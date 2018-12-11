@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE dbofap.pck_extract_ddl
+CREATE OR REPLACE PACKAGE pck_extract_ddl
 AS
 
    ---------------------------------------------------------------------------
@@ -57,7 +57,7 @@ AS
 
 END  pck_extract_ddl;
 /
-CREATE OR REPLACE PACKAGE BODY  dbofap.pck_extract_ddl
+CREATE OR REPLACE PACKAGE BODY  pck_extract_ddl
 AS
 
 ---------------------------------------------------------------------------
@@ -395,10 +395,7 @@ AS
 
 BEGIN
    
-   -- Seul endroit où le DDL est statique
-   -- Cause: il n'est pas possible d'obtenir les privilèges individuellement pour interroger dbms_metadata / OBJECT_GRANT
-   -- Solution: extraction du code contenu dans l'installation automatisée (fap\bdd\install\divers\grant.sql)
-   tab_ddl_privilege(1) := TO_CLOB('GRANT SELECT, UPDATE, INSERT, DELETE ON ' || table_cible || ' TO fap');
+   tab_ddl_privilege(1) := TO_CLOB('GRANT SELECT, UPDATE, INSERT, DELETE ON ' || table_cible || ' TO XXX');
 
 EXCEPTION
 
@@ -680,14 +677,9 @@ IS
 
 BEGIN
 
-   tab_table(1)    := 'alt_alert_logi_fap';
-   tab_table(2)    := 'alt_tar';
-   tab_table(3)    := 'evt_fap_detail';
-   tab_table(4)    := 'l_cco_fap';
-   tab_table(5)    := 'ul_filiere';
-   tab_table(6)    := 'ecm_element_cout_modele';
-   tab_table(7)    := 'troncon';
-   tab_table(8)    := 'filiere';
+   tab_table(1)    := 'TABLE_1;
+   tab_table(2)    := 'TABLE_2';
+
 
 END ajouter_table_extraire;
 
