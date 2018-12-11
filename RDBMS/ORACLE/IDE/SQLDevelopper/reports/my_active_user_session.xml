@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<displays>
+<display id="16f83b7d-0167-1000-8004-0a004b01e67f" type="" style="Table" enable="true">
+	<name><![CDATA[my active user session]]></name>
+	<description><![CDATA[]]></description>
+	<tooltip><![CDATA[]]></tooltip>
+	<drillclass><![CDATA[]]></drillclass>
+	<CustomValues>
+		<TYPE><![CDATA[horizontal]]></TYPE>
+	</CustomValues>
+	<query>
+		<sql><![CDATA[SELECT 
+    sss.logon_time
+   ,sss.action
+   ,sss.event
+   ,sss.status  
+   ,sss.state   
+   ,sss.wait_time  
+   ,sss.wait_class 
+   ,sss.sql_id
+   ,qry.last_load_time
+   ,sss.client_info
+   ,qry.sql_text
+FROM 
+   v$session   sss  
+      INNER JOIN v$sql qry ON qry.sql_id = sss.sql_id
+WHERE 1=1
+   AND sss.status     =   'ACTIVE'
+   AND sss.module     IN ('SQL Developer', 'PL/SQL Developer')
+   -- Exclude this query
+   AND sss.sid        NOT IN (SELECT sys_context('USERENV','SID') FROM dual)
+   AND DECODE (sss.machine, 'EMEAAD\ITEM-S36830', 'Me', 'ITEM-S36830', 'Me', 'Something else') = 'Me']]></sql>
+	</query>
+		<pdf version="VERSION_1_7" compression="CONTENT">
+			<docproperty title="null" author="null" subject="null" keywords="null" />
+			<cell toppadding="2" bottompadding="2" leftpadding="2" rightpadding="2" horizontalalign="LEFT" verticalalign="TOP" wrap="true" />
+			<column>
+				<heading font="null" size="10" style="NORMAL" color="-16777216" rowshading="-1" labeling="FIRST_PAGE" />
+				<footing font="null" size="10" style="NORMAL" color="-16777216" rowshading="-1" labeling="NONE" />
+				<blob blob="NONE" zip="false" />
+			</column>
+			<table font="null" size="10" style="NORMAL" color="-16777216" userowshading="false" oddrowshading="-1" evenrowshading="-1" showborders="true" spacingbefore="12" spacingafter="12" horizontalalign="LEFT" />
+			<header enable="false" generatedate="false">
+				<data>
+				
+				
+				
+				
+				
+				
+				
+				null																																</data>
+			</header>
+			<footer enable="false" generatedate="false">
+				<data value="null" />
+			</footer>
+			<pagesetup papersize="LETTER" orientation="1" measurement="in" margintop="1.0" marginbottom="1.0" marginleft="1.0" marginright="1.0" />
+		</pdf>
+</display>
+</displays>
