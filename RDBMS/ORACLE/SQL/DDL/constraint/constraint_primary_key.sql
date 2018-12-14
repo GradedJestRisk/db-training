@@ -1,13 +1,17 @@
-
 ---------------------------------------------------------------------------
---------------     PK                  -------------
+--------------      CREATE                   -------------
 ---------------------------------------------------------------------------
 
 -- 3 ways
+
+-- Create 
 CREATE TABLE dbofap.tbl_foo (foo VARCHAR2(32) PRIMARY KEY, bar INTEGER);
 
 CREATE TABLE dbofap.tbl_test (id INTEGER, foo VARCHAR2(32) NOT NULL, bar INTEGER UNIQUE, barbar INTEGER);
 
+
+
+-- Alter table - Let oracle create index
 ALTER TABLE 
    dbofap.tbl_test 
 ADD CONSTRAINT 
@@ -15,6 +19,18 @@ ADD CONSTRAINT
 PRIMARY KEY (id)
 ;
 
+-- Using existing index
+ALTER TABLE 
+   dbofap.tbl_test 
+ADD CONSTRAINT 
+   pk_tbl_tst 
+PRIMARY KEY (id)
+;
+
+
+---------------------------------------------------------------------------
+--------------      Remove                  -------------
+---------------------------------------------------------------------------
 
 ALTER TABLE dbofap.tbl_test DROP CONSTRAINT PK_TBL_TST;
 

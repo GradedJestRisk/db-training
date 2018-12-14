@@ -1,3 +1,7 @@
+---------------------------------------------------------------------------
+--------------     History                    -------------
+---------------------------------------------------------------------------
+
 -- Execution plan historic
 -- For query / id
 SELECT 
@@ -11,7 +15,7 @@ SELECT
 FROM 
    dba_hist_sql_plan xp_hst
 WHERE 1=1
-   AND xp_hst.sql_id = 'c4phfzzkjpsw8'
+   AND xp_hst.sql_id = '8fdpq6vt69qpp'
 ORDER BY
    xp_hst.timestamp DESC
 ; 
@@ -49,6 +53,10 @@ WHERE 1=1
    AND xp_hst.sql_id          = 'c4phfzzkjpsw8'
    AND xp_hst.plan_hash_value = '1863236027'
 ; 
+
+---------------------------------------------------------------------------
+--------------      Last execution plan                    -------------
+---------------------------------------------------------------------------
 
    
 -- Last execution plan

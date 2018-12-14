@@ -1,38 +1,13 @@
--- Locking session
-select 
-   x.sid,
-   x.status
-from 
-   v$session x, v$sqltext y
-where 
-   x.sql_address = y.address
-and 
-   y.sql_text like '%PKG_PURGE_FIL_INACT%';
-
-
-SELECT 
-   s.sid,
-   l.lock_type,
-   l.mode_held,
-   l.mode_requested,
-   l.lock_id1
-FROM   
-   dba_lock_internal l,
-   v$session s
-WHERE 1=1
-   AND s.sid = l.session_id
-   AND UPPER(l.lock_id1) LIKE '%PKG%'
-   AND l.lock_type = 'Body Definition Lock'
-;
-
-
-
+---------------------------------------------------------------------------
+--------------     ????                    -------------
+---------------------------------------------------------------------------
 SELECT
    object_name,
    procedure_name,
-   authid
+   AUTHID
+   --,p.*
 FROM  
-   dba_procedures
+   dba_procedures p
 WHERE 1=1
    AND object_name = 'PKG_PURGE_FAP'
    AND procedure_name IS NULL
@@ -52,6 +27,41 @@ WHERE 1=1
    AND procedure_name IS NULL
    AND authid         = '﻿CURRENT_USER'
 ; 
+
+
+---------------------------------------------------------------------------
+--------------      Lock on compilation                 -------------
+---------------------------------------------------------------------------
+
+-- Lock
+select 
+   x.sid,
+   x.status,
+   y.SQL_TEXT
+from 
+   v$session x, v$sqltext y
+where  1=1
+   AND x.sql_address  =     y.address
+   AND y.sql_text     LIKE '%PKG_PURGE_FIL_INACT%'
+   AND x.sid          <>  (SELECT sys_context('USERENV','SID') FROM dual) 
+   ;
+
+
+SELECT 
+   s.sid,
+   l.lock_type,
+   l.mode_held,
+   l.mode_requested,
+   l.lock_id1
+FROM   
+   dba_lock_internal l,
+   v$session s
+WHERE 1=1
+   AND s.sid = l.session_id
+   AND UPPER(l.lock_id1) LIKE '%PKG%'
+   AND l.lock_type = 'Body Definition Lock'
+;
+
 
 
 ------------------------------------------------------------------------
