@@ -1,13 +1,14 @@
 select 
    ao.object_name,
    ao.object_type,
-   ao.status
+   ao.status,
+   ao.last_ddl_time
    --,ao.*
 from all_objects ao
 where 1=1
 --   AND ao.owner = 'FAP'
    --AND ao.object_type IN ('PACKAGE','PACKAGE BODY')
-   AND ao.object_name = UPPER('purge_table')
+   AND ao.object_name = UPPER('recuperer_duree_etapes_delete')
    --AND ao.status <> 'VALID'   
 --ORDER BY 
 --   ao.status ASC,
@@ -31,7 +32,7 @@ ORDER BY
    ao.status ASC,
    ao.object_name ASC
  ;
- purge_table
+
 
 select 
    ao.object_name,

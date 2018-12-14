@@ -1,6 +1,28 @@
+
+-- Indexes:
+-- - can be disabled
+-- - structure can't be modified, you had to drop/create
+-- - others attributes can be changed (name, storage)
+
+
 --------------------------------------------------------------------------
---------------     Index                    -------------
+--------------     CREATE                    -------------
 ---------------------------------------------------------------------------
+
+
+DROP TABLE test_index;
+
+CREATE TABLE test_index (
+   id          NUMBER
+);
+
+INSERT INTO test_index(id) VALUES (1);
+INSERT INTO test_index(id) VALUES (1);
+INSERT INTO test_index(id) VALUES (2);
+
+COMMIT;
+
+CREATE INDEX ndx_test_index_id ON test_index(id);
 
 -- Column-based
 CREATE INDEX cfgfil_fk ON filiere (fil_id_filprd);
@@ -9,10 +31,33 @@ CREATE INDEX cfgfil_fk ON filiere (fil_id_filprd);
 CREATE INDEX ndx_trace_trunc_dt ON trace (TRUNC(dt));
 
 
--- Indexes:
--- - can be disabled
--- - structure can't be modified, you had to drop/create
--- - others attributes can be changed (name, storage)
+
+--------------------------------------------------------------------------
+--------------     MODIFY                    -------------
+---------------------------------------------------------------------------
+
+-- Unusable : ignored by CBO and not maintained by DML (eg: INSERT/DELETE)
+ALTER INDEX ndx_test_index_id UNUSABLE;
+
+SELECT ndx.status FROM all_indexes ndx WHERE ndx.index_name   =  UPPER('ndx_test_index_id');
+
+SELECT 
+   TO_CHAR(DBMS_METADATA.get_ddl ('INDEX', UPPER('ndx_test_index_id'), USER))
+FROM dual;
+
+-- In order to make it usable again, you must rebuild / drop + create
+-- Avoid to lost index definition..
+ALTER INDEX ndx_test_index_id REBUILD;
+
+
+
+
+-- Invisible : ignored by CBO
+ALTER INDEX cfgfil_fk INVISIBLE;
+
+--------------------------------------------------------------------------
+--------------     SELECT                    -------------
+---------------------------------------------------------------------------
 
 
 SELECT 
@@ -27,7 +72,7 @@ WHERE 1=1
 
 
 -- Index
--- Pour propri�taire
+-- Given an owner
 SELECT 
    'Index'             rqt_cnt
    ,ndx.owner          ndx_prp
@@ -45,7 +90,7 @@ WHERE 1=1
 
 
 -- Index
--- Pour nom d'index
+-- Given an index / name
 SELECT 
    'Index'             rqt_cnt
    ,ndx.owner          ndx_prp
@@ -63,7 +108,7 @@ WHERE 1=1
 
 
 -- Index
--- Pour propri�taire et une table
+-- Given an owner + table / name
 SELECT 
    'Index'             rqt_cnt
    ,ndx.owner          ndx_prp
@@ -81,106 +126,12 @@ WHERE 1=1
 
 
 
--- Index 
--- Profondeur décroissante
-SELECT 
-   'Index'             rqt_cnt
-   ,ndx.owner          ndx_prp
-   ,ndx.index_name     ndx_nm
---   ,ndx.index_type     ndx_typ
-   ,ndx.table_name     tbl_nm
---   ,ndx.partitioned    ndx_prt
-   ,ndx.uniqueness     ndx_nqn
-   ,ndx.blevel             ndx_prf
-  -- ,ndx.*   
-FROM 
-   all_indexes       ndx 
-WHERE 1=1
-   AND   ndx.owner             =   'DBOFAP'
-   AND   ndx.blevel            IS NOT NULL
-   AND   ndx.table_name        =   'FILIERE'
-ORDER BY 
-   ndx.blevel DESC
-;
-
-ANALYZE INDEX 
-   dbofap.idx_dat_fin_fap 
-VALIDATE STRUCTURE
-;
-
-SELECT 
-   ndx_stt.height               ndx_prf
-   ,ndx_stt.lf_blks             rows_in_table
-   ,ndx_stt.lf_rows             total_rows_in_index
-   ,ndx_stt.del_lf_rows         deleted_rows_in_index
-   ,(del_lf_rows / lf_rows * 100) del_rows_ratio      
-FROM 
-   index_stats ndx_stt
-;
-
-
-SELECT 
-   n(clustering_factor)
-FROM 
-   all_indexes 
-WHERE 1=1
---TABLE_NAME='AGG_CLAIM_HP'
-   AND index_name = 'IDX_DATEXPPE'
-;
-
-SELECT 
-   n(num_rows) row_count,
-   n(blocks)   block_count
-FROM 
-   all_tables 
-WHERE 
-   table_name = 'TRONCON'
-;
-
-/*
-
-TRONCON
-ROW_COUNT	BLOCK_COUNT
-464 345 822	  7 664 428
-
-IDX_DATEXPPE
-15 894 042
-
--- clustering 
-
-/*
-https://gerardnico.com/db/oracle/clustering_factor
-
-If the value is near the number of blocks, then the table is very well ordered. 
-In this case, the index entries in a single leaf block tend to point to rows in the same data blocks.
-
-If the value is near the number of rows, then the table is very randomly ordered. 
-In this case, it is unlikely that index entries in the same leaf block point to rows in the same data blocks.
-*/
-
-
-SELECT 
-   ndx.index_name,
-   n(tbl.blocks) block_count,
-   n(ndx.clustering_factor) clust_factor,
-   n(tbl.num_rows) row_count  
-FROM 
-   all_indexes ndx
-      INNER JOIN all_tables tbl ON tbl.table_name = ndx.table_name
-WHERE 1=1
-   AND ndx.table_name   =   'TRONCON'
---   AND ndx.index_name   =   'IDX_DATEXPPE'
-ORDER BY
-   ndx.clustering_factor
-;
-
-
-
 --------------------------------------------------------------------------
---------------     Colonne                    -------------
+--------------     Column                    -------------
 ---------------------------------------------------------------------------
 
-
+-- Column
+-- Given owner + index / name
 SELECT 
    'Index col'             rqt_cnt
    ,ndx_clm.index_owner    ndx_prp
@@ -194,10 +145,12 @@ WHERE 1=1
    AND   ndx_clm.index_name    =   'TRCSIT_FK'
 ;
 
+-- Column (list)
+-- Given owner + index / name
 SELECT 
    ndx_clm.table_name,
    ndx_clm.index_name,
-   LISTAGG(ndx_clm.column_name, ',') WITHIN GROUP (ORDER BY ndx_clm.column_name)
+   LISTAGG(ndx_clm.column_name, ',') WITHIN GROUP (ORDER BY ndx_clm.column_name) column_list
 FROM 
    all_ind_columns   ndx_clm
 WHERE 1=1
@@ -210,12 +163,12 @@ GROUP BY
 
 
 --------------------------------------------------------------------------
---------------     Index  + colonne                  -------------
+--------------     Index  + columns                  -------------
 ---------------------------------------------------------------------------
 
 
--- Index + colonnes
--- Pour index / nom
+-- Index + columns
+-- Given index / name
 SELECT 
    'Index'             rqt_cnt
    ,ndx.owner          ndx_prp
@@ -238,30 +191,8 @@ WHERE 1=1
 
 
 
--- Index + colonnes
--- Pour table / nom
-SELECT 
-   'Index'             rqt_cnt
-   ,ndx.owner          ndx_prp
-   ,ndx.index_name     ndx_nm
-   ,ndx.index_type     ndx_typ
-   ,ndx.table_name     tbl_nm
-   ,ndx.partitioned    ndx_prt
-   ,ndx.uniqueness     ndx_nqn
-   ,ndx_clm.column_name    clm_nm
-  -- ,ndx.*   
-FROM 
-   all_indexes       ndx,
-   all_ind_columns   ndx_clm
-WHERE 1=1
-   AND   ndx.owner             =   'DBOFAP'
-   AND   ndx.table_name        =   'LUU_ULO'
-   AND   ndx_clm.index_owner   =    ndx.owner
-   AND   ndx_clm.index_name    =    ndx.index_name 
-;
-
--- Index + colonnes
--- Pour table / nom + colonne / nom
+-- Index + columns
+-- Given table / name
 SELECT 
    'Index'             rqt_cnt
    ,ndx.owner          ndx_prp
@@ -281,43 +212,8 @@ WHERE 1=1
    AND   ndx_clm.column_name   =   'ID_NAT_CTX'
 ;
 
-
--- Index + colonnes
--- Pour table / nom + colonne / nom
-SELECT 
-   'Index'             rqt_cnt
-   ,ndx.owner          ndx_prp
-   ,ndx.index_name     ndx_nm
-   ,ndx.index_type     ndx_typ
-   ,ndx.table_name     tbl_nm
-   ,ndx.partitioned    ndx_prt
-   ,ndx.uniqueness     ndx_nqn
-   ,ndx.blevel             ndx_prf
-   ,ndx_clm.column_name    clm_nm
-  -- ,ndx.*   
-FROM 
-   all_indexes       ndx 
-      INNER JOIN  all_ind_columns   ndx_clm ON ( ndx_clm.index_owner   =    ndx.owner AND ndx_clm.index_name    =    ndx.index_name )
-WHERE 1=1
-   --AND   ndx.owner             =   'DBOFAP'
-   AND   ndx.table_name        =   'FILIERE'
-   AND   ndx_clm.column_name   =   'ID_NAT_CTX'
-;
-
-
-SELECT 
-   index_name,
-   blevel,
-   leaf_blocks
-FROM 
-   dba_indexes
-WHERE 1=1
---   AND   owner      =   user
-   AND   index_name = 'TRCNCT_FK'
-;
-
 ---------------------------------------------------------------------------
---------------     Function source                   -------------
+--------------    Function-based index source                   -------------
 ---------------------------------------------------------------------------
 
 
@@ -326,13 +222,12 @@ SELECT
    src.column_expression
 FROM
    dba_ind_expressions src
-WHERE index_name IN (
-   'IDX_DBA_FIL_1',
-   'IDX_ECM_DAT_EXP',
-   'IDX_FILIERE_DAT_FIN_FAP_F',
-   'TRC_IS_NULL_EXP_PE'
-)
-;
+WHERE 1=1
+   AND index_name IN (
+      'IDX_DBA_FIL_1',
+      'IDX_ECM_DAT_EXP',
+      'IDX_FILIERE_DAT_FIN_FAP_F',
+      'TRC_IS_NULL_EXP_PE');
 
 
 ---------------------------------------------------------------------------
@@ -436,3 +331,121 @@ SELECT
 FROM dual
 ;
 -- 68% => bad..
+
+
+
+---------------------------------------------------------------------------
+--------------      Is index healthy ?                  -------------
+---------------------------------------------------------------------------
+
+-- Index 
+-- Decreasing depth
+SELECT 
+   'Index'             rqt_cnt
+   ,ndx.owner          ndx_prp
+   ,ndx.index_name     ndx_nm
+--   ,ndx.index_type     ndx_typ
+   ,ndx.table_name     tbl_nm
+--   ,ndx.partitioned    ndx_prt
+   ,ndx.uniqueness     ndx_nqn
+   ,ndx.blevel             ndx_prf
+  -- ,ndx.*   
+FROM 
+   all_indexes       ndx 
+WHERE 1=1
+   AND   ndx.owner             =   'DBOFAP'
+   AND   ndx.blevel            IS NOT NULL
+   AND   ndx.table_name        =   'FILIERE'
+ORDER BY 
+   ndx.blevel DESC
+;
+
+-- ?
+ANALYZE INDEX 
+   dbofap.idx_dat_fin_fap 
+VALIDATE STRUCTURE
+;
+
+SELECT 
+   ndx_stt.height               ndx_prf
+   ,ndx_stt.lf_blks             rows_in_table
+   ,ndx_stt.lf_rows             total_rows_in_index
+   ,ndx_stt.del_lf_rows         deleted_rows_in_index
+   ,(del_lf_rows / lf_rows * 100) del_rows_ratio      
+FROM 
+   index_stats ndx_stt
+;
+
+
+SELECT 
+   n(clustering_factor)
+FROM 
+   all_indexes 
+WHERE 1=1
+--TABLE_NAME='AGG_CLAIM_HP'
+   AND index_name = 'IDX_DATEXPPE'
+;
+
+SELECT 
+   n(num_rows) row_count,
+   n(blocks)   block_count
+FROM 
+   all_tables 
+WHERE 
+   table_name = 'TRONCON'
+;
+
+/*
+
+TRONCON
+ROW_COUNT	BLOCK_COUNT
+464 345 822	  7 664 428
+
+IDX_DATEXPPE
+15 894 042
+
+-- clustering 
+
+/*
+https://gerardnico.com/db/oracle/clustering_factor
+
+If the value is near the number of blocks, then the table is very well ordered. 
+In this case, the index entries in a single leaf block tend to point to rows in the same data blocks.
+
+If the value is near the number of rows, then the table is very randomly ordered. 
+In this case, it is unlikely that index entries in the same leaf block point to rows in the same data blocks.
+*/
+
+
+SELECT 
+   ndx.index_name,
+   n(tbl.blocks) block_count,
+   n(ndx.clustering_factor) clust_factor,
+   n(tbl.num_rows) row_count  
+FROM 
+   all_indexes ndx
+      INNER JOIN all_tables tbl ON tbl.table_name = ndx.table_name
+WHERE 1=1
+   AND ndx.table_name   =   'TRONCON'
+--   AND ndx.index_name   =   'IDX_DATEXPPE'
+ORDER BY
+   ndx.clustering_factor
+;
+
+
+SELECT 
+   index_name,
+   blevel,
+   leaf_blocks
+FROM 
+   dba_indexes
+WHERE 1=1
+--   AND   owner      =   user
+   AND   index_name = 'TRCNCT_FK'
+;
+
+
+
+
+
+
