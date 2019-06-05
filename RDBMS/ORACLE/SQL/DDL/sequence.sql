@@ -10,7 +10,7 @@ SELECT
 FROM 
    all_sequences   sqc
 WHERE 1=1
- AND   sqc.sequence_owner   =   'DBOFAP'
+   AND   sqc.sequence_owner   =   'DBOFAP'
    AND   sqc.sequence_name    = 'SEQ_PARAM'
 ORDER BY
    sqc.sequence_name          ASC
@@ -26,8 +26,8 @@ SELECT
 FROM 
    all_sequences   sqc
 WHERE 1=1
-   AND   sqc.sequence_owner   =   'DBOFAP'
-   AND   UPPER(sqc.sequence_name)    LIKE UPPER('%evt%') 
+   --AND   sqc.sequence_owner   =   'DBOFAP'
+   AND   REGEXP_LIKE(sqc.sequence_name, 'opvprep', 'i') 
 ORDER BY
    sqc.sequence_name          ASC
 ;

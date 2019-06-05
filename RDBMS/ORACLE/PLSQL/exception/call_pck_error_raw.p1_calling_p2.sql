@@ -1,0 +1,3 @@
+SET SERVEROUTPUT ON;
+SET LINESIZE 200;
+EXEC pck_error_raw.p1_calling_p2;

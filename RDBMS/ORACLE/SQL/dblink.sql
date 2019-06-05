@@ -25,7 +25,6 @@ SELECT  * FROM
    all_db_links
 ;
 
-
 SELECT  * 
 FROM 
    all_db_links

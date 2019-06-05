@@ -10,17 +10,29 @@ WHERE parameter = 'NLS_DATE_FORMAT'
 ; 
 
 
-SELECT 
-   EXTRACT(MINUTE FROM DATE '20180101-16:02:01') minutee
-FROM 
-   DUAL
-;
+
 
 ---------------------------------------------------------------------------
 --------------      Date                   -------------
 ---------------------------------------------------------------------------
 
 
+-- Specify date from string using date mask
+SELECT 
+   TO_DATE('00010101', 'YYYYMMDD')  date_type
+FROM 
+   dual
+;
+
+-- Extract minute
+SELECT 
+   EXTRACT(MINUTE FROM DATE '20180101-16:02:01') minute
+FROM 
+   DUAL
+;
+
+
+-- Extract other
 SELECT 
    'Extract fields from date=>'
    ,SYSDATE                   system_date 
@@ -34,6 +46,88 @@ FROM
    dual
 ;
 
+-- Julian start
+-- 5th millenium
+--  saw the spread of agriculture from Western Asia throughout Southern and Central Europe.
+SELECT
+  'Julian start at BC: =>' 
+  ,TO_CHAR(
+    TO_DATE(1, 'J'),
+    'DD/MM/YYYY')
+FROM 
+  dual
+;
+
+
+-- Julian (number) to date
+SELECT
+  'Julian to Gregorian =>' 
+   ,TO_DATE(2459725, 'J')
+FROM 
+  dual
+;
+
+-- Julian Epoch (start)
+SELECT
+  'Julian Epoch =>' 
+   ,TO_DATE(1, 'J')
+FROM 
+  dual
+;
+
+-- Julian end
+SELECT
+  'Julian Epoch =>' 
+   ,TO_DATE(5373484, 'J')
+FROM 
+  dual
+;
+
+-- Julian to Gregorian
+SELECT
+  'Julian to Gregorian =>' 
+  ,TO_CHAR(
+    TO_DATE(2459725, 'J'),
+    'DD/MM/YYYY')
+FROM 
+  dual
+;
+
+
+-- Gregorian to Julian 
+SELECT
+  'Gregorian to Julian =>' 
+  ,        TO_DATE('20000101', 'YYYYMMDD')       dt_gregorian
+  ,TO_CHAR(TO_DATE('19830404', 'YYYYMMDD'), 'J') dt_julian
+  ,TO_NUMBER(TO_CHAR(TO_DATE('19830404', 'YYYYMMDD'), 'J')) dt_julian_number
+FROM 
+  dual
+;
+
+
+-- Bith in julian
+SELECT
+   FLOOR(MONTHS_BETWEEN (SYSDATE, TO_DATE(2445429,'J')) / 12)  age_completed
+FROM  
+  dual
+;
+
+
+-- Birth this year
+SELECT
+   FLOOR(MONTHS_BETWEEN (SYSDATE, TO_DATE('20190101', 'YYYYMMDD')) / 12)  age_completed
+   ,CEIL(MONTHS_BETWEEN (SYSDATE, TO_DATE('20190101', 'YYYYMMDD')) / 12)  age_incoming
+FROM  
+  dual
+;
+
+-- Previous birth
+SELECT
+   FLOOR(MONTHS_BETWEEN (SYSDATE, TO_DATE('19830404', 'YYYYMMDD')) / 12)  age_completed
+   ,CEIL(MONTHS_BETWEEN (SYSDATE, TO_DATE('19830404', 'YYYYMMDD')) / 12)  age_incoming
+FROM  
+  dual
+;
 
 ---------------------------------------------------------------------------
 --------------      Timestamp                   -------------

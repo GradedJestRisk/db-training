@@ -4,6 +4,20 @@
 ---------- Verrou -------
 -------------------------------
 
+
+-- https://blog.developpez.com/pachot/jl_locks/
+
+--l_mode
+
+--0,'None(0)', 
+--1,'Null(1)', 
+--2,'Row Share(2)', 
+--3,'Row Exclu(3)', 
+--4,'Share(4)', 
+--5,'Share Row Ex(5)', 
+--6,'Exclusive(6)')
+
+
 -- Verrou PL/SQL Developper
 select l.*, o.owner object_owner, o.object_Name
 from  sys.all_objects o, v$lock l
@@ -107,7 +121,8 @@ SELECT
    ,bjt.object_name          bjt_nm
    ,TRUNC(vrr.ctime/60)      vrr_tmps_min  
    ,DECODE (vrr.lmode, 2, 'Partag�', 3, 'Exclusif', vrr.lmode) vrr_md
-  -- ,vrr.*
+   ,'v$session=>'
+   ,sss.*
 FROM
    v$session         sss,   
    sys.all_objects   bjt,
@@ -116,11 +131,14 @@ WHERE  1=1
    --AND   sss.username    =   'PTOP'
    AND   vrr.sid         =   sss.sid
    AND   vrr.type        =   'TM'      -- Sur table
-   AND   vrr.lmode       =    3        -- Exclusif
+  -- AND   vrr.lmode       =    3        -- Exclusif
    AND   bjt.object_id   =    vrr.id1
+  -- AND bjt.object_name = 'PFL_DATAAFF_TMP'
 ORDER BY
    sss.USERNAME ASC
 ;
+
+
 
 
 -- Verrou exclusif
@@ -138,7 +156,7 @@ SELECT
    ,bjt.owner                bjr_prp
    ,bjt.object_name          bjt_nm
    ,TRUNC(vrr.ctime/60)      vrr_tmps_min  
-   ,DECODE (vrr.lmode, 2, 'Partagé', 3, 'Exclusif', vrr.lmode) vrr_md
+   ,DECODE (vrr.lmode, 2, 'Partagé', 6, 'Exclusif', vrr.lmode) vrr_md
   -- ,vrr.*
 FROM
    v$session         sss,   
@@ -148,9 +166,10 @@ WHERE  1=1
    --AND   sss.username    =   'PTOP'
    AND   vrr.sid         =   sss.sid
    AND   vrr.type        =   'TM'      -- Sur table
-   AND   vrr.lmode       =    3        -- Exclusif
+  -- AND   vrr.lmode       =    6        -- Exclusif
    AND   bjt.object_id   =    vrr.id1
 ORDER BY
+   vrr.lmode    DESC,
    sss.username ASC,
    sss.action
 ;

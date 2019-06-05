@@ -43,9 +43,9 @@ SELECT
 FROM
   dba_tab_privs prv_drc
 WHERE 1=1
-   AND prv_drc.grantor    =   'SYS'
-   AND prv_drc.grantee    =   'SELECT_CATALOG_ROLE'
-   AND prv_drc.table_name =   UPPER ('dba_tables')   
+--   AND prv_drc.grantor    =   'SYS'
+--   AND prv_drc.grantee    =   'SELECT_CATALOG_ROLE'
+   AND prv_drc.table_name =   UPPER ('REF_K_BATCHS')   
 ;
 
 -- Directly granted privileges
@@ -92,7 +92,7 @@ FROM
   dba_role_privs prv_rl
 WHERE 1=1
 --   AND prv_rl.granted_role  =   'DBOFAP'
-   AND prv_rl.grantee       =   'DBOFAP'
+   AND prv_rl.grantee       =   'EXPRDO'
 --   AND prv_rl.table_name = UPPER ('filiere')      
 ;
 
@@ -158,6 +158,13 @@ WHERE 1=1
 --   AND rl.role = 'RU_DEV'
 ;
 
+SELECT *
+FROM 
+   role_role_privs rl
+WHERE 1=1
+   AND rl.role = 'EXP_RDO_ROLE'
+;
+
 -------------------------------
 ---------- R�le + Droits        -------
 -------------------------------
@@ -202,7 +209,7 @@ FROM
 WHERE 1=1
  --  AND rl_tls.username     =   'FAP'
    AND rl_tbl.role         =   rl_tls.granted_role
- AND rl_tbl.owner        =   'FAP'
+ --AND rl_tbl.owner        =   'FAP'
    --AND rl_tbl.table_name   =   'DBMS_AQ'
 ORDER BY
     rl_tls.username     

@@ -64,45 +64,6 @@ WHERE 1=1
 
 
 
-------------------------------------------------------------------------
------------------------------ Compilation ----------------------------------
-------------------------------------------------------------------------
-
--- plsql_optimize_level
--- 1 = Debug
--- 2 = Normal (with optimization)
-
-SELECT 
-   *
-FROM 
-   all_plsql_object_settings p
-WHERE 1=1
-   AND p.owner                =   'DBOFAP'
-   AND p.type                IN   ('PACKAGE','PACKAGE BODY')
-   AND p.plsql_optimize_level <   2
-;
-
--- Compile all packages with level1 in level2
-SELECT DISTINCT
-   'ALTER PACKAGE ' ||p.name ||' COMPILE;'
-FROM 
-   all_plsql_object_settings p
-WHERE 1=1
-   AND p.owner                =   'DBOFAP'
-   AND p.type                IN   ('PACKAGE','PACKAGE BODY')
-   AND p.plsql_optimize_level <   2
-;
-
-SELECT *
-  FROM ALL_PLSQL_OBJECT_SETTINGS 
-;
-
-SELECT * FROM 
-   v$parameter
-WHERE 1=1
-   AND name = 'plsql_optimize_level'
---   AND lower(name) LIKE '%optim%'
-;
 
 
 ------------------------------------------------------------------------
@@ -126,7 +87,8 @@ SELECT
    ,pck.object_name 
    ,pck.owner       
    ,pck.status       pck_tt
-   ,PCK.LAST_DDL_TIME
+   ,pck.created        crt_dt   
+   ,PCK.last_ddl_time  cmp_dt
 FROM 
    all_objects pck
 WHERE 1=1
@@ -292,7 +254,7 @@ SELECT
    prc.object_name,
    prc.procedure_name,
    prc.*
-FROM user_procedures prc
+FROM all_procedures prc
 WHERE 1=1--
    AND prc.object_type = 'PACKAGE'
    AND LOWER(prc.procedure_name) LIKE '%capi%'

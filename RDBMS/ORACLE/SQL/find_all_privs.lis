@@ -1,0 +1,9 @@
+﻿find_all_privs: Release 1.0.7.0.0 - Production on Mar. Mai   07 10:40:33 2019
+Copyright (c) 2004 PeteFinnigan.com Limited. All rights reserved.
+unknown command "sqlplus" - rest of line ignored.
+ORA-20000: ORU-10027: buffer overflow, limit of 1000000 bytes
+ORA-06512: à "SYS.DBMS_OUTPUT", ligne 32
+ORA-06512: à "SYS.DBMS_OUTPUT", ligne 97
+ORA-06512: à "SYS.DBMS_OUTPUT", ligne 112
+ORA-06512: à ligne 179
+Rollback complete.
