@@ -11,8 +11,7 @@ const client = new Client({
 client.connect();
 
 const query = ` 
-SELECT *
-FROM people
+SELECT current_database()
 `;
 
 client.query(query, (err, res) => {
@@ -25,5 +24,6 @@ client.query(query, (err, res) => {
     }
     client.end();
 });
+
 
 
