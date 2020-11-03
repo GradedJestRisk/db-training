@@ -1,0 +1,22 @@
+{
+  "name": "mysql_js",
+  "version": "1.0.0",
+  "description": "Direct connexion to mysql",
+  "main": "main.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GradedJestRisk/js-training.git"
+  },
+  "keywords": [
+    "mysql"
+  ],
+  "author": "GradedJestRisk",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GradedJestRisk/js-training/issues"
+  },
+  "homepage": "https://github.com/GradedJestRisk/js-training#readme"
+}
