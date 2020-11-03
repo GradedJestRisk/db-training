@@ -1,0 +1,2 @@
+select $$with data as ($$ || (select string_agg(format($$select %L table_name, (select last_value from %s) last_value, (select max(id) from %I) max_id$$, rel.relname, pg_get_serial_sequence(rel.relname, 'id'), rel.relname), ' UNION ')
+from pg_attribute att inner join pg_class rel on att.attrelid=rel.oid where rel.relkind='r' and attname='id') || $$) select *, max_id - last_value "max_id - last_value" from data order by table_name $$ \gexec
