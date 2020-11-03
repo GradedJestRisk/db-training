@@ -1,0 +1,31 @@
+;
+; Archive created at 2020-11-03 15:00:44 CET
+;     dbname: replication_target
+;     TOC Entries: 24
+;     Compression: -1
+;     Dump Version: 1.14-0
+;     Format: CUSTOM
+;     Integer: 4 bytes
+;     Offset: 8 bytes
+;     Dumped from database version: 12.4
+;     Dumped by pg_dump version: 12.4 (Ubuntu 12.4-0ubuntu0.20.04.1)
+;
+;
+; Selected TOC Entries:
+;
+2988; 0 0 ACL - SCHEMA public postgres
+205; 1259 32033 TABLE public referencing pix
+206; 1259 32043 TABLE public referencing_referencing pix
+204; 1259 32028 TABLE public schooling-registrations pix
+202; 1259 32018 TABLE public test_table pix
+203; 1259 32023 TABLE public users pix
+2979; 0 32033 TABLE DATA public referencing pix
+2980; 0 32043 TABLE DATA public referencing_referencing pix
+2978; 0 32028 TABLE DATA public schooling-registrations pix
+2976; 0 32018 TABLE DATA public test_table pix
+2977; 0 32023 TABLE DATA public users pix
+2845; 2606 32037 CONSTRAINT public referencing referencing_pkey pix
+2847; 2606 32047 CONSTRAINT public referencing_referencing referencing_referencing_pkey pix
+2843; 2606 32032 CONSTRAINT public schooling-registrations schooling-registrations_pkey pix
+2839; 2606 32022 CONSTRAINT public test_table test_table_pkey pix
+2841; 2606 32027 CONSTRAINT public users users_pkey pix

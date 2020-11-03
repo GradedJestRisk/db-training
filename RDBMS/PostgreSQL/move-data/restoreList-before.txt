@@ -1,0 +1,24 @@
+";\n;
+Archive created at 2020-11-03 15:00:44 CET\n;
+dbname: replication_target\n;
+TOC Entries: 24\n;     Compression: -1\n;     Dump Version: 1.14-0\n;     Format: CUSTOM\n;     Integer: 4 bytes\n;     Offset: 8 bytes\n;
+Dumped from database version: 12.4\n;
+Dumped by pg_dump version: 12.4 (Ubuntu 12.4-0ubuntu0.20.04.1)\n;\n;\n; Selected TOC Entries:\n;\n2988; 0 0 ACL - SCHEMA public postgres
+205; 1259 32033 TABLE public referencing pix
+206; 1259 32043 TABLE public referencing_referencing pix
+204; 1259 32028 TABLE public schooling-registrations pix
+202; 1259 32018 TABLE public test_table pix
+2989;0 0 COMMENT public TABLE test_table pix
+203; 1259 32023 TABLE public users pix
+2979; 0 32033 TABLE DATA public referencing pix
+2980; 0 32043 TABLE DATA public referencing_referencing pix
+2978; 0 32028 TABLE DATA public schooling-registrations pix
+2976; 0 32018 TABLE DATA public test_table pix
+2977; 0 32023 TABLE DATA public users pix
+2845; 2606 32037 CONSTRAINT public referencing referencing_pkey pix
+2847; 2606 32047 CONSTRAINT public referencing_referencing referencing_referencing_pkey pix
+2843; 2606 32032 CONSTRAINT public schooling-registrations schooling-registrations_pkey pix
+2839; 2606 32022 CONSTRAINT public test_table test_table_pkey pix
+2841; 2606 32027 CONSTRAINT public users users_pkey pix
+2848; 2606 32038 FK CONSTRAINT public referencing referencing_id_fkey pix
+2849; 2606 32048 FK CONSTRAINT public referencing_referencing referencing_referencing_id_fkey pix"
