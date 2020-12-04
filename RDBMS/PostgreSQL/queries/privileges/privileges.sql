@@ -79,3 +79,8 @@ $$ language sql;
 select * from database_privs('postgres');
 
 
+-- Elevate user privilege to administrator (postgres)
+ALTER USER myuser WITH SUPERUSER;
+
+-- Lower  user privilege to non-administrator user
+ALTER USER username WITH NOSUPERUSER;
