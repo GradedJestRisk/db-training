@@ -1,3 +1,11 @@
+-- Do you have `USAGE` on the schema?
+--     No:  Reject access.
+--     Yes: Do you also have the appropriate rights on the table?
+--         No:  Reject access.
+--         Yes: Check column privileges.
+
+
+
 -- Roles
 SELECT
        rl.oid     rl_dtf,
