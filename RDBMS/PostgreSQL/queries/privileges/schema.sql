@@ -4,6 +4,12 @@
 --         No:  Reject access.
 --         Yes: Check column privileges.
 
+-- To avoid prefixing with schema name
+--
+-- SHOW search_path;
+-- SET search_path = schema1, "$user", public;
+-- SHOW search_path;
+
 -- docker rm db_server_schema_test
 
 -- docker run --name db_server_schema_test --env POSTGRES_HOST_AUTH_METHOD=trust --publish 5432:5432 --detach postgres:latest
@@ -74,3 +80,34 @@ SELECT "current_user"(), "current_database"(), "current_schema"();
 
 SELECT * FROM schema1.foo;
 INSERT INTO schema1.foo (label) VALUES ('some_text_inserted_by_' ||  "current_user"());
+
+
+-----------------
+-- Move objects -
+-----------------
+
+DROP SCHEMA IF EXISTS tests CASCADE;
+
+CREATE SCHEMA tests;
+SELECT current_schema();
+
+-- Table
+ALTER TABLE item SET SCHEMA tests;
+SELECT * FROM tests.item;
+
+-- Function
+ALTER PROCEDURE update_quality
+SET SCHEMA tests;
+
+-- Procedure
+DROP PROCEDURE IF EXISTS tests.update_quality;
+
+ALTER PROCEDURE update_quality
+SET SCHEMA tests;
+
+
+do $$
+begin
+	call tests.update_quality();
+end
+$$;

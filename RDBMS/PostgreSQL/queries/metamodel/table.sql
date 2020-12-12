@@ -22,7 +22,7 @@ SELECT
 FROM
      pg_stat_user_tables tbl
 WHERE 1=1
-    AND tbl.schemaname = 'public'
+ --   AND tbl.schemaname = 'public'
 --    AND tbl.relname = 'users'
 ORDER BY
    tbl.relname ASC
