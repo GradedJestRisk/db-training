@@ -118,7 +118,7 @@ CREATE OR REPLACE FUNCTION list_users() RETURNS JSON AS $$
 $$ LANGUAGE plv8 STABLE STRICT;
 
 SELECT jsonb_pretty(list_users()::jsonb);
-                   jsonb_pretty
+--                   jsonb_pretty
 -- --------------------------------------------------
 --  [                                               +
 --      {                                           +
