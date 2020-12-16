@@ -4,9 +4,11 @@ const Hapi = require('@hapi/hapi');
 
 const init = async () => {
 
+    const defaultPort = 3000;
+    const port = parseInt(process.env.PORT, 10) || defaultPort;
+
     const server = Hapi.server({
-        port: 3000,
-        host: 'localhost'
+        port
     });
 
     server.route({
