@@ -1,6 +1,7 @@
 'use strict';
 
 const Hapi = require('@hapi/hapi');
+const Joi = require('@hapi/joi');
 
 const init = async () => {
 
@@ -22,10 +23,17 @@ const init = async () => {
 
     server.route({
         method: 'PUT',
-        path: '/hello',
+        path: '/hello/{name}',
+        config: {
+            validate: {
+                params: Joi.object({
+                    name: Joi.string().required()
+                })
+            }
+        },
         handler: (request, h) => {
             console.log(request.info.remoteAddress + ': ' + request.method.toUpperCase() + ' ' + request.path);
-            return { hello : 'world'};
+            return { hello : request.params.name };
         }
     });
 
