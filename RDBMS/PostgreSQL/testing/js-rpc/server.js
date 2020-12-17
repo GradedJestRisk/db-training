@@ -2,6 +2,8 @@
 
 const Hapi = require('@hapi/hapi');
 const Joi = require('@hapi/joi');
+const Boom = require('@hapi/boom');
+
 const { hello } =  require('./src/hello');
 
 const init = async () => {
@@ -34,6 +36,9 @@ const init = async () => {
           name: Joi.string().required(),
           location: Joi.string().required(),
         }),
+        failAction: async (request, h, err) => {
+          throw Boom.badRequest('Invalid request: ' + err.message);
+        }
       },
     },
     handler: (request, h) => {

@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@hapi/boom": "^9.1.0",
     "@hapi/hapi": "^20.0.3",
     "@hapi/joi": "^17.1.1",
     "prettier": "^2.2.1"
