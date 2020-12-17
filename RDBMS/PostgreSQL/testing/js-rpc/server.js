@@ -2,6 +2,7 @@
 
 const Hapi = require('@hapi/hapi');
 const Joi = require('@hapi/joi');
+const { hello } =  require('./src/hello');
 
 const init = async () => {
   const defaultPort = 3000;
@@ -22,17 +23,19 @@ const init = async () => {
 
   server.route({
     method: 'PUT',
-    path: '/hello/{name}',
+    path: '/hello/{name}/{location}',
     config: {
       validate: {
         params: Joi.object({
           name: Joi.string().required(),
+          location: Joi.string().required(),
         }),
       },
     },
     handler: (request, h) => {
       console.log(request.info.remoteAddress + ': ' + request.method.toUpperCase() + ' ' + request.path);
-      return { hello: request.params.name };
+      const data = { name: request.params.name, location: request.params.location};
+      return hello(data);
     },
   });
 
