@@ -1,0 +1,23 @@
+{
+  "name": "js-shell",
+  "version": "1.0.0",
+  "description": "",
+  "main": "execute.js",
+  "engines": {
+    "node": "15.4.0"
+  },
+  "scripts": {
+    "test:hello": "./execute.js --function hello --name joe --location nebraska",
+    "test:goodbye": "./execute.js --function goodbye --name john --location minesotta",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "command-line-args": "^5.1.1",
+    "command-line-usage": "^6.1.1",
+    "prettier": "^2.2.1"
+  }
+}
