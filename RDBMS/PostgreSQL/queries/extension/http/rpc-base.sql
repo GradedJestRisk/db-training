@@ -9,7 +9,8 @@ DECLARE
 BEGIN
 
     SELECT content INTO response
-    FROM http_get('http://localhost:3000');
+   -- FROM http_get('https://hello-scalingo.osc-fr1.scalingo.io');
+    FROM http_put('https://hello-scalingo.osc-fr1.scalingo.io/hello');
 --    FROM http_get('http://httpbin.org/get');
 
     RETURN response;

@@ -34,6 +34,19 @@
 -- Test
 CREATE EXTENSION IF NOT EXISTS http;
 
+SELECT *
+FROM pg_extension
+WHERE 1=1
+    AND extname = 'plpgsql';
+;
+
+-- Set option
+SELECT http_set_curlopt('CURLOPT_PROXYPORT', '12345');
+
+-- List options
+SELECT * FROM http_list_curlopt();
+
+
 ---------------
 -- Use       --
 ---------------
