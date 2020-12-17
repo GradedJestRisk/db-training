@@ -1,5 +1,5 @@
-const hello = function({ name, location }){
-    const greeting = `Hello ${name} from ${location}`;
+const hello = function(firstPerson, secondPerson){
+    const greeting = `Hello ${firstPerson.name} from ${firstPerson.location} and ${secondPerson.name} from ${secondPerson.location}`;
     const length = greeting.length;
 
     const response = { greeting, length};

@@ -30,12 +30,16 @@ const init = async () => {
           name: Joi.string().required(),
           location: Joi.string().required(),
         }),
+        payload: Joi.object({
+          name: Joi.string().required(),
+          location: Joi.string().required(),
+        }),
       },
     },
     handler: (request, h) => {
-      console.log(request.info.remoteAddress + ': ' + request.method.toUpperCase() + ' ' + request.path);
-      const data = { name: request.params.name, location: request.params.location};
-      return hello(data);
+      const firstPerson = { name: request.params.name, location: request.params.location};
+      const secondPerson = { name: request.payload.name, location: request.payload.location};
+      return hello(firstPerson, secondPerson);
     },
   });
 
