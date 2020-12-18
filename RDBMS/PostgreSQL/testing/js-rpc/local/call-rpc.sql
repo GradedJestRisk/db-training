@@ -30,8 +30,8 @@ BEGIN
         response_status, response_payload
     FROM http_put(
         uri,
-    payload,
-content_type
+        payload,
+        content_type
         );
 
     IF response_status <> ok_status THEN
