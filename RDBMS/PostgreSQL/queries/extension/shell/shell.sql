@@ -1,5 +1,14 @@
---
+-- Build custom PL/SH + NodeJS docker image
+curl --o Dockerfile https://github.com/GradedJestRisk/db-training/tree/master/RDBMS/PostgreSQL/extension/shell/Dockefile
+docker build --tag gradedjestrisk/plsh-nodejs:13 .
+docker push gradedjestrisk/plsh-nodejs:13
 
+-- Use custom PL/SH + NodeJS docker image
+docker rm plsh-nodejs
+docker run --detach --env POSTGRES_HOST_AUTH_METHOD=trust --publish 5432:5432 --name plsh-nodejs gradedjestrisk/plsh-nodejs:13
+
+-- From standard Pl/SH image
+curl --o Dockerfile https://github.com/GradedJestRisk/db-training/tree/master/RDBMS/PostgreSQL/extension/shell/Dockefile
 docker build --tag plsh:latest .
 docker run --detach --env POSTGRES_HOST_AUTH_METHOD=trust --publish 5432:5432 --name postgres_sh plsh:latest
 docker start postgres_sh
