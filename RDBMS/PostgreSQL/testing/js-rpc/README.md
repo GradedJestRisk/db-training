@@ -1,7 +1,7 @@
 # Install Postgres psql-http
 Install using;
 - official instructions [here](https://github.com/pramsey/pgsql-http) 
-- or detailed instructions leveraging Docker (here)[http://github.com/GradedJestRisk/db-training/blob/master/RDBMS/PostgreSQL/queries/extension/http/http.sql#L1-L1]
+- or detailed instructions leveraging Docker [here](http://github.com/GradedJestRisk/db-training/blob/master/RDBMS/PostgreSQL/queries/extension/http/http.sql)
 
 # Compile local pg-psql source
 Compile:
