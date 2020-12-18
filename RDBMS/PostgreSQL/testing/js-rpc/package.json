@@ -7,7 +7,9 @@
     "node": "15.4.0"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write ."
   },
   "keywords": [],
   "author": "",
