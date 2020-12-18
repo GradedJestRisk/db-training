@@ -1,5 +1,6 @@
-DROP FUNCTION IF EXISTS public.call_rpc();
-CREATE OR REPLACE FUNCTION public.call_rpc(p_function TEXT, p_name TEXT, p_location TEXT)
+DROP FUNCTION IF EXISTS call_rpc();
+
+CREATE OR REPLACE FUNCTION call_rpc(p_function TEXT, p_payload TEXT)
     RETURNS TEXT
     LANGUAGE 'plpgsql'
 AS
@@ -7,12 +8,13 @@ $BODY$
 DECLARE
 
     -- request
-    uri          TEXT;
     baseURL      CONSTANT TEXT := 'https://hello-scalingo.osc-fr1.scalingo.io';
-    endpoint     TEXT := p_function;
-    payload_json TEXT := '{ "name": "'|| p_name ||'", "location": "'|| p_location ||'" }';
     content_type CONSTANT TEXT := 'application/json';
     ok_status    CONSTANT INTEGER = 200;
+
+    uri          TEXT;
+    endpoint     TEXT := p_function;
+    payload      TEXT := p_payload;
 
     -- response
     response_payload   TEXT;
@@ -20,7 +22,7 @@ DECLARE
 
 BEGIN
 
-    uri := baseURL  || '/' || endpoint || '/' || p_name || '/' || p_location;
+    uri := baseURL  || '/' || endpoint;
 
     SELECT
         status, content
@@ -28,7 +30,7 @@ BEGIN
         response_status, response_payload
     FROM http_put(
         uri,
-    payload_json,
+    payload,
 content_type
         );
 
