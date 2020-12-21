@@ -11,8 +11,36 @@ ORDER BY
     t.table_name ASC
 ;
 
-SELECT  COUNT(1) FROM information_schema.tables t WHERE t.table_name = 'answers'
+-- Table
+-- Given OID (object identifier)
+SELECT
+   oid     obj_dtf ,
+   relname tbl_nm
+FROM
+     pg_class
+WHERE 1=1
+--    AND relname = 'users'
+    AND relkind = 'r'
+    AND oid     IN ( 138183, 30074)
+ORDER BY
+    relname ASC
 ;
+
+-- Table + OID
+SELECT
+  --sch.nspname sch,
+  tbl.relname tbl_nm,
+  tbl.oid
+FROM pg_class tbl
+    INNER JOIN pg_namespace sch ON sch.oid = tbl.relnamespace
+WHERE 1=1
+    AND tbl.relkind = 'r'
+    AND sch.nspname = 'public'
+ORDER BY relname ASC;
+
+
+
+
 
 -- Table record count
 SELECT
