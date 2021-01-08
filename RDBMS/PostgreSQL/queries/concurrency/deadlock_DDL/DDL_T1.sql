@@ -10,7 +10,7 @@ BEGIN;
     ALTER TABLE foo ADD COLUMN label TEXT;
     -- AccessExclusiveLock on foo => granted
 
-    -- Execute DML_T2.sql
+    -- Execute any of DML_T2.sql / DML_T3.sql
 
     ALTER TABLE bar ADD COLUMN label TEXT;
     -- [40P01] ERROR: deadlock detected Detail: Process 55 waits for AccessExclusiveLock on relation 16393 of database 16384; blocked by process 62.

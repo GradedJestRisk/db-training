@@ -23,15 +23,13 @@ ORDER BY
 -- FOREIGN KEY constraints
 SELECT COUNT(1) FROM pg_constraint pgc  WHERE pgc.contype = 'f';
 
-
-
 -- FOREIGN KEY constraints + Referencing/referenced tables
 SELECT
     tc.constraint_name ,
     tc.table_name    AS referencing_table_name,
     kcu.column_name  AS referencing_table_name,
     ccu.table_name   AS referenced_table_name,
-    ccu.column_name  AS referenced__column_name
+    ccu.column_name  AS referenced_column_name
 FROM
     information_schema.table_constraints AS tc
     JOIN information_schema.key_column_usage AS kcu
@@ -42,7 +40,8 @@ FROM
       AND ccu.table_schema = tc.table_schema
 WHERE 1=1
   AND tc.constraint_type = 'FOREIGN KEY'
-  AND tc.table_name       IN ('answers', 'feedbacks')
+--  AND tc.table_name       IN ('answers', 'feedbacks')
+    AND ccu.table_name = 'users'
 ;
 
 
