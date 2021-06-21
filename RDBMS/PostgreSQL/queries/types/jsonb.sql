@@ -1,3 +1,15 @@
+
+-- Display
+SELECT
+       '{"what": "is this", "nested": {"items 1": "are the best", "items 2": [1, 2, 3]}}'::jsonb;
+
+
+-- Pretty-print
+SELECT
+       jsonb_pretty('{"what": "is this", "nested": {"items 1": "are the best", "items 2": [1, 2, 3]}}'::jsonb);
+
+
+
 -- https://www.postgresql.org/docs/current/datatype-json.html
 -- The json and jsonb data types accept almost identical sets of values as input.
 -- The major practical difference is one of efficiency.
@@ -7,6 +19,12 @@
 -- while jsonb data is stored in a decomposed binary format that makes it slightly slower to input due to added conversion overhead,
 -- but significantly faster to process, since no reparsing is needed.
 
+
+DROP TABLE IF EXISTS foo;
+CREATE TABLE foo (bar JSONB);
+INSERT INTO foo (bar) VALUES ('{ "foz": "old"}');
+SELECT * FROM foo;
+UPDATE foo SET bar = jsonb_set("bar", '{foz}', '"{new}"');
 
 -- Insert
 CREATE TABLE books (

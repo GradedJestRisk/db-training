@@ -5,8 +5,10 @@ SELECT
     t.*
   FROM information_schema.tables t
 WHERE 1=1
+    AND t.table_type = 'BASE TABLE'
 --    and t.table_name = 'users'
     and t.table_catalog = 'pix'
+    and t.table_schema = 'public'
 ORDER BY
     t.table_name ASC
 ;
@@ -15,9 +17,10 @@ ORDER BY
 -- Given OID (object identifier)
 SELECT
    oid     obj_dtf ,
-   relname tbl_nm
+   relname tbl_nm,
+   c.*
 FROM
-     pg_class
+     pg_class c
 WHERE 1=1
 --    AND relname = 'users'
     AND relkind = 'r'

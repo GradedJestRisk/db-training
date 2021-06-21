@@ -1,9 +1,12 @@
+SELECT "current_user"()
+;
+
+
 -- Do you have `USAGE` on the schema?
 --     No:  Reject access.
 --     Yes: Do you also have the appropriate rights on the table?
 --         No:  Reject access.
 --         Yes: Check column privileges.
-
 
 
 -- Roles
@@ -27,7 +30,7 @@ SELECT
 FROM
    information_schema.table_privileges
 WHERE 1=1
---    AND grantee = 'pix'
+    AND grantee = 'administrator'
 --    AND grantee <> 'postgres'
     AND table_schema <> 'pg_catalog'
 --    AND table_schema <> 'information_schema'

@@ -18,7 +18,7 @@ FROM pg_locks lck
 WHERE 1=1
     --AND tbl.relkind  = 'r'
     --AND lck.locktype = 'relation'
-    --AND sch.nspname  = 'public'
+    AND sch.nspname  = 'public'
 ;
 
 
@@ -64,6 +64,7 @@ WHERE 1=1
     AND tbl.relkind  = 'r'
     AND lck.locktype = 'relation'
     AND sch.nspname  = 'public'
+    AND tbl.relname  = 'foo'
 ;
 
 -- Blocking
