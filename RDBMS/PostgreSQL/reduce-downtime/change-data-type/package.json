@@ -1,0 +1,26 @@
+{
+   "name": "change-data-type",
+   "main": "npm run type_change:start",
+   "engines": {
+      "node": "16.3.0",
+      "npm": "7.15.1"
+   },
+   "scripts": {
+      "database:start": "npm run database:start:instance && npm run database:start:wait && npm run database:start:check-if-available",
+      "database:start:instance": "docker-compose --file ./database/docker-compose.yml up --detach",
+      "database:start:wait": "sleep 30",
+      "database:start:check-if-available": "pg_isready -h localhost -p 5432 -d database && echo Database ready",
+      "fake_activity": "node src/fake-activity.js",
+      "test_connexion": "node ./test-connexion.js",
+      "type_change:perform": "node ./src/perform-type-change.js",
+      "type_change:revert": "node ./src/revert-type-change.js",
+      "type_change:start": "run-p --race fake_activity type_change:perform"
+   },
+   "license": "ISC",
+   "dependencies": {
+      "pg": "^8.6.0"
+   },
+   "devDependencies": {
+      "npm-run-all": "^4.1.5"
+   }
+}
