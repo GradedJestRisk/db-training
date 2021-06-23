@@ -6,6 +6,7 @@ const waitForThatMilliseconds = (delay) =>
 
 const queryAgainstTableWhoseDataTypeIsToBeChanged = async (client) => {
   while (true) {
+    console.log(".");
     await client.query("SELECT COUNT(1) FROM foo");
     await client.query("INSERT INTO foo(value) VALUES(0)");
     //await waitForThatMilliseconds(1);

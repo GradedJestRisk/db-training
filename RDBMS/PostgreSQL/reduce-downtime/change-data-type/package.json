@@ -6,14 +6,12 @@
       "npm": "7.15.1"
    },
    "scripts": {
-      "database:start": "npm run database:start:instance && npm run database:start:wait && npm run database:start:check-if-available",
+      "database:start": "npm run database:start:instance && npm run database:start:wait-until-available",
       "database:start:instance": "docker-compose --file ./database/docker-compose.yml up --detach",
-      "database:start:wait": "sleep 30",
-      "database:start:check-if-available": "pg_isready -h localhost -p 5432 -d database && echo Database ready",
+      "database:start:wait-until-available": "./database/wait-database-ready.sh",
       "fake_activity": "node src/fake-activity.js",
       "test_connexion": "node ./test-connexion.js",
       "type_change:perform": "node ./src/perform-type-change.js",
-      "type_change:revert": "node ./src/revert-type-change.js",
       "type_change:start": "run-p --race fake_activity type_change:perform"
    },
    "license": "ISC",

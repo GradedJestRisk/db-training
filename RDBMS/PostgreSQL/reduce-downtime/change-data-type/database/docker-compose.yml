@@ -14,3 +14,8 @@ services:
          - ./create-schema.sql:/docker-entrypoint-initdb.d/init.sql
       ports:
          - 5432:5432
+      deploy:
+         resources:
+            limits:
+               cpus: '2'
+               memory: 500m

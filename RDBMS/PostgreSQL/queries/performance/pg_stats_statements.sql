@@ -33,7 +33,7 @@ SELECT
 FROM pg_stat_statements stt
 WHERE 1=1
     --AND stt.query ILIKE '%ALTER%'
---    AND stt.query ILIKE '%foo%'
+    AND stt.query ILIKE '%foo%'
     --AND stt.query ILIKE  'INSERT INTO foo (value)%'
-    AND stt.query = 'ALTER TABLE foo ALTER COLUMN value TYPE BIGINT'
+    --AND stt.query = 'ALTER TABLE foo ALTER COLUMN value TYPE BIGINT'
 ;
