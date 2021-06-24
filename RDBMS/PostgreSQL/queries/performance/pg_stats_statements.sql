@@ -7,7 +7,24 @@ WHERE 1=1
   AND installed_version IS NOT NULL
 ;
 
+-- Reset
+select pg_stat_statements_reset();
+
 -- https://www.postgresql.org/docs/current/pgstatstatements.html
+
+-- Statements + User + Database
+SELECT
+   usr.rolname,
+   db.datname,
+   stt.*
+FROM pg_stat_statements stt
+    INNER JOIN pg_authid usr ON usr.oid = stt.userid
+    INNER JOIN pg_database db ON db.oid = stt.dbid
+WHERE 1=1
+--    AND usr.rolname <> 'postgres'
+    AND db.datname = 'database'
+;
+
 
 SELECT
    stt.*
