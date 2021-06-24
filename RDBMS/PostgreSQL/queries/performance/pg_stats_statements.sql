@@ -54,3 +54,21 @@ WHERE 1=1
     --AND stt.query ILIKE  'INSERT INTO foo (value)%'
     --AND stt.query = 'ALTER TABLE foo ALTER COLUMN value TYPE BIGINT'
 ;
+
+select *
+from pgbench_history
+;
+
+select *
+from pgbench_accounts
+;
+
+select *
+from pgbench_branches
+;
+
+select *
+from pgbench_tellers
+;
+
+

@@ -6,11 +6,20 @@ CREATE TABLE foo (
    value INTEGER CONSTRAINT value_unique UNIQUE
  );
 
--- Dafault-named constraint
+-- Default-named constraint
 CREATE TABLE foo (
    id    SERIAL PRIMARY KEY,
    value INTEGER UNIQUE
  );
+
+-- Out of column
+CREATE TABLE foo (
+   id    SERIAL PRIMARY KEY,
+   value INTEGER,
+   UNIQUE(value)
+ );
+
+
 
 DROP TABLE IF EXISTS bar;
 
