@@ -4,10 +4,12 @@ const { Client } = require("pg");
 const labels = {
   revert: "REVERT",
   revertPrimaryKeyType: "REVERT_PRIMARY_KEY",
+  revertForeignKeyType: "REVERT_FOREIGN_KEY",
   inPlace: "CHANGE_IN_PLACE",
   inPlacePrimaryKey: "CHANGE_IN_PLACE_PRIMARY_KEY",
   inPlacePrimaryKeyDropCreateConstraint:
     "CHANGE_IN_PLACE_PRIMARY_KEY_CONSTRAINT",
+  inPlaceForeignKey: "CHANGE_IN_PLACE_FOREIGN_KEY",
 };
 
 const changeTypeInPlace = async (client) => {
@@ -16,6 +18,14 @@ const changeTypeInPlace = async (client) => {
 
 const revertType = async (client) => {
   await client.query("ALTER TABLE foo ALTER COLUMN value TYPE INTEGER", []);
+};
+
+const changeTypeInForeignKey = async (client) => {
+  await client.query("ALTER TABLE bar ALTER COLUMN value_foo TYPE BIGINT", []);
+};
+
+const revertTypeForeignKey = async (client) => {
+  await client.query("ALTER TABLE bar ALTER COLUMN value_foo TYPE INTEGER", []);
 };
 
 // https://www.postgresql.org/docs/current/sql-altersequence.html
@@ -51,47 +61,59 @@ const waitForThatMilliseconds = (delay) =>
 
   client.connect();
 
-  await waitForThatMilliseconds(1000);
+  // await waitForThatMilliseconds(1000);
+  //
+  // console.log("Change type in place");
+  // console.time(labels.inPlace);
+  // await changeTypeInPlace(client);
+  // console.timeEnd(labels.inPlace);
+  //
+  // await waitForThatMilliseconds(1000);
+  //
+  // console.log("Revert type change..");
+  // console.time(labels.revert);
+  // await revertType(client);
+  // console.timeEnd(labels.revert);
+  //
+  // await waitForThatMilliseconds(1000);
+  //
+  // console.log("Change type on PK in place");
+  // console.time(labels.inPlacePrimaryKey);
+  // await changeTypeInPlacePrimaryKey(client);
+  // console.timeEnd(labels.inPlacePrimaryKey);
+  //
+  // await waitForThatMilliseconds(1000);
+  //
+  // console.log("Revert type change..");
+  // console.time(labels.revertPrimaryKeyType);
+  // await revertPrimaryKeyType(client);
+  // console.timeEnd(labels.revertPrimaryKeyType);
+  //
+  // await waitForThatMilliseconds(1000);
+  //
+  // console.log("Change type on PK in place DROP/CREATE constraint");
+  // console.time(labels.inPlacePrimaryKeyDropCreateConstraint);
+  // await changeTypeInPlacePrimaryKeyWithDropCreate(client);
+  // console.timeEnd(labels.inPlacePrimaryKeyDropCreateConstraint);
+  //
+  // await waitForThatMilliseconds(1000);
+  //
+  // console.log("Revert type change..");
+  // console.time(labels.revertPrimaryKeyType);
+  // await revertPrimaryKeyType(client);
+  // console.timeEnd(labels.revertPrimaryKeyType);
 
-  console.log("Change type in place");
-  console.time(labels.inPlace);
-  await changeTypeInPlace(client);
-  console.timeEnd(labels.inPlace);
+  console.log("Change type on FK in place");
+  console.time(labels.inPlaceForeignKey);
+  await changeTypeInForeignKey(client);
+  console.timeEnd(labels.inPlaceForeignKey);
 
   await waitForThatMilliseconds(1000);
 
   console.log("Revert type change..");
-  console.time(labels.revert);
-  await revertType(client);
-  console.timeEnd(labels.revert);
-
-  await waitForThatMilliseconds(1000);
-
-  console.log("Change type on PK in place");
-  console.time(labels.inPlacePrimaryKey);
-  await changeTypeInPlacePrimaryKey(client);
-  console.timeEnd(labels.inPlacePrimaryKey);
-
-  await waitForThatMilliseconds(1000);
-
-  console.log("Revert type change..");
-  console.time(labels.revertPrimaryKeyType);
-  await revertPrimaryKeyType(client);
-  console.timeEnd(labels.revertPrimaryKeyType);
-
-  await waitForThatMilliseconds(1000);
-
-  console.log("Change type on PK in place DROP/CREATE constraint");
-  console.time(labels.inPlacePrimaryKeyDropCreateConstraint);
-  await changeTypeInPlacePrimaryKeyWithDropCreate(client);
-  console.timeEnd(labels.inPlacePrimaryKeyDropCreateConstraint);
-
-  await waitForThatMilliseconds(1000);
-
-  console.log("Revert type change..");
-  console.time(labels.revertPrimaryKeyType);
-  await revertPrimaryKeyType(client);
-  console.timeEnd(labels.revertPrimaryKeyType);
+  console.time(labels.revertForeignKeyType);
+  await revertTypeForeignKey(client);
+  console.timeEnd(labels.revertForeignKeyType);
 
   client.end();
 })();
