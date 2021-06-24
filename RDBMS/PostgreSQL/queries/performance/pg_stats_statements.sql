@@ -16,13 +16,24 @@ select pg_stat_statements_reset();
 SELECT
    usr.rolname,
    db.datname,
-   stt.*
+   stt.query query_text,
+   'count=>',
+   stt.calls,
+   stt.rows  affected_rows,
+   stt.wal_records  wal,
+   'time=>',
+   stt.total_exec_time cumulated_excution_time,
+   stt.min_exec_time,
+   stt.max_exec_time
 FROM pg_stat_statements stt
     INNER JOIN pg_authid usr ON usr.oid = stt.userid
     INNER JOIN pg_database db ON db.oid = stt.dbid
 WHERE 1=1
 --    AND usr.rolname <> 'postgres'
     AND db.datname = 'database'
+    AND stt.query ILIKE '%foo%'
+ORDER BY
+    stt.total_exec_time DESC
 ;
 
 
@@ -54,21 +65,3 @@ WHERE 1=1
     --AND stt.query ILIKE  'INSERT INTO foo (value)%'
     --AND stt.query = 'ALTER TABLE foo ALTER COLUMN value TYPE BIGINT'
 ;
-
-select *
-from pgbench_history
-;
-
-select *
-from pgbench_accounts
-;
-
-select *
-from pgbench_branches
-;
-
-select *
-from pgbench_tellers
-;
-
-

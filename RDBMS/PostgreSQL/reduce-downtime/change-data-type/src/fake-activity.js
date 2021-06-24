@@ -16,7 +16,10 @@ const queryAgainstTableWhoseDataTypeIsToBeChanged = async (client) => {
     // await client.query("SELECT * FROM foo ORDER BY RANDOM() LIMIT 1");
 
     // Write
-    await client.query("INSERT INTO foo(value) VALUES(1)");
+    await client.query(
+      "INSERT INTO foo(value) " +
+        "VALUES( floor(random() * 2147483627 + 1)::int ) ON CONFLICT ON CONSTRAINT value_unique DO NOTHING"
+    );
 
     await waitForThatMilliseconds(10);
   }

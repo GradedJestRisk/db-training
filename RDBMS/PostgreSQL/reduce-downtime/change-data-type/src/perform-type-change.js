@@ -61,47 +61,47 @@ const waitForThatMilliseconds = (delay) =>
 
   client.connect();
 
-  // await waitForThatMilliseconds(1000);
-  //
-  // console.log("Change type in place");
-  // console.time(labels.inPlace);
-  // await changeTypeInPlace(client);
-  // console.timeEnd(labels.inPlace);
-  //
-  // await waitForThatMilliseconds(1000);
-  //
-  // console.log("Revert type change..");
-  // console.time(labels.revert);
-  // await revertType(client);
-  // console.timeEnd(labels.revert);
-  //
-  // await waitForThatMilliseconds(1000);
-  //
-  // console.log("Change type on PK in place");
-  // console.time(labels.inPlacePrimaryKey);
-  // await changeTypeInPlacePrimaryKey(client);
-  // console.timeEnd(labels.inPlacePrimaryKey);
-  //
-  // await waitForThatMilliseconds(1000);
-  //
-  // console.log("Revert type change..");
-  // console.time(labels.revertPrimaryKeyType);
-  // await revertPrimaryKeyType(client);
-  // console.timeEnd(labels.revertPrimaryKeyType);
-  //
-  // await waitForThatMilliseconds(1000);
-  //
-  // console.log("Change type on PK in place DROP/CREATE constraint");
-  // console.time(labels.inPlacePrimaryKeyDropCreateConstraint);
-  // await changeTypeInPlacePrimaryKeyWithDropCreate(client);
-  // console.timeEnd(labels.inPlacePrimaryKeyDropCreateConstraint);
-  //
-  // await waitForThatMilliseconds(1000);
-  //
-  // console.log("Revert type change..");
-  // console.time(labels.revertPrimaryKeyType);
-  // await revertPrimaryKeyType(client);
-  // console.timeEnd(labels.revertPrimaryKeyType);
+  await waitForThatMilliseconds(1000);
+
+  console.log("Change type in place");
+  console.time(labels.inPlace);
+  await changeTypeInPlace(client);
+  console.timeEnd(labels.inPlace);
+
+  await waitForThatMilliseconds(1000);
+
+  console.log("Revert type change..");
+  console.time(labels.revert);
+  await revertType(client);
+  console.timeEnd(labels.revert);
+
+  await waitForThatMilliseconds(1000);
+
+  console.log("Change type on PK in place");
+  console.time(labels.inPlacePrimaryKey);
+  await changeTypeInPlacePrimaryKey(client);
+  console.timeEnd(labels.inPlacePrimaryKey);
+
+  await waitForThatMilliseconds(1000);
+
+  console.log("Revert type change..");
+  console.time(labels.revertPrimaryKeyType);
+  await revertPrimaryKeyType(client);
+  console.timeEnd(labels.revertPrimaryKeyType);
+
+  await waitForThatMilliseconds(1000);
+
+  console.log("Change type on PK in place DROP/CREATE constraint");
+  console.time(labels.inPlacePrimaryKeyDropCreateConstraint);
+  await changeTypeInPlacePrimaryKeyWithDropCreate(client);
+  console.timeEnd(labels.inPlacePrimaryKeyDropCreateConstraint);
+
+  await waitForThatMilliseconds(1000);
+
+  console.log("Revert type change..");
+  console.time(labels.revertPrimaryKeyType);
+  await revertPrimaryKeyType(client);
+  console.timeEnd(labels.revertPrimaryKeyType);
 
   console.log("Change type on FK in place");
   console.time(labels.inPlaceForeignKey);

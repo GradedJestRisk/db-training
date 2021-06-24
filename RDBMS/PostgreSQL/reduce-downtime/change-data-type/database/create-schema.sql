@@ -5,12 +5,14 @@ DROP TABLE IF EXISTS foo;
 -- https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL
 CREATE TABLE foo (
    id    SERIAL PRIMARY KEY,
-   INTEGER CONSTRAINT value_unique UNIQUE
+   value INTEGER CONSTRAINT value_unique UNIQUE
  );
 
 INSERT INTO foo (value)
 SELECT floor(random() * 2147483627 + 1)::int
-FROM generate_series( 1, 10000000)
+FROM
+  --generate_series( 1, 5000000) -- 5 million => 2 minutes
+    generate_series( 1, 1000000) -- 1 million => 40 seconds
 ON CONFLICT ON CONSTRAINT value_unique DO NOTHING;
 
 DROP TABLE IF EXISTS bar;
