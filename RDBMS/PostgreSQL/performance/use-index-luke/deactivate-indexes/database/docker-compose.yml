@@ -1,0 +1,20 @@
+version: '3.7'
+
+services:
+   database:
+      image: postgres:13-alpine
+      container_name: database
+      restart: always
+    # uncomment to change default wal_size
+    # command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c max_connections=200 -c log_statement=all -c min_wal_size=4096 -c max_wal_size=16384
+      command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c max_connections=200 -c log_statement=all
+      environment:
+         POSTGRES_DB: database
+         POSTGRES_HOST_AUTH_METHOD: trust
+      ports:
+         - 5432:5432
+      deploy:
+         resources:
+            limits:
+               cpus: '3'
+               memory: 500m
