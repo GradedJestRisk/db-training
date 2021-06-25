@@ -2,14 +2,15 @@
 const { Client } = require("pg");
 
 const labels = {
-  revert: "REVERT",
-  revertPrimaryKeyType: "REVERT_PRIMARY_KEY",
-  revertForeignKeyType: "REVERT_FOREIGN_KEY",
   inPlace: "CHANGE_IN_PLACE",
+  revert: "REVERT",
   inPlacePrimaryKey: "CHANGE_IN_PLACE_PRIMARY_KEY",
   inPlacePrimaryKeyDropCreateConstraint:
     "CHANGE_IN_PLACE_PRIMARY_KEY_CONSTRAINT",
-  inPlaceForeignKey: "CHANGE_IN_PLACE_FOREIGN_KEY",
+  revertPrimaryKeyType: "REVERT_PRIMARY_KEY",
+  inPlaceReferencedFK: "CHANGE_IN_PLACE_FOREIGN_KEY_REFERENCED",
+  inPlaceReferencingFK: "CHANGE_IN_PLACE_FOREIGN_KEY_REFERENCING",
+  revertForeignKeyType: "REVERT_REFERENCED_FK",
 };
 
 const changeTypeInPlace = async (client) => {
@@ -20,11 +21,22 @@ const revertType = async (client) => {
   await client.query("ALTER TABLE foo ALTER COLUMN value TYPE INTEGER", []);
 };
 
-const changeTypeInForeignKey = async (client) => {
+const changeTypeInPlaceReferencedFK = async (client) => {
+  await client.query(
+    "ALTER TABLE foo ALTER COLUMN referenced_value TYPE BIGINT",
+    []
+  );
+};
+
+const revertTypeReferencedFK = async (client) => {
+  await client.query("ALTER TABLE bar ALTER COLUMN value_foo TYPE INTEGER", []);
+};
+
+const changeTypeInPlaceReferencingFK = async (client) => {
   await client.query("ALTER TABLE bar ALTER COLUMN value_foo TYPE BIGINT", []);
 };
 
-const revertTypeForeignKey = async (client) => {
+const revertTypeInPlaceReferencingFK = async (client) => {
   await client.query("ALTER TABLE bar ALTER COLUMN value_foo TYPE INTEGER", []);
 };
 
@@ -103,16 +115,28 @@ const waitForThatMilliseconds = (delay) =>
   await revertPrimaryKeyType(client);
   console.timeEnd(labels.revertPrimaryKeyType);
 
-  console.log("Change type on FK in place");
-  console.time(labels.inPlaceForeignKey);
-  await changeTypeInForeignKey(client);
-  console.timeEnd(labels.inPlaceForeignKey);
+  console.log("Change type on referenced FK in place");
+  console.time(labels.inPlaceReferencedFK);
+  await changeTypeInPlaceReferencedFK(client);
+  console.timeEnd(labels.inPlaceReferencedFK);
 
   await waitForThatMilliseconds(1000);
 
   console.log("Revert type change..");
   console.time(labels.revertForeignKeyType);
-  await revertTypeForeignKey(client);
+  await revertTypeReferencedFK(client);
+  console.timeEnd(labels.revertForeignKeyType);
+
+  console.log("Change type on referencing FK in place");
+  console.time(labels.inPlaceReferencingFK);
+  await changeTypeInPlaceReferencingFK(client);
+  console.timeEnd(labels.inPlaceReferencingFK);
+
+  await waitForThatMilliseconds(1000);
+
+  console.log("Revert type change..");
+  console.time(labels.revertForeignKeyType);
+  await revertTypeInPlaceReferencingFK(client);
   console.timeEnd(labels.revertForeignKeyType);
 
   client.end();
