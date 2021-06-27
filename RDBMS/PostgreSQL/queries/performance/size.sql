@@ -5,6 +5,7 @@
 -- integer 	            4
 -- bigint 	            8
 -- decimal 	            variable
+-- decimal 	            variable
 -- numeric 	            variable
 -- real 	            4
 -- double precision 	8
@@ -187,3 +188,32 @@ SELECT
        pg_size_pretty(  pg_database_size('database'))  data_toast_index
 ;
 
+-- https://www.postgresql.org/docs/current/monitoring-stats.html#PG-STAT-DATABASE-VIEW
+
+select pg_current_wal_lsn()
+;
+
+
+-- Database
+SELECT
+     'Database stats=>'
+     ,db.stats_reset  audit_start_time
+     ,db.numbackends  client_actually_connected
+     ,'cache:'
+     ,db.blks_read    blocks_read_file
+     ,db.blks_read    blocks_read_memory
+     ,'counts:'
+     ,db.xact_commit   commit_count
+     ,db.xact_rollback rollback_count
+     ,db.tup_returned  rows_returned_to_client
+     ,db.tup_fetched   rows_select
+     ,db.tup_inserted  rows_inserted
+     ,db.tup_updated   rows_updated
+     ,db.tup_deleted   rows_deleted
+     ,'pg_stat_database->'
+     ,db.*
+FROM
+    pg_stat_database db
+WHERE 1=1
+    AND db.datname = 'database'
+;
