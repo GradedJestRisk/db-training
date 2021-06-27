@@ -63,6 +63,20 @@ const revertPrimaryKeyType = async (client) => {
 const waitForThatMilliseconds = (delay) =>
   new Promise((resolve) => setTimeout(resolve, delay));
 
+const getWalStart = async (client) => {
+  return (await client.query('SELECT pg_current_wal_lsn() AS location')).rows[0]
+    .location;
+};
+
+const getWalSize = async (client, walStart) => {
+  return (
+    await client.query(
+      'SELECT pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), $1)) AS size',
+      [walStart]
+    )
+  ).rows[0].size;
+};
+
 (async () => {
   const client = new Client({
     user: 'postgres',
@@ -75,21 +89,13 @@ const waitForThatMilliseconds = (delay) =>
 
   await waitForThatMilliseconds(1000);
 
-  const walStart = (
-    await client.query('SELECT pg_current_wal_lsn() AS location')
-  ).rows[0].location;
-
+  const walStart = await getWalStart(client);
   console.log('Change type in place');
   console.time(labels.inPlace);
   await changeTypeInPlace(client);
   console.timeEnd(labels.inPlace);
 
-  const walSize = (
-    await client.query(
-      'SELECT pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), $1)) AS size',
-      [walStart]
-    )
-  ).rows[0].size;
+  const walSize = await getWalSize(client, walStart);
 
   console.log(`WAL used : ${walSize}`);
 

@@ -31,7 +31,7 @@ TRUNCATE TABLE foo;
 -- Deactivate WAL
 ALTER TABLE foo SET UNLOGGED;
 
--- Raeactivate WAL
+-- Reactivate WAL
 ALTER TABLE foo SET LOGGED;
 
 

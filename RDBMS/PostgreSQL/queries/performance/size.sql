@@ -104,7 +104,12 @@ VACUUM ANALYZE;
 -- Execute DELETE, check dead_tuples, then run VACUUM full
 VACUUM FULL;
 
+-- Reset table stats
+SELECT
+    pg_stat_reset_single_table_counters('public.foo'::regclass)
+;
 
+-- Statistics
 SELECT
    stt.n_live_tup,
    stt.n_dead_tup,
@@ -129,11 +134,12 @@ SELECT
 
 -- Index
 SELECT
-       pg_size_pretty(pg_indexes_size('foo'))   data_size_pretty
+       pg_size_pretty(pg_indexes_size('foo'))   index_size
 ;
 
+-- Indexes
 SELECT
-   ndx.indexname  ndxl_nm
+    ndx.indexname  ndxl_nm
    ,ndx.indexdef  dfn
 FROM pg_indexes ndx
 WHERE 1=1
@@ -145,6 +151,7 @@ SELECT
        pg_size_pretty(  pg_total_relation_size('foo'))  data_toast_index
 ;
 
+-- Complete
 WITH x AS (
    SELECT count(*)               AS ct
         , sum(length(t::text))   AS txt_len  -- length in characters
@@ -190,9 +197,9 @@ SELECT
 
 -- https://www.postgresql.org/docs/current/monitoring-stats.html#PG-STAT-DATABASE-VIEW
 
-select pg_current_wal_lsn()
+-- Reset stats
+SELECT pg_stat_reset()
 ;
-
 
 -- Database
 SELECT
