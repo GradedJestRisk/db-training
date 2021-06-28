@@ -281,7 +281,3 @@ WHERE 1=1
     AND db.datname = 'database'
 ;
 
-SELECT TRUNC(SUM(stt.total_exec_time))               execution_time_ms,
-       pg_size_pretty(SUM(wal_bytes))                disk_wal_size,
-       pg_size_pretty(SUM(temp_blks_written) * 8192) disk_temp_sizeFROM pg_stat_statements stt INNER JOIN pg_authid usr
-ON usr.oid = stt.userid INNER JOIN pg_database db ON db.oid = stt.dbidWHERE db.datname = 'database'

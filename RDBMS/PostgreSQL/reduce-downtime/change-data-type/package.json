@@ -1,27 +1,26 @@
 {
-   "name": "change-data-type",
-   "main": "npm run type_change:start",
-   "engines": {
-      "node": "16.3.0",
-      "npm": "7.15.1"
-   },
-   "scripts": {
-
-      "database:start": "npm run database:remove-volume && npm run database:start:instance && npm run database:wait-until-ready",
-      "database:remove-volume": "(docker volume rm database_database-data; exit 0;)",
-      "database:start:instance": "docker-compose --file ./database/docker-compose.yml up --detach",
-      "database:wait-until-ready": "./database/wait-database-until-ready.sh",
-      "database:peek-last-logs": "docker logs --follow --tail 20 database",
-      "fake_activity": "node src/fake-activity.js",
-      "test_connexion": "node ./test-connexion.js",
-      "type_change:perform": "node ./src/perform-type-change.js",
-      "type_change:perform-with-activity": "run-p --race fake_activity type_change:perform"
-   },
-   "license": "ISC",
-   "dependencies": {
-      "pg": "^8.6.0"
-   },
-   "devDependencies": {
-      "npm-run-all": "^4.1.5"
-   }
+  "name": "change-data-type",
+  "main": "npm run type_change:start",
+  "engines": {
+    "node": "16.3.0",
+    "npm": "7.15.1"
+  },
+  "scripts": {
+    "database:start": "npm run database:remove-volume && npm run database:start:instance && npm run database:wait-until-ready",
+    "database:remove-volume": "(docker volume rm database_database-data; exit 0;)",
+    "database:start:instance": "docker-compose --file ./database/docker-compose.yml up --detach",
+    "database:wait-until-ready": "./database/wait-database-until-ready.sh",
+    "database:peek-last-logs": "docker logs --follow --tail 20 database",
+    "fake_activity": "node src/fake-activity.js",
+    "test_connexion": "node src/test-connexion.js",
+    "type_change:perform": "node ./src/perform-type-change.js",
+    "type_change:perform-with-activity": "run-p --race fake_activity type_change:perform"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "pg": "^8.6.0"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  }
 }

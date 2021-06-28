@@ -1,8 +1,6 @@
 CREATE EXTENSION pg_stat_statements;
 CREATE EXTENSION pg_buffercache;
 
-
-
 DROP TABLE IF EXISTS foo;
 
 -- https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL
@@ -12,8 +10,11 @@ CREATE TABLE foo (
    referenced_value INTEGER CONSTRAINT referenced_value_unique UNIQUE
  );
 
-INSERT INTO foo (value, referenced_value)
-SELECT 1, floor(random() * 2147483627 + 1)::int
+INSERT INTO foo
+  (value, referenced_value)
+SELECT
+  floor(random() * 2147483627 + 1)::int,
+  floor(random() * 2147483627 + 1)::int
 FROM
   --generate_series( 1, 5000000) -- 5 million => 2 minutes
     generate_series( 1, 1000000) -- 1 million => 40 seconds
