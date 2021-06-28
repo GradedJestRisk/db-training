@@ -1,80 +1,96 @@
 // https://tech.coffeemeetsbagel.com/reaching-the-max-limit-for-ids-in-postgres-6d6fa2b1c6ea
 const { Client } = require('pg');
 
-const labels = {
-  inPlace: 'CHANGE_IN_PLACE',
-  revert: 'REVERT',
-  inPlacePrimaryKey: 'CHANGE_IN_PLACE_PRIMARY_KEY',
-  inPlacePrimaryKeyDropCreateConstraint:
-    'CHANGE_IN_PLACE_PRIMARY_KEY_CONSTRAINT',
-  revertPrimaryKeyType: 'REVERT_PRIMARY_KEY',
-  inPlaceReferencedFK: 'CHANGE_IN_PLACE_FOREIGN_KEY_REFERENCED',
-  inPlaceReferencingFK: 'CHANGE_IN_PLACE_FOREIGN_KEY_REFERENCING',
-  revertForeignKeyType: 'REVERT_REFERENCED_FK',
+const resetStatistics = async (client) => {
+  await client.query('SELECT pg_stat_statements_reset()');
 };
 
-const changeTypeInPlace = async (client) => {
-  await client.query('ALTER TABLE foo ALTER COLUMN value TYPE BIGINT', []);
+const getStatistics = async (client) => {
+  const cumulatedQuery =
+    'SELECT' +
+    '    TRUNC(SUM(stt.total_exec_time))                  execution_time_ms ' +
+    '   ,pg_size_pretty(SUM(wal_bytes))                   disk_wal_size ' +
+    '   ,pg_size_pretty(SUM(temp_blks_written) * 8192)    disk_temp_size ' +
+    'FROM pg_stat_statements stt ' +
+    '    INNER JOIN pg_authid usr ON usr.oid = stt.userid ' +
+    '    INNER JOIN pg_database db ON db.oid = stt.dbid ' +
+    "WHERE db.datname = 'database' ";
+  const result = await client.query(cumulatedQuery);
+  return result.rows[0];
 };
 
-const revertType = async (client) => {
-  await client.query('ALTER TABLE foo ALTER COLUMN value TYPE INTEGER', []);
-};
-
-const changeTypeInPlaceReferencedFK = async (client) => {
-  await client.query(
-    'ALTER TABLE foo ALTER COLUMN referenced_value TYPE BIGINT',
-    []
-  );
-};
-
-const revertTypeReferencedFK = async (client) => {
-  await client.query('ALTER TABLE bar ALTER COLUMN value_foo TYPE INTEGER', []);
-};
-
-const changeTypeInPlaceReferencingFK = async (client) => {
-  await client.query('ALTER TABLE bar ALTER COLUMN value_foo TYPE BIGINT', []);
-};
-
-const revertTypeInPlaceReferencingFK = async (client) => {
-  await client.query('ALTER TABLE bar ALTER COLUMN value_foo TYPE INTEGER', []);
-};
-
-// https://www.postgresql.org/docs/current/sql-altersequence.html
-const changeTypeInPlacePrimaryKey = async (client) => {
-  await client.query('ALTER SEQUENCE foo_id_seq AS BIGINT', []);
-  await client.query('ALTER TABLE foo ALTER COLUMN id TYPE BIGINT', []);
-};
-
-const changeTypeInPlacePrimaryKeyWithDropCreate = async (client) => {
-  await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
-  await client.query('ALTER SEQUENCE foo_id_seq AS BIGINT');
-  await client.query('ALTER TABLE foo ALTER COLUMN id TYPE BIGINT');
-  await client.query('ALTER TABLE foo ADD CONSTRAINT foo_pkey PRIMARY KEY(id)');
-};
-
-const revertPrimaryKeyType = async (client) => {
-  await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
-  await client.query('ALTER SEQUENCE foo_id_seq AS INTEGER');
-  await client.query('ALTER TABLE foo ALTER COLUMN id TYPE INTEGER');
-  await client.query('ALTER TABLE foo ADD CONSTRAINT foo_pkey PRIMARY KEY(id)');
-};
+const changes = [
+  {
+    label: 'CHANGE_IN_PLACE',
+    perform: async (client) => {
+      await client.query('ALTER TABLE foo ALTER COLUMN value TYPE BIGINT');
+    },
+    revert: async (client) => {
+      await client.query('ALTER TABLE foo ALTER COLUMN value TYPE INTEGER');
+    },
+  },
+  {
+    label: 'CHANGE_IN_PLACE_PRIMARY_KEY',
+    perform: async (client) => {
+      // https://www.postgresql.org/docs/current/sql-altersequence.html
+      await client.query('ALTER SEQUENCE foo_id_seq AS BIGINT');
+      await client.query('ALTER TABLE foo ALTER COLUMN id TYPE BIGINT');
+    },
+    revert: async (client) => {
+      await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
+      await client.query('ALTER SEQUENCE foo_id_seq AS INTEGER');
+      await client.query('ALTER TABLE foo ALTER COLUMN id TYPE INTEGER');
+      await client.query(
+        'ALTER TABLE foo ADD CONSTRAINT foo_pkey PRIMARY KEY(id)'
+      );
+    },
+  },
+  {
+    label: 'CHANGE_IN_PLACE_PRIMARY_KEY_CONSTRAINT',
+    perform: async (client) => {
+      await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
+      await client.query('ALTER SEQUENCE foo_id_seq AS BIGINT');
+      await client.query('ALTER TABLE foo ALTER COLUMN id TYPE BIGINT');
+      await client.query(
+        'ALTER TABLE foo ADD CONSTRAINT foo_pkey PRIMARY KEY(id)'
+      );
+    },
+    revert: async (client) => {
+      await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
+      await client.query('ALTER SEQUENCE foo_id_seq AS INTEGER');
+      await client.query('ALTER TABLE foo ALTER COLUMN id TYPE INTEGER');
+      await client.query(
+        'ALTER TABLE foo ADD CONSTRAINT foo_pkey PRIMARY KEY(id)'
+      );
+    },
+  },
+  {
+    label: 'CHANGE_IN_PLACE_FOREIGN_KEY_REFERENCED',
+    perform: async (client) => {
+      await client.query(
+        'ALTER TABLE foo ALTER COLUMN referenced_value TYPE BIGINT'
+      );
+    },
+    revert: async (client) => {
+      await client.query('ALTER TABLE bar ALTER COLUMN value_foo TYPE INTEGER');
+    },
+  },
+  {
+    label: 'CHANGE_IN_PLACE_FOREIGN_KEY_REFERENCING',
+    perform: async (client) => {
+      await client.query('ALTER TABLE bar ALTER COLUMN value_foo TYPE BIGINT');
+    },
+    revert: async (client) => {
+      await client.query('ALTER TABLE bar ALTER COLUMN value_foo TYPE INTEGER');
+    },
+  },
+];
 
 const waitForThatMilliseconds = (delay) =>
   new Promise((resolve) => setTimeout(resolve, delay));
 
-const getWalStart = async (client) => {
-  return (await client.query('SELECT pg_current_wal_lsn() AS location')).rows[0]
-    .location;
-};
-
-const getWalSize = async (client, walStart) => {
-  return (
-    await client.query(
-      'SELECT pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), $1)) AS size',
-      [walStart]
-    )
-  ).rows[0].size;
+const allowSomeQueryToSlipIn = async () => {
+  await waitForThatMilliseconds(1000);
 };
 
 (async () => {
@@ -87,76 +103,27 @@ const getWalSize = async (client, walStart) => {
 
   client.connect();
 
-  await waitForThatMilliseconds(1000);
+  await allowSomeQueryToSlipIn();
+  const results = [];
 
-  const walStart = await getWalStart(client);
-  console.log('Change type in place');
-  console.time(labels.inPlace);
-  await changeTypeInPlace(client);
-  console.timeEnd(labels.inPlace);
+  for (const change of changes) {
+    console.log(`Changing type with ${change.label} 🕗`);
+    await resetStatistics(client);
 
-  const walSize = await getWalSize(client, walStart);
+    await change.perform(client);
 
-  console.log(`WAL used : ${walSize}`);
+    console.log(`Type changed ✔`);
+    const statistics = await getStatistics(client);
+    results.push({
+      label: change.label,
+      ...statistics,
+    });
 
-  await waitForThatMilliseconds(1000);
-
-  console.log('Revert type change..');
-  console.time(labels.revert);
-  await revertType(client);
-  console.timeEnd(labels.revert);
-
-  await waitForThatMilliseconds(1000);
-
-  console.log('Change type on PK in place');
-  console.time(labels.inPlacePrimaryKey);
-  await changeTypeInPlacePrimaryKey(client);
-  console.timeEnd(labels.inPlacePrimaryKey);
-
-  await waitForThatMilliseconds(1000);
-
-  console.log('Revert type change..');
-  console.time(labels.revertPrimaryKeyType);
-  await revertPrimaryKeyType(client);
-  console.timeEnd(labels.revertPrimaryKeyType);
-
-  await waitForThatMilliseconds(1000);
-
-  console.log('Change type on PK in place DROP/CREATE constraint');
-  console.time(labels.inPlacePrimaryKeyDropCreateConstraint);
-  await changeTypeInPlacePrimaryKeyWithDropCreate(client);
-  console.timeEnd(labels.inPlacePrimaryKeyDropCreateConstraint);
-
-  await waitForThatMilliseconds(1000);
-
-  console.log('Revert type change..');
-  console.time(labels.revertPrimaryKeyType);
-  await revertPrimaryKeyType(client);
-  console.timeEnd(labels.revertPrimaryKeyType);
-
-  console.log('Change type on referenced FK in place');
-  console.time(labels.inPlaceReferencedFK);
-  await changeTypeInPlaceReferencedFK(client);
-  console.timeEnd(labels.inPlaceReferencedFK);
-
-  await waitForThatMilliseconds(1000);
-
-  console.log('Revert type change..');
-  console.time(labels.revertForeignKeyType);
-  await revertTypeReferencedFK(client);
-  console.timeEnd(labels.revertForeignKeyType);
-
-  console.log('Change type on referencing FK in place');
-  console.time(labels.inPlaceReferencingFK);
-  await changeTypeInPlaceReferencingFK(client);
-  console.timeEnd(labels.inPlaceReferencingFK);
-
-  await waitForThatMilliseconds(1000);
-
-  console.log('Revert type change..');
-  console.time(labels.revertForeignKeyType);
-  await revertTypeInPlaceReferencingFK(client);
-  console.timeEnd(labels.revertForeignKeyType);
+    console.log('Reverting 🕗');
+    await change.revert(client);
+    console.log(`Reverted ✔`);
+  }
 
   client.end();
+  console.log(results);
 })();

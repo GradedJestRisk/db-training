@@ -249,13 +249,39 @@ WHERE 1=1
 ;
 
 -- Disc
--- Volume total size
+-- Volume total size (all volumes)
 docker system df
 
 -- File mapping
 -- https://www.postgresql.org/docs/current/storage-file-layout.html
 
+-- Named volume size
+sudo du -sh /var/lib/docker/volumes/database_database-data/
+
+-- browse
+sudo ncdu /var/lib/docker/volumes/database_database-data/
+
 -- WAL
-sudo ls -ltr /var/lib/docker/volumes/database_db-data/_data/pg_wal
--- database
-sudo ls -ltr /var/lib/docker/volumes/database_db-data/_data/base/16384
+_data/pg_wal
+-- Relations
+_data/base/16384
+
+
+select pg_stat_statements_reset();
+
+
+SELECT
+    TRUNC(SUM(stt.total_exec_time))                  execution_time_ms
+   ,pg_size_pretty(SUM(wal_bytes))                   disk_wal_size
+   ,pg_size_pretty(SUM(temp_blks_written) * 8192)    disk_temp_size
+FROM pg_stat_statements stt
+    INNER JOIN pg_authid usr ON usr.oid = stt.userid
+    INNER JOIN pg_database db ON db.oid = stt.dbid
+WHERE 1=1
+    AND db.datname = 'database'
+;
+
+SELECT TRUNC(SUM(stt.total_exec_time))               execution_time_ms,
+       pg_size_pretty(SUM(wal_bytes))                disk_wal_size,
+       pg_size_pretty(SUM(temp_blks_written) * 8192) disk_temp_sizeFROM pg_stat_statements stt INNER JOIN pg_authid usr
+ON usr.oid = stt.userid INNER JOIN pg_database db ON db.oid = stt.dbidWHERE db.datname = 'database'

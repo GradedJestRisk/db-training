@@ -1,6 +1,9 @@
 -- Reset
 select pg_stat_statements_reset();
 
+-- Temp block size
+SELECT current_setting('block_size')
+-- 8192
 
 -- Trigger log
 -- LOG:  temporary file: path "base/pgsql_tmp/pgsql_tmp76.0", size 18120704
@@ -18,6 +21,7 @@ SHOW work_mem;
 SELECT
        query                                                       AS query,
        to_char(temp_blks_written, 'FM999G999G999G990')             AS temp_blocks_written,
+       pg_size_pretty(temp_blks_written * 8192)                    AS temp_size_written,
        interval '1 millisecond' * total_exec_time                  AS total_exec_time,
        to_char(calls, 'FM999G999G999G990')                         AS ncalls,
        total_exec_time / calls                                     AS avg_exec_time_ms,

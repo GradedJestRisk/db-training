@@ -20,18 +20,24 @@ SELECT
    'count=>',
    stt.calls,
    stt.rows  affected_rows,
-   stt.wal_records  wal,
    'time=>',
    stt.total_exec_time cumulated_excution_time,
    stt.min_exec_time,
-   stt.max_exec_time
+   stt.max_exec_time,
+   'wal=>'
+   ,pg_size_pretty(wal_bytes) wal_size
+   ,stt.wal_records  wal_count
+   ,'temp=>'
+   ,to_char(temp_blks_written, 'FM999G999G999G990')             AS temp_blocks_written
+   ,pg_size_pretty(temp_blks_written * 8192)                    AS temp_size_written
+   ,stt.*
 FROM pg_stat_statements stt
     INNER JOIN pg_authid usr ON usr.oid = stt.userid
     INNER JOIN pg_database db ON db.oid = stt.dbid
 WHERE 1=1
 --    AND usr.rolname <> 'postgres'
     AND db.datname = 'database'
-    AND stt.query ILIKE '%foo%'
+   -- AND stt.query ILIKE '%foo%'
 ORDER BY
     stt.total_exec_time DESC
 ;

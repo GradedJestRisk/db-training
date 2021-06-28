@@ -31,6 +31,20 @@ const createTableWithIndex = async (client) => {
   await client.query('CREATE TABLE foo (id INTEGER UNIQUE)', []);
 };
 
+const getWalStart = async (client) => {
+  return (await client.query('SELECT pg_current_wal_lsn() AS location')).rows[0]
+    .location;
+};
+
+const getWalSize = async (client, walStart) => {
+  return (
+    await client.query(
+      'SELECT pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), $1)) AS size',
+      [walStart]
+    )
+  ).rows[0].size;
+};
+
 (async () => {
   const client = new Client({
     user: 'postgres',
@@ -46,7 +60,7 @@ const createTableWithIndex = async (client) => {
   // https://blog.logrocket.com/experimental-node-js-testing-the-new-performance-hooks-31fcdd2a747e/
 
   const afterwardsStart = performance.now();
-
+  const walStart = await getWalStart(client);
   console.log('Creating table without index..');
   console.time(labels.createTableWithoutIndex);
   await createTableWithoutIndex(client);
@@ -61,6 +75,9 @@ const createTableWithIndex = async (client) => {
   console.time(labels.createIndex);
   await createIndex(client);
   console.timeEnd(labels.createIndex);
+
+  const walSize = await getWalSize(client, walStart);
+  console.log(`WAL used: ${walSize}`);
 
   const elapsedTimeAfterwards = performance.now() - afterwardsStart;
 
