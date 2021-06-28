@@ -190,6 +190,29 @@ UNION ALL SELECT 'dead_tuples', pg_stat_get_dead_tuples(tbl), NULL, NULL FROM x;
 
 ------- Database --------------
 
+-- https://www.postgresql.fastware.com/blog/back-to-basics-with-postgresql-memory-components
+-- shared buffer, WAL, temp..
+
+-- Block size
+SELECT current_setting('block_size');
+
+--
+SHOW shared_buffers;
+-- 128 MB
+
+SHOW work_mem;
+-- 4MB
+
+-- Temporary table storage
+-- No link with temporary files
+SHOW temp_buffers
+;
+-- 8MB
+
+SELECT *
+FROM pg_controldata
+;
+
 -- Database
 SELECT
        pg_size_pretty(  pg_database_size('database'))  data_toast_index
@@ -224,3 +247,15 @@ FROM
 WHERE 1=1
     AND db.datname = 'database'
 ;
+
+-- Disc
+-- Volume total size
+docker system df
+
+-- File mapping
+-- https://www.postgresql.org/docs/current/storage-file-layout.html
+
+-- WAL
+sudo ls -ltr /var/lib/docker/volumes/database_db-data/_data/pg_wal
+-- database
+sudo ls -ltr /var/lib/docker/volumes/database_db-data/_data/base/16384

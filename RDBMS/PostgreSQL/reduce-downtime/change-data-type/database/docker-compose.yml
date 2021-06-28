@@ -17,6 +17,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - ./create-schema.sql:/docker-entrypoint-initdb.d/init.sql
+      - database-data:/var/lib/postgresql/data
     ports:
       - 5432:5432
     deploy:
@@ -24,3 +25,25 @@ services:
         limits:
           cpus: '3'
           memory: 500m
+
+volumes:
+  database-data:
+    driver: local
+
+#volumes:
+#  db-data:
+#    driver: local
+#    driver_opts:
+#      # Lowering space to 100 Mb would cause database to crash on startup
+#      # PANIC:  could not write to file "pg_wal/xlogtemp.47": No space left on device
+#      # Raising it to 1 Gb may be enough for some queries
+#      # LOG:  server process (PID 60) was terminated by signal 9: Killed
+#      # https://serverfault.com/questions/706047/terminating-connection-because-of-crash-of-another-server-process
+#      # To check: sudo dmesg
+#      # [12476.266720] memory: usage 512000kB, limit 512000kB, failcnt 81104
+#      # [12476.266737] oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),
+#      # [12476.266744] Memory cgroup out of memory: Killed process 50369 (postgres) total-vm:195116kB, anon-rss:704kB, file-rss:3272kB, shmem-rss:46564kB, UID:70 pgtables:196kB oom_score_adj:0
+#
+#      o: "size=5G,uid=1000"
+#      device: tmpfs
+#      type: tmpfs

@@ -1,4 +1,7 @@
 CREATE EXTENSION pg_stat_statements;
+CREATE EXTENSION pg_buffercache;
+
+
 
 DROP TABLE IF EXISTS foo;
 
