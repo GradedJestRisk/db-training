@@ -37,6 +37,22 @@ SELECT
    stt.relname,
    stt.n_live_tup,
    stt.n_dead_tup,
+   stt.last_analyze,
+   stt.analyze_count,
+   stt.last_autoanalyze,
+   stt.autoanalyze_count
+FROM pg_stat_user_tables stt
+WHERE 1=1
+    AND relname = 'foo'
+--   AND stt.last_autoanalyze IS NOT NULL
+;
+
+
+-- More statistics
+SELECT
+   stt.relname,
+   stt.n_live_tup,
+   stt.n_dead_tup,
    'events=>',
    stt.n_tup_ins,
    stt.n_tup_upd,
@@ -59,6 +75,5 @@ WHERE 1=1
     AND relname = 'foo'
 --   AND stt.last_autoanalyze IS NOT NULL
 ;
-
 
 -- https://pgstats.dev/

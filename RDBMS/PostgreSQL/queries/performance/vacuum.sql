@@ -16,8 +16,9 @@
 
 
 DROP TABLE IF EXISTS vac_ins;
-create table vac_ins(c1 int, c2 char(500));
-create index idx_vac_ins on vac_ins(c1);
+
+CREATE TABLE vac_ins(c1 int, c2 char(500));
+CREATE INDEX idx_vac_ins ON vac_ins(c1);
 
 INSERT INTO
     vac_ins
@@ -27,6 +28,9 @@ VALUES(
 );
 
 DELETE FROM vac_ins WHERE c1 > 2000
+;
+
+DELETE FROM vac_ins
 ;
 
 
@@ -55,10 +59,6 @@ VACUUM (VERBOSE) vac_ins;
 
 
 
--- With stats
-VACUUM (VERBOSE, ANALYZE) vac_ins;
-
-
 -- After a VACUUM, there should not be any dead tuple (except if some transactions are pending)
 -- https://www.cybertec-postgresql.com/en/reasons-why-vacuum-wont-remove-dead-rows/
 -- Statistics
@@ -71,6 +71,9 @@ WHERE 1=1
     AND relname = 'vac_ins'
 --   AND stt.last_autoanalyze IS NOT NULL
 ;
+
+-- With stats
+VACUUM (VERBOSE, ANALYZE) vac_ins;
 
 
 --
@@ -119,3 +122,33 @@ COMMIT;
 -- all-visible page count has not changed
 VACUUM vac_ins;
 -- all-visible page count has changed
+
+
+
+
+-------------- ROLLBACK ------------
+-- You can get dead tuples with any update/delete
+
+BEGIN;
+
+INSERT INTO
+    vac_ins
+VALUES(
+    generate_series(1,200000),
+   'aaaaaa'
+);
+
+ROLLBACK;
+
+-- Statistics
+SELECT
+   stt.relname,
+   stt.n_live_tup,
+   stt.n_dead_tup
+FROM pg_stat_user_tables stt
+WHERE 1=1
+    AND relname = 'vac_ins'
+--   AND stt.last_autoanalyze IS NOT NULL
+;
+
+-- vac_ins,0,200000
