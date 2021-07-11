@@ -1,4 +1,71 @@
--- Starting with PG 13, the visibility map is updated by ANALYZE even if ony INSERT took place
+-----------------------
+-- Index-only scans ---
+-----------------------
+
+-- TL;DR: read data more quickly if it stored in an index
+
+-- https://www.postgresql.org/docs/10/indexes-index-only-scans.html
+-- An ordinary index scan, each row retrieval requires fetching data from both the index and the heap.
+-- Furthermore, while the index entries that match a given indexable WHERE condition are usually close together in the index,
+-- the table rows they reference might be anywhere in the heap.
+-- The heap-access portion of an index scan thus involves a lot of random access into the heap, which can be slow.
+
+-- To solve this performance problem, PostgreSQL supports index-only scans, which can answer queries from an index alone without any heap access.
+-- The basic idea is to return values directly out of each index entry instead of consulting the associated heap entry.
+
+-- Restrictions:
+-- - the index type must support index-only scans
+-- - the query must reference only columns stored in the index
+
+-- Additional requirement: it must verify that each retrieved row be “visible” to the query's MVCC snapshot.
+-- Visibility information is not stored in index entries, only in heap entries; so at first glance it would seem that every row retrieval would require a heap access anyway.
+-- And this is indeed the case, if the table row has been modified recently. '
+-- 'However, for seldom-changing data there is a way around this problem. '
+-- 'PostgreSQL tracks, for each page in a table's heap, whether all rows stored in that page are old enough to be visible to all current and future transactions.
+-- This information is stored in a bit in the table's visibility map. '
+-- 'An index-only scan, after finding a candidate index entry, checks the visibility map bit for the corresponding heap page. '
+-- 'If it's set, the row is known visible and so the data can be returned with no further work.
+-- If it's not set, the heap entry must be visited to find out whether it's visible, so no performance advantage is gained over a standard index scan.
+-- Even in the successful case, this approach trades visibility map accesses for heap accesses; but since the visibility map is four orders of magnitude smaller
+-- than the heap it describes, far less physical I/O is needed to access it. In most situations the visibility map remains cached in memory all the time.
+--
+-- In short, while an index-only scan is possible given the two fundamental requirements,
+-- => it will be a win only if a significant fraction of the table's heap pages have their all-visible map bits set.
+-- But tables in which a large fraction of the rows are unchanging are common enough to make this type of scan very useful in practice.
+
+
+---------------------
+-- Visibility map ---
+---------------------
+
+-- https://www.postgresql.org/docs/13/storage-vm.html
+-- The map is conservative in the sense that
+-- -  whenever a bit is set, we know the condition is true,
+-- -  if a bit is not set, it might or might not be true.
+--
+-- Visibility map bits are only set by vacuum, but are cleared by any data-modifying operations on a page.
+
+-- API in pg_visibility
+-- https://www.postgresql.org/docs/13/pgvisibility.html
+
+-- Visibility map
+-- relallvisible = IF visible to all transactions
+SELECT
+   relname
+   ,relpages       page_count          -- Number of pages
+   ,relallvisible  visible_page_count   -- Number of pages that are visible to all transactions
+   ,(relallvisible / relpages) pct_visible
+FROM pg_class
+WHERE 1=1
+    AND relname = 'vac_ins'
+;
+
+
+---------------------
+-- INSERTs ---
+---------------------
+
+-- Starting with PG 13, the visibility map is updated by VACUUM even if ony INSERT took place
 -- http://amitkapila16.blogspot.com/2020/05/improved-autovacuum-in-postgresql-13.html
 
 
