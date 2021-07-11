@@ -1,0 +1,25 @@
+version: '3.7'
+
+services:
+  database:
+    image: postgres:13-alpine
+    container_name: database
+    restart: always
+    # Log statements => enable log_statement
+    # https://www.postgresql.org/docs/13/runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT
+    # log_min_messages=DEBUG5 to get finer-grained, warning is default
+    # Get details statistics =>  enable pg_stat_statements
+    # https://www.postgresql.org/docs/13/runtime-config-client.html#GUC-SHARED-PRELOAD-LIBRARIES
+    # track=all to get internal statements, top to get only clients statements
+    command: postgres
+                -c shared_preload_libraries='pg_stat_statements, auto_explain'
+                -c pg_stat_statements.track=top
+                -c auto_explain.log_min_duration=0
+                -c auto_explain.log_analyze=true
+                -c log_statement=all
+                -c log_min_messages=DEBUG5
+    environment:
+      POSTGRES_DB: database
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - 5432:5432

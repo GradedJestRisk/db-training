@@ -1,0 +1,15 @@
+{
+  "name": "explain",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "database:connect": "psql postgres://postgres@localhost:5432/database",
+    "database:peek-last-logs": "docker logs --follow --tail 50 database",
+    "database:restart": "docker_stop && docker-compose --detach",
+    "database:start": "docker-compose --detach"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
