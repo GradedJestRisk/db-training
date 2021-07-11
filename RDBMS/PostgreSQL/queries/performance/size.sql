@@ -109,8 +109,11 @@ SELECT
     pg_stat_reset_single_table_counters('public.foo'::regclass)
 ;
 
+
+
 -- Statistics
 SELECT
+   stt.relname,
    stt.n_live_tup,
    stt.n_dead_tup,
    'events=>',
@@ -118,13 +121,23 @@ SELECT
    stt.n_tup_upd,
    stt.n_tup_hot_upd,  -- hot, see https://www.cybertec-postgresql.com/en/hot-updates-in-postgresql-for-better-performance/
    stt.n_tup_del,
-   'refresh=>',
+   'analyze=>',
    stt.last_analyze,
+   stt.analyze_count,
    stt.last_autoanalyze,
+   stt.autoanalyze_count,
+   'vacuum=>',
    stt.last_vacuum,
-   stt.*
+   stt.vacuum_count,
+   stt.last_autovacuum,
+   stt.autovacuum_count,
+   'pg_stat_user_tables=>'
+   ,stt.*
 FROM pg_stat_user_tables stt
-WHERE relname = 'foo';
+WHERE 1=1
+--    AND relname = 'foo'
+   AND stt.last_autoanalyze IS NOT NULL
+;
 
 -- Data (regular + TOAST) / Index
 SELECT

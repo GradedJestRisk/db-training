@@ -1,0 +1,2 @@
+-- https://www.postgresql.org/docs/current/information-schema.html
+-- https://www.postgresql.org/docs/current/catalogs.html

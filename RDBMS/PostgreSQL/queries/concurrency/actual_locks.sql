@@ -43,6 +43,8 @@ ORDER BY
          lck.virtualtransaction
 ;
 
+
+
 -- Table-level lock + Queries
 SELECT
       'Lock:'
@@ -66,6 +68,28 @@ WHERE 1=1
     AND sch.nspname  = 'public'
     AND tbl.relname  = 'foo'
 ;
+
+-- Row-level lock
+SELECT
+       lck.virtualtransaction,
+       sch.nspname,
+       tbl.relname,
+       lck.mode,
+       lck.pid,
+       lck.granted
+      ,'pg_locks=>'
+      ,lck.*
+FROM pg_locks lck
+    INNER JOIN pg_class tbl ON tbl.oid = lck.relation
+        INNER JOIN pg_namespace sch ON sch.oid = tbl.relnamespace
+WHERE 1=1
+    AND tbl.relkind  = 'r'
+    AND lck.locktype = 'tuple'
+    AND sch.nspname  = 'public'
+ORDER BY
+         lck.virtualtransaction
+;
+
 
 -- Blocking
 
