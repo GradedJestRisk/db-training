@@ -31,7 +31,7 @@ SHOW autovacuum_vacuum_scale_factor;
 SELECT
        relname
        ,stt.n_dead_tup
-       ,(50 + 0.2 * stt.n_live_tup) ceiling -- if > n_dead_tup, autovaccum is triggered
+       ,TRUNC(current_setting('autovacuum_vacuum_threshold')::float8 + current_setting('autovacuum_vacuum_scale_factor')::float8 * stt.n_live_tup) ceiling -- if > n_dead_tup, autovaccum is triggered
 FROM pg_stat_user_tables stt
 WHERE 1=1
 --    AND relname = 'foo'

@@ -45,9 +45,6 @@
 --
 -- Visibility map bits are only set by vacuum, but are cleared by any data-modifying operations on a page.
 
--- API in pg_visibility
--- https://www.postgresql.org/docs/13/pgvisibility.html
-
 -- Visibility map
 -- relallvisible = IF visible to all transactions
 SELECT
@@ -58,6 +55,21 @@ SELECT
 FROM pg_class
 WHERE 1=1
     AND relname = 'vac_ins'
+;
+
+-- API in pg_visibility
+-- https://www.postgresql.org/docs/13/pgvisibility.html
+
+CREATE EXTENSION pg_visibility
+;
+
+-- Get block number
+SELECT
+    blkno,
+    all_visible
+FROM
+    pg_visibility('vac_ins')
+WHERE all_visible = false
 ;
 
 
@@ -185,3 +197,28 @@ WHERE 1=1
 --   Heap Fetches: 0
 -- Planning Time: 0.141 ms
 -- Execution Time: 0.605 ms
+
+
+
+
+--Visibility map bits are only set by vacuum
+-- In fact you don't need analyze to do it
+
+-- Visibility map
+SELECT
+   relname,
+   relpages       page_count,
+   relallvisible  visible_page_count
+FROM pg_class
+WHERE 1=1
+    AND relname = 'vac_ins'
+;
+
+INSERT INTO
+    vac_ins
+VALUES(
+    generate_series(1,20),
+   'aaaaaa'
+);
+
+VACUUM vac_ins;
