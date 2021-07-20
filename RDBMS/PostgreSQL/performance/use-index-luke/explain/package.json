@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "database:connect": "psql postgres://postgres@localhost:5432/database",
-    "database:peek-last-logs": "docker logs --follow --tail 50 database",
+    "database:peek-last-logs": "docker logs -f database 2>&1 | ~/scripts/colorize_plans_in_logs.py --sql-style=colorful --explain-style=autumn",
     "database:restart": "docker_stop && docker-compose --detach",
     "database:start": "docker-compose --detach"
   },
