@@ -1,6 +1,8 @@
 // https://tech.coffeemeetsbagel.com/reaching-the-max-limit-for-ids-in-postgres-6d6fa2b1c6ea
 const { Client } = require('pg');
 
+const CHUNK_SIZE = 100000;
+
 const resetStatistics = async (client) => {
   await client.query('SELECT pg_stat_statements_reset()');
 };
@@ -20,21 +22,133 @@ const getStatistics = async (client) => {
 };
 
 const changes = [
+  // {
+  //   label: 'CHANGE_IN_PLACE',
+  //   perform: async (client) => {
+  //     await client.query('ALTER TABLE foo ALTER COLUMN value TYPE BIGINT');
+  //   },
+  //   revert: async (client) => {
+  //     await client.query('ALTER TABLE foo ALTER COLUMN value TYPE INTEGER');
+  //   },
+  // },
+  // {
+  //   label: 'CHANGE_IN_PLACE_PRIMARY_KEY',
+  //   perform: async (client) => {
+  //     // https://www.postgresql.org/docs/current/sql-altersequence.html
+  //     await client.query('ALTER SEQUENCE foo_id_seq AS BIGINT');
+  //     await client.query('ALTER TABLE foo ALTER COLUMN id TYPE BIGINT');
+  //   },
+  //   revert: async (client) => {
+  //     await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
+  //     await client.query('ALTER SEQUENCE foo_id_seq AS INTEGER');
+  //     await client.query('ALTER TABLE foo ALTER COLUMN id TYPE INTEGER');
+  //     await client.query(
+  //       'ALTER TABLE foo ADD CONSTRAINT foo_pkey PRIMARY KEY(id)'
+  //     );
+  //   },
+  // },
+  // {
+  //   label: 'CHANGE_IN_PLACE_PRIMARY_KEY_CONSTRAINT',
+  //   perform: async (client) => {
+  //     await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
+  //     await client.query('ALTER SEQUENCE foo_id_seq AS BIGINT');
+  //     await client.query('ALTER TABLE foo ALTER COLUMN id TYPE BIGINT');
+  //     await client.query(
+  //       'ALTER TABLE foo ADD CONSTRAINT foo_pkey PRIMARY KEY(id)'
+  //     );
+  //   },
+  //   revert: async (client) => {
+  //     await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
+  //     await client.query('ALTER SEQUENCE foo_id_seq AS INTEGER');
+  //     await client.query('ALTER TABLE foo ALTER COLUMN id TYPE INTEGER');
+  //     await client.query(
+  //       'ALTER TABLE foo ADD CONSTRAINT foo_pkey PRIMARY KEY(id)'
+  //     );
+  //   },
+  // },
   {
-    label: 'CHANGE_IN_PLACE',
+    label: 'CHANGE_WITH_TEMPORARY_COLUMN_PRIMARY_KEY_CONSTRAINT',
     perform: async (client) => {
-      await client.query('ALTER TABLE foo ALTER COLUMN value TYPE BIGINT');
-    },
-    revert: async (client) => {
-      await client.query('ALTER TABLE foo ALTER COLUMN value TYPE INTEGER');
-    },
-  },
-  {
-    label: 'CHANGE_IN_PLACE_PRIMARY_KEY',
-    perform: async (client) => {
-      // https://www.postgresql.org/docs/current/sql-altersequence.html
+      await client.query('ALTER TABLE foo ADD COLUMN new_id BIGINT');
+
+      // Feed new_id for each new inserted row
+      await client.query(`CREATE OR REPLACE FUNCTION migrate_id_concurrently()
+                          RETURNS TRIGGER AS
+                          $$
+                          BEGIN
+                              NEW.new_id = NEW.id::BIGINT;
+                              RETURN NEW;
+                          END
+                          $$ LANGUAGE plpgsql;`);
+
+      await client.query(`CREATE TRIGGER trg_foo
+                          BEFORE INSERT ON foo
+                          FOR EACH ROW
+                          EXECUTE PROCEDURE migrate_id_concurrently();`);
+
+      // Prepare Primary key unique constraint
+      // https://www.2ndquadrant.com/en/blog/create-index-concurrently/
+      // https://dba.stackexchange.com/questions/131945/detect-when-a-create-index-concurrently-is-finished-in-postgresql
+      await client.query('CREATE UNIQUE INDEX CONCURRENTLY idx ON foo(new_id)');
+
+      let rowsUpdatedCount = 0;
+
+      // Feed new_id for each existing row
+      console.log(
+        `Feeding new_id on existing rows (using ${CHUNK_SIZE}-record size chunks)`
+      );
+      do {
+        // https://blog.pilosus.org/posts/2019/12/07/postgresql-update-rows-in-chunks/
+        const result = await client.query(`WITH rows AS (
+          SELECT id
+          FROM foo
+          WHERE new_id IS NULL
+          ORDER BY id
+          LIMIT ${CHUNK_SIZE}
+        )
+        UPDATE foo
+        SET new_id = id
+        WHERE EXISTS (SELECT * FROM rows WHERE foo.id = rows.id)`);
+
+        rowsUpdatedCount = result.rowCount;
+        process.stdout.write('.');
+      } while (rowsUpdatedCount >= CHUNK_SIZE);
+
+      ////////// MAINTENANCE WINDOW STARTS HERE ////////////////////////////////
+      console.log('Opening maintenance window...');
+
+      // Change external account password and disconnect him
+      // Check pending transactions
+
+      await client.query('DROP TRIGGER trg_foo ON foo');
+      await client.query('DROP FUNCTION migrate_id_concurrently');
+
+      // Migrate remaining rows
+      const result = await client.query(`
+        UPDATE foo
+        SET new_id = id
+        WHERE new_id IS NULL`);
+
+      // https://stackoverflow.com/questions/9490014/adding-serial-to-existing-column-in-postgres
+      await client.query('ALTER SEQUENCE foo_id_seq OWNED BY foo.new_id');
       await client.query('ALTER SEQUENCE foo_id_seq AS BIGINT');
-      await client.query('ALTER TABLE foo ALTER COLUMN id TYPE BIGINT');
+      await client.query(
+        `ALTER TABLE foo ALTER COLUMN new_id SET DEFAULT nextval('foo_id_seq')`
+      );
+      await client.query('ALTER TABLE foo ALTER COLUMN id DROP DEFAULT');
+      // check with \d foo_id_seq;
+
+      await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
+      // Enable PK on new_id before dropping id, in case something is wrong
+      await client.query(
+        'ALTER TABLE foo ADD CONSTRAINT foo_pkey PRIMARY KEY USING INDEX idx'
+      );
+
+      await client.query('ALTER TABLE foo DROP COLUMN id');
+      await client.query('ALTER TABLE foo RENAME COLUMN new_id TO id');
+
+      console.log('Closing maintenance window...');
+      ////////// MAINTENANCE WINDOW STOPS HERE ////////////////////////////////
     },
     revert: async (client) => {
       await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
@@ -45,45 +159,26 @@ const changes = [
       );
     },
   },
-  {
-    label: 'CHANGE_IN_PLACE_PRIMARY_KEY_CONSTRAINT',
-    perform: async (client) => {
-      await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
-      await client.query('ALTER SEQUENCE foo_id_seq AS BIGINT');
-      await client.query('ALTER TABLE foo ALTER COLUMN id TYPE BIGINT');
-      await client.query(
-        'ALTER TABLE foo ADD CONSTRAINT foo_pkey PRIMARY KEY(id)'
-      );
-    },
-    revert: async (client) => {
-      await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
-      await client.query('ALTER SEQUENCE foo_id_seq AS INTEGER');
-      await client.query('ALTER TABLE foo ALTER COLUMN id TYPE INTEGER');
-      await client.query(
-        'ALTER TABLE foo ADD CONSTRAINT foo_pkey PRIMARY KEY(id)'
-      );
-    },
-  },
-  {
-    label: 'CHANGE_IN_PLACE_FOREIGN_KEY_REFERENCED',
-    perform: async (client) => {
-      await client.query(
-        'ALTER TABLE foo ALTER COLUMN referenced_value TYPE BIGINT'
-      );
-    },
-    revert: async (client) => {
-      await client.query('ALTER TABLE bar ALTER COLUMN value_foo TYPE INTEGER');
-    },
-  },
-  {
-    label: 'CHANGE_IN_PLACE_FOREIGN_KEY_REFERENCING',
-    perform: async (client) => {
-      await client.query('ALTER TABLE bar ALTER COLUMN value_foo TYPE BIGINT');
-    },
-    revert: async (client) => {
-      await client.query('ALTER TABLE bar ALTER COLUMN value_foo TYPE INTEGER');
-    },
-  },
+  // {
+  //   label: 'CHANGE_IN_PLACE_FOREIGN_KEY_REFERENCED',
+  //   perform: async (client) => {
+  //     await client.query(
+  //       'ALTER TABLE foo ALTER COLUMN referenced_value TYPE BIGINT'
+  //     );
+  //   },
+  //   revert: async (client) => {
+  //     await client.query('ALTER TABLE bar ALTER COLUMN value_foo TYPE INTEGER');
+  //   },
+  // },
+  // {
+  //   label: 'CHANGE_IN_PLACE_FOREIGN_KEY_REFERENCING',
+  //   perform: async (client) => {
+  //     await client.query('ALTER TABLE bar ALTER COLUMN value_foo TYPE BIGINT');
+  //   },
+  //   revert: async (client) => {
+  //     await client.query('ALTER TABLE bar ALTER COLUMN value_foo TYPE INTEGER');
+  //   },
+  // },
 ];
 
 const waitForThatMilliseconds = (delay) =>
