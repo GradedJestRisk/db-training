@@ -1,6 +1,15 @@
 // https://tech.coffeemeetsbagel.com/reaching-the-max-limit-for-ids-in-postgres-6d6fa2b1c6ea
 const { Client } = require('pg');
 
+const connexion = {
+  user: 'postgres',
+  host: 'localhost',
+  database: 'database',
+  port: 5432,
+};
+
+const externalUserName = 'activity';
+
 const CHUNK_SIZE = 100000;
 
 const resetStatistics = async (client) => {
@@ -117,9 +126,14 @@ const changes = [
       ////////// MAINTENANCE WINDOW STARTS HERE ////////////////////////////////
       console.log('Opening maintenance window...');
 
-      // Change external account password and disconnect him
-      // Check pending transactions
+      // Disable login
+      await client.query(`ALTER USER "${externalUserName}" WITH NOLOGIN`);
 
+      // Terminate established connexion
+      await client.query(`SELECT pg_terminate_backend(pid) FROM pg_stat_activity
+                          WHERE datname = 'database' AND pid <> pg_backend_pid()`);
+
+      // Disable migration
       await client.query('DROP TRIGGER trg_foo ON foo');
       await client.query('DROP FUNCTION migrate_id_concurrently');
 
@@ -148,6 +162,9 @@ const changes = [
       await client.query('ALTER TABLE foo RENAME COLUMN new_id TO id');
 
       console.log('Closing maintenance window...');
+
+      // Enable login
+      await client.query(`ALTER USER "${externalUserName}" WITH LOGIN`);
       ////////// MAINTENANCE WINDOW STOPS HERE ////////////////////////////////
     },
     revert: async (client) => {
@@ -189,12 +206,7 @@ const allowSomeQueryToSlipIn = async () => {
 };
 
 (async () => {
-  const client = new Client({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'database',
-    port: 5432,
-  });
+  const client = new Client(connexion);
 
   client.connect();
 

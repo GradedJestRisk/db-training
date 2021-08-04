@@ -1,6 +1,10 @@
 CREATE EXTENSION pg_stat_statements;
 CREATE EXTENSION pg_buffercache;
 
+CREATE USER activity;
+CREATE USER migration;
+GRANT CONNECT ON DATABASE database TO activity, migration;
+
 DROP TABLE IF EXISTS foo;
 
 -- https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL
@@ -28,3 +32,6 @@ CREATE TABLE bar (
 
 INSERT INTO bar (value_foo)
 SELECT f.referenced_value FROM foo f;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE foo, bar TO activity, migration;
+GRANT ALL PRIVILEGES ON SEQUENCE foo_id_seq TO activity, migration;
