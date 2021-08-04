@@ -7,7 +7,7 @@
   },
   "scripts": {
     "database:start": "npm run database:remove-volume && npm run database:start:instance && npm run database:wait-until-ready",
-    "database:remove-volume": "(docker volume rm database_database-data; exit 0;)",
+    "database:remove-volume": "(docker volume rm database_database-data || exit 0;)",
     "database:start:instance": "docker-compose --file ./database/docker-compose.yml up --detach",
     "database:wait-until-ready": "./database/wait-database-until-ready.sh",
     "database:peek-last-logs": "docker logs --follow --tail 20 database",
