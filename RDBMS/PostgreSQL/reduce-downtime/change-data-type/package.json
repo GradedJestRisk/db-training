@@ -11,7 +11,11 @@
     "database:start:instance": "docker-compose --file ./database/docker-compose.yml up --detach",
     "database:wait-until-ready": "./database/wait-database-until-ready.sh",
     "database:peek-last-logs": "docker logs --follow --tail 20 database",
-    "fake_activity": "node src/fake-activity.js",
+    "fake_activity:restart": "npm run --silent fake_activity:restart:shell",
+    "fake_activity:restart:shell": "./src/restart-fake-activity.sh",
+    "fake_activity": "npm run fake_activity:pool",
+    "fake_activity:pool": "node src/fake-activity-pool.js",
+    "fake_activity:client": "node src/fake-activity-client.js",
     "test_connexion": "node src/test-connexion.js",
     "type_change:perform": "node ./src/perform-type-change.js",
     "type_change:perform-with-activity": "run-p --race fake_activity type_change:perform"

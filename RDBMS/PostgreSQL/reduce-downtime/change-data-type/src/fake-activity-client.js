@@ -1,16 +1,10 @@
-// https://stackoverflow.com/questions/54795701/migrating-int-to-bigint-in-postgressql-without-any-downtime
 const { Client } = require('pg');
-
-const { Pool } = require('pg');
 
 const connexion = {
   user: 'activity',
   host: 'localhost',
   database: 'database',
   port: 5432,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
 };
 
 const waitForThatMilliseconds = (delay) =>
@@ -23,6 +17,7 @@ const queryAgainstTableWhoseDataTypeIsToBeChanged = async (pool) => {
     // Read
     // Short living query
     await pool.query('SELECT * FROM foo LIMIT 1');
+
     // Long-living query
     // await client.query("SELECT COUNT(1) FROM foo");
     // await client.query("SELECT * FROM foo ORDER BY RANDOM() LIMIT 1");
@@ -38,11 +33,17 @@ const queryAgainstTableWhoseDataTypeIsToBeChanged = async (pool) => {
 };
 
 (async () => {
-  const pool = new Pool(connexion);
+  const client = new Client(connexion);
 
-  pool.connect();
+  client.on('error', (error) => {
+    console.log(`Client emitted error: ${error}`);
+    client.connect();
+  });
+
+  client.connect();
+
   console.log('Reading and writing in table foo..');
-  await queryAgainstTableWhoseDataTypeIsToBeChanged(pool);
+  await queryAgainstTableWhoseDataTypeIsToBeChanged(client);
 
-  pool.end();
+  client.end();
 })();
