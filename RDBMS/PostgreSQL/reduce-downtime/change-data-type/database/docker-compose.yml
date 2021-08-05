@@ -17,7 +17,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - ./create-schema.sql:/docker-entrypoint-initdb.d/init.sql
-#      - database-data:/var/lib/postgresql/data
+      - database-data:/var/lib/postgresql/data
     ports:
       - 5432:5432
     deploy:
@@ -26,9 +26,9 @@ services:
           cpus: '3'
           memory: 500m
 
-#volumes:
-#  database-data:
-#    driver: local
+volumes:
+  database-data:
+    driver: local
 
 #volumes:
 #  db-data:
