@@ -165,6 +165,7 @@ SELECT
 ;
 
 -- Complete
+-- https://dba.stackexchange.com/questions/23879/measure-the-size-of-a-postgresql-table-row/23933#23933
 WITH x AS (
    SELECT count(*)               AS ct
         , sum(length(t::text))   AS txt_len  -- length in characters
@@ -198,7 +199,8 @@ FROM   x, y
 UNION ALL SELECT '------------------------------', NULL, NULL, NULL
 UNION ALL SELECT 'row_count', ct, NULL, NULL FROM x
 UNION ALL SELECT 'live_tuples', pg_stat_get_live_tuples(tbl), NULL, NULL FROM x
-UNION ALL SELECT 'dead_tuples', pg_stat_get_dead_tuples(tbl), NULL, NULL FROM x;
+UNION ALL SELECT 'dead_tuples', pg_stat_get_dead_tuples(tbl), NULL, NULL FROM x
+;
 
 
 ------- Database --------------
