@@ -26,6 +26,7 @@ CREATE TABLE foo (
  );
 
 INSERT INTO foo (id) VALUES (1);
+VACUUM (VERBOSE, ANALYZE) foo;
 
 -- column size
 SELECT pg_column_size('foo') size_bytes;
@@ -33,7 +34,25 @@ SELECT pg_column_size('foo') size_bytes;
 
 -- table size
 SELECT * FROM pg_table_size('foo') size_bytes;
--- 8192
+-- 40 690
+
+-- pages
+SELECT
+ relpages page_count,
+ (relpages * 8 * 1024) total_size_bytes
+FROM pg_class WHERE relname = 'foo';
+-- 1 page, 8 192 bytes
+
+SELECT
+    pg_size_pretty(tuple_len)       alive_size,
+    pg_size_pretty(dead_tuple_len)  dead_size,
+    pg_size_pretty(free_space)      unused_size,
+    pg_size_pretty(table_len)       total_size,
+    pg_size_pretty(table_len - tuple_len - dead_tuple_len - free_space) overhead
+FROM pgstattuple('foo')
+;
+-- Most of the page is empty (8128)
+-- data is only 28 bytes
 
 -- overhead take most of size
 SELECT
@@ -41,6 +60,8 @@ SELECT
      pg_column_size('foo')  "data",
      (pg_table_size('foo') - pg_column_size('foo'))  overhead
 ;
+
+
 
 --------------------------------------------------
 ------ Single column   --------------------------
@@ -63,6 +84,8 @@ FROM
     generate_series( 1, 1000000) -- 1 million => 2 seconds
 ;
 
+VACUUM (VERBOSE, ANALYZE) foo;
+
 SELECT *
 FROM foo;
 
@@ -76,6 +99,16 @@ SELECT pg_column_size('foo') size_bytes;
 
 SELECT * FROM pg_table_size('foo') size_bytes;
 -- 36 290 560
+
+-- Pages
+SELECT
+   relpages   page_count,
+   (relpages * 8 * 1000) total_size_bytes
+FROM pg_class WHERE relname = 'foo';
+
+-- 4 425 pages
+-- 35 400 000
+
 
 --------------------------------
 -- Integer, random
@@ -95,24 +128,22 @@ CREATE TABLE foo (
 --  );
 
 
-INSERT INTO foo   (id)
-SELECT *
-FROM generate_series( 1, power(10, 2)::int) -- 100 => 2 seconds
-;
+-- INSERT INTO foo (id)
+-- SELECT *
+-- FROM generate_series( 1, power(10, 2)::int) -- 100 => 2 seconds
+-- ;
 
 INSERT INTO foo   (id)
 SELECT *
-FROM generate_series( 1, power(10, 6)::int) -- 1 million => 2 seconds
+FROM generate_series( 1, power(10, 6)::int) -- 1 million => 10 seconds
 ;
 
-INSERT INTO foo   (id)
-SELECT *
-FROM generate_series( 1, power(10, 7)::int) -- 10 million => 1 minute
-;
+-- INSERT INTO foo   (id)
+-- SELECT *
+-- FROM generate_series( 1, power(10, 7)::int) -- 10 million => 1 minute
+-- ;
 
 VACUUM (VERBOSE, ANALYZE) foo; -- for 10 million => 2 minutes
-
-
 SELECT * FROM foo;
 
 -- Integer
@@ -161,9 +192,15 @@ SELECT
   xmax transaction_number_changed_row
 FROM foo;
 
-
 -- System columns have a 90% overhead then (30 Mbytes on 35 Mbytes)
 
+-- Pages
+SELECT
+   relpages   page_count,
+   (relpages * 8 * 1000) total_size_bytes
+FROM pg_class WHERE relname = 'foo';
+-- 4 425 pages
+-- 35 400 000 bytes
 
 --------------------------------------------------
 ------ Several columns  --------------------------

@@ -98,7 +98,7 @@ FROM foo
 ;
 
 -- Update statistics;
-VACUUM ANALYZE;
+VACUUM ANALYZE foo;
 
 -- Reclaim space => 5 seconds
 -- Execute DELETE, check dead_tuples, then run VACUUM full
@@ -108,8 +108,6 @@ VACUUM FULL;
 SELECT
     pg_stat_reset_single_table_counters('public.foo'::regclass)
 ;
-
-
 
 -- Statistics
 SELECT

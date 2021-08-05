@@ -1,7 +1,3 @@
-
-
-DROP VIEW IF EXISTS stats_foo;
-
 DROP TABLE IF EXISTS foo;
 
 CREATE TABLE foo (
@@ -63,7 +59,6 @@ FROM x,
 ;
 
 select * from foo;
-select * from stats_foo;
 
 -- Disable AUTOVACUUM
 ALTER TABLE foo SET (autovacuum_enabled = false)
@@ -86,6 +81,8 @@ SELECT * FROM stats_foo;
 
 -- Drop column
 ALTER TABLE foo DROP COLUMN value;
+
+
 
 SELECT * from stats_foo;
 -- 35 mb
