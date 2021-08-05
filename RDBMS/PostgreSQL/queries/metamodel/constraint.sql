@@ -1,3 +1,24 @@
+-- Constraints
+SELECT
+       'constraint=>'    qry
+       ,pgc.contype      cnt_type
+       ,pgc.conname      constraint_name
+       ,ccu.table_schema "schema"
+       ,ccu.table_name   "table"
+       ,ccu.column_name  "column"
+       ,pg_get_constraintdef(pgc.oid) definition
+       --pgc.*
+FROM pg_constraint pgc
+    JOIN pg_namespace nsp ON nsp.oid = pgc.connamespace
+    JOIN pg_class  cls     ON pgc.conrelid = cls.oid
+    JOIN information_schema.constraint_column_usage ccu ON pgc.conname = ccu.constraint_name AND nsp.nspname = ccu.constraint_schema
+WHERE 1=1
+--    AND pgc.contype = 'p'
+   -- AND ccu.table_name = 'memberships'
+ORDER BY
+    pgc.conname ASC;
+
+
 
 -- PRIMARY KEY constraints
 SELECT
@@ -27,7 +48,7 @@ SELECT COUNT(1) FROM pg_constraint pgc  WHERE pgc.contype = 'f';
 SELECT
     tc.constraint_name ,
     tc.table_name    AS referencing_table_name,
-    kcu.column_name  AS referencing_table_name,
+    kcu.column_name  AS referencing_column_name,
     ccu.table_name   AS referenced_table_name,
     ccu.column_name  AS referenced_column_name
 FROM
@@ -63,6 +84,27 @@ WHERE 1=1
 ;
 
 
+-- UNIQUE constraints
+SELECT
+       'UNIQUE Constraint=>' qry
+       ,pgc.conname      constraint_name
+       ,ccu.table_schema "schema"
+       ,ccu.table_name   "table"
+       ,ccu.column_name  "column"
+       ,pgc.contype
+       ,pg_get_constraintdef(pgc.oid) definition
+       --pgc.*
+FROM pg_constraint pgc
+    JOIN pg_namespace nsp ON nsp.oid = pgc.connamespace
+    JOIN pg_class  cls     ON pgc.conrelid = cls.oid
+    JOIN information_schema.constraint_column_usage ccu ON pgc.conname = ccu.constraint_name AND nsp.nspname = ccu.constraint_schema
+WHERE 1=1
+    AND pgc.contype = 'u'
+   -- AND ccu.table_name = 'memberships'
+ORDER BY
+    pgc.conname ASC;
+
+
 
 
 
@@ -84,7 +126,7 @@ FROM pg_constraint pgc
     JOIN information_schema.constraint_column_usage ccu ON pgc.conname = ccu.constraint_name AND nsp.nspname = ccu.constraint_schema
 WHERE 1=1
     AND pgc.contype = 'c'
-    AND ccu.table_name = 'memberships'
+   -- AND ccu.table_name = 'memberships'
 ORDER BY
     pgc.conname ASC;
 

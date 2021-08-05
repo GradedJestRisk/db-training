@@ -49,6 +49,7 @@ ORDER BY
 SELECT
       'Lock:'
       ,qry.query
+      ,tbl.relname
       --,qry.client_addr
       ,lck.virtualtransaction
       ,lck.mode
@@ -65,8 +66,8 @@ FROM pg_locks lck
 WHERE 1=1
     AND tbl.relkind  = 'r'
     AND lck.locktype = 'relation'
-    AND sch.nspname  = 'public'
-    AND tbl.relname  = 'foo'
+      AND sch.nspname  = 'public'
+      AND tbl.relname  = 'foo'
 ;
 
 -- Row-level lock

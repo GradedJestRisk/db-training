@@ -1,5 +1,6 @@
 SELECT
    NOW(),
+   NOW() + interval '3 DAYS',
    current_timestamp,
    DATE(current_timestamp)
 ;

@@ -1,3 +1,9 @@
+-- Schemas
+SELECT schema_name
+FROM information_schema.schemata
+;
+
+
 -- Do you have `USAGE` on the schema?
 --     No:  Reject access.
 --     Yes: Do you also have the appropriate rights on the table?
