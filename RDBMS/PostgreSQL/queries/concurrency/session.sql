@@ -16,7 +16,7 @@ SELECT
   ,ssn.*
 FROM pg_stat_activity ssn
 WHERE 1=1
-  AND ssn.usename = 'activity'
+  --AND ssn.usename = 'activity'
 --  AND ssn.datname = 'database'
 --  AND ssn.query ILIKE '%VALUES%'
 --   AND pid <> pg_backend_pid()
