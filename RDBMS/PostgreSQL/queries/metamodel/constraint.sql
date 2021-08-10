@@ -102,8 +102,12 @@ FROM
 WHERE 1=1
   AND tc.constraint_type = 'FOREIGN KEY'
 --  AND tc.table_name       IN ('answers', 'feedbacks')
-    AND tc.table_name = 'authentication-methods'
+--    AND tc.table_name = 'authentication-methods'
+    -- references
+    AND ccu.table_name   = 'answers'
+    AND ccu.column_name  = 'id'
 ;
+
 
 
 -- FOREIGN KEY constraints + Referencing/referenced tables + columns
@@ -221,11 +225,11 @@ SELECT
 WHERE 1=1
     --AND c.table_catalog = 'pix'
 --    AND c.table_schema  = 'public'
---    AND c.table_name = 'authentication-methods'
+    AND c.table_name = 'knowledge-elements'
 --    AND c.data_type     LIKE 'timestamp%'
 --    AND c.data_type     = 'character varying'
-    AND c.column_name LIKE '%Id'
-    AND is_nullable = 'YES'
+--    AND c.column_name LIKE '%Id'
+    AND is_nullable = 'NO'
 ORDER BY
     c.column_name ASC
 ;

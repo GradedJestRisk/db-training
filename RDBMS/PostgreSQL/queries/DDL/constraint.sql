@@ -155,11 +155,57 @@ INSERT INTO foo (id) VALUES (1);
 -- FOREIGN KEY  --
 ----------------
 
--- FOREIGN KEY
+DROP TABLE IF EXISTS foo CASCADE;
+CREATE TABLE foo (id INTEGER UNIQUE);
+INSERT INTO foo (id) VALUES (0);
+INSERT INTO foo (id) VALUES (1);
+
+DROP TABLE IF EXISTS bar CASCADE;
+CREATE TABLE bar (id_foo INTEGER NOT NULL);
+INSERT INTO bar (id_foo) VALUES (0);
+
+-- Way 1 (validate existing values before creating FK)
 ALTER TABLE bar
-ADD CONSTRAINT value_foreign_key
-FOREIGN KEY (value_foo)
-REFERENCES foo (value);
+ADD CONSTRAINT bar_foo_id_fkey
+FOREIGN KEY (id_foo)
+REFERENCES foo (id);
+
+-- Way 2 (skip validate existing values before creating FK)
+ALTER TABLE bar
+ADD CONSTRAINT bar_foo_id_fkey
+FOREIGN KEY (id_foo)
+REFERENCES foo (id) NOT VALID;
+
+INSERT INTO bar (id_foo) VALUES (3);
+-- [23503] ERROR: insert or update on table "bar" violates foreign key constraint "bar_foo_id_fkey"
+-- Detail: Key (id_foo)=(3) is not present in table "foo".
+
+SELECT
+    'constraint=>'
+    ,pgc.convalidated
+   ,'pg_constraint=>'
+   ,pgc.*
+FROM pg_constraint pgc
+WHERE 1=1
+    AND pgc.conname = 'bar_foo_id_fkey'
+    AND pgc.contype = 'f'
+;
+-- false
+
+
+ALTER TABLE bar VALIDATE CONSTRAINT bar_foo_id_fkey;
+
+SELECT
+    'constraint=>'
+    ,pgc.convalidated
+   ,'pg_constraint=>'
+   ,pgc.*
+FROM pg_constraint pgc
+WHERE 1=1
+    AND pgc.conname = 'bar_foo_id_fkey'
+    AND pgc.contype = 'f'
+;
+-- true
 
 ------------------------
 ------- DROP -----------
