@@ -35,7 +35,7 @@ ORDER BY
 
 
 -- Column
--- Given column type
+-- Given table + column name
 SELECT
     c.table_name,
     c.column_name,
@@ -46,11 +46,38 @@ SELECT
      c.*
   FROM information_schema.columns c
 WHERE 1=1
+    AND c.table_catalog = 'pix'
+    AND c.table_schema  = 'public'
+    AND c.table_name    = 'answers'
+    AND c.column_name   = 'id'
+    AND c.data_type     = 'integer'
+--    AND c.column_name LIKE '%Id'
+ORDER BY
+    c.table_name, c.column_name ASC
+;
+
+select * from answers;
+
+
+-- Column
+-- Given column type
+SELECT
+    c.table_name,
+    c.column_name,
+    c.data_type,
+    c.numeric_precision,
+    c.character_maximum_length,
+    c.is_nullable,
+    'columns=>',
+     c.*
+  FROM information_schema.columns c
+WHERE 1=1
     --AND c.table_catalog = 'pix'
 --    AND c.table_schema  = 'public'
     AND c.data_type     LIKE 'timestamp%'
 --    AND c.data_type     = 'character varying'
 --    AND c.column_name LIKE '%Id'
+    AND is_nullable = 'NO'
 ORDER BY
     c.column_name ASC
 ;

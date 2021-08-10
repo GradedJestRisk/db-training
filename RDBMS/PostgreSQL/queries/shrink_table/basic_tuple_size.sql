@@ -15,6 +15,23 @@
 --  Some data types require alignment to the next multiple of 2, 4 or 8 bytes.
 
 
+
+--------------------------------------------------
+------ Single column, no row   ---------------
+--------------------------------------------------
+
+DROP TABLE IF EXISTS foo CASCADE;
+
+CREATE TABLE foo (
+   id INTEGER
+ );
+
+VACUUM (VERBOSE, ANALYZE) foo;
+
+-- table size
+SELECT * FROM pg_table_size('foo') size_bytes;
+-- 0
+
 --------------------------------------------------
 ------ Single column, single row   ---------------
 --------------------------------------------------
@@ -255,4 +272,6 @@ SELECT
 -- 164 bytes
 
 -- System columns have a 10% overhead then
+
+
 

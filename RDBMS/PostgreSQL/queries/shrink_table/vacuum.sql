@@ -2,6 +2,19 @@
 -- VACUUM -----------
 --------------------
 
+-- Reclaims storage occupied by dead tuple, concurrently
+-- => update the visibility map
+VACUUM foo;
+VACUUM VERBOSE foo;
+VACUUM VERBOSE ANALYZE foo;
+
+-- Reclaims storage occupied by dead tuple, blocking
+-- => rewrite whole table
+VACUUM FULL foo;
+VACUUM FULL VERBOSE foo;
+VACUUM FULL VERBOSE ANALYZE foo;
+
+
 -- https://www.postgresql.org/docs/current/sql-vacuum.html
 
 -- VACUUM reclaims storage occupied by dead tuple

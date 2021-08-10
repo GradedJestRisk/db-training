@@ -4,7 +4,17 @@
 
 -- Should be ON to trigger autovacuum
 SHOW autovacuum;
+SELECT name, setting FROM pg_settings WHERE name='autovacuum';
+
+-- If track_counts is off, the statistics collector won’t update the count of the number of dead rows for each table
+-- which is the value that the autovacuum daemon checks in order to determine when and where it needs to run
 SHOW track_counts;
+
+-- On table
+SELECT reloptions FROM pg_class WHERE relname='foo';
+ALTER TABLE foo SET (AUTOVACUUM_ENABLED=FALSE);
+ALTER TABLE foo SET (AUTOVACUUM_ENABLED=TRUE);
+
 
 -- Daemon
 SELECT
@@ -18,18 +28,33 @@ FROM
 where t.backend_type = 'autovacuum launcher'
 ;
 
--- Settings
+--------------
+-- Settings --
+--------------
 
+-- All
+SELECT * from pg_settings where category like 'Autovacuum';
+
+
+-- Analyze
+SELECT * from pg_settings
+where category like 'Autovacuum'
+AND name ILIKE '%analyze%';
+
+-- Threshold (Minimum number of tuple updates or deletes prior to vacuum)
 SHOW autovacuum_vacuum_threshold;
 -- 50
 
+-- Scale factor (Number of tuple updates or deletes prior to vacuum as a fraction of reltuples)
 SHOW autovacuum_vacuum_scale_factor;
 --0.2
 
 
--- Autovacuum trigger for relation
+-- Will autovacuum trigger ?
+-- For relation
 SELECT
        relname
+       ,stt.n_live_tup
        ,stt.n_dead_tup
        ,TRUNC(current_setting('autovacuum_vacuum_threshold')::float8 + current_setting('autovacuum_vacuum_scale_factor')::float8 * stt.n_live_tup) ceiling -- if > n_dead_tup, autovaccum is triggered
 FROM pg_stat_user_tables stt
@@ -97,3 +122,66 @@ WHERE 1=1
     AND relname = 'vac_ins'
 --   AND stt.last_autoanalyze IS NOT NULL
 ;
+
+
+-----------------
+-- Block by lock
+----------------
+
+-- https://www.datadoghq.com/blog/postgresql-vacuum-monitoring/
+
+
+SELECT reloptions FROM pg_class WHERE relname='foo';
+-- {autovacuum_enabled=true}
+
+
+-- In another session, run
+BEGIN TRANSACTION;
+DELETE FROM foo WHERE id > 500;
+ALTER TABLE foo RENAME COLUMN id TO bar;
+SELECT count(1) FROM foo;
+
+-- ANALYZE VERBOSE foo;
+-- INFO:  analyzing "public.foo"
+-- INFO:  "foo": scanned 2440 of 2440 pages, containing 250 live rows and 49750 dead rows; 250 rows in sample, 250 estimated total rows
+
+
+-- Will autovacuum trigger ?
+-- For relation
+SELECT
+       relname
+       ,stt.n_live_tup
+       ,stt.n_dead_tup
+       ,TRUNC(current_setting('autovacuum_vacuum_threshold')::float8 + current_setting('autovacuum_vacuum_scale_factor')::float8 * stt.n_live_tup) ceiling -- if > n_dead_tup, autovaccum is triggered
+FROM pg_stat_user_tables stt
+WHERE 1=1
+    AND relname = 'foo'
+ORDER BY stt.n_dead_tup DESC
+;
+
+
+-- Statistics
+SELECT
+   TO_CHAR(stt.last_autoanalyze,'HH:MI:SS') last_autoanalyze
+FROM pg_stat_user_tables stt
+WHERE 1=1
+    AND relname = 'foo'
+--   AND stt.last_autoanalyze IS NOT NULL
+;
+
+
+
+-- idle
+SELECT
+       --xact_start, state, usename
+    application_name,
+    query
+    -- *
+FROM pg_stat_activity
+WHERE 1=1
+  AND datname = 'postgres'
+  AND state = 'idle'
+;
+
+-- Check autovacuum is in queue, waiting
+-- docker exec -it database ps -ef | grep autovacuum

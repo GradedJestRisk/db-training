@@ -5,7 +5,7 @@ CREATE TABLE foo (
    value INTEGER
  );
 
-ALTER TABLE foo SET (autovacuum_enabled=false);
+ALTER TABLE foo SET (AUTOVACUUM_ENABLED=FALSE);
 
 INSERT INTO foo
   (value)
