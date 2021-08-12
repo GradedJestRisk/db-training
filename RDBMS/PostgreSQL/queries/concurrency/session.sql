@@ -12,14 +12,16 @@ SELECT
   ,ssn.client_port
   ,ssn.pid -- in database, not on client
   ,ssn.query
+  ,ssn.state
   ,'pg_stat_activity=>'
-  ,ssn.*
+--  ,ssn.*
 FROM pg_stat_activity ssn
 WHERE 1=1
   --AND ssn.usename = 'activity'
 --  AND ssn.datname = 'database'
 --  AND ssn.query ILIKE '%VALUES%'
 --   AND pid <> pg_backend_pid()
+    AND ssn.query = 'CREATE UNIQUE INDEX ndx_pk_foo ON foo(id)'
 ;
 
 -- Terminate all sessions on database, but me

@@ -29,21 +29,17 @@
 ----------------
 
 DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (id INTEGER UNIQUE);
+CREATE TABLE foo (id INTEGER);
 
 INSERT INTO foo (id) VALUES (0);
 INSERT INTO foo (id) VALUES (NULL);
 
--- UNIQUE does not check NULL
-INSERT INTO foo (id) VALUES (NULL);
 SELECT * FROM foo;
-TRUNCATE TABLE foo;
 
 -- First way
 ALTER TABLE foo
 ALTER COLUMN id SET NOT NULL;
 --  ERROR: column "id" contains null values
-
 
 ALTER TABLE "account-recovery-demands"
 ALTER COLUMN "schoolingRegistrationId" SET NOT NULL;
@@ -95,6 +91,18 @@ WHERE 1=1
 ----------------
 -- UNIQUE  --
 ----------------
+
+DROP TABLE IF EXISTS foo;
+CREATE TABLE foo (id INTEGER UNIQUE);
+
+INSERT INTO foo (id) VALUES (0);
+INSERT INTO foo (id) VALUES (NULL);
+
+-- UNIQUE does not check NULL
+INSERT INTO foo (id) VALUES (NULL);
+SELECT * FROM foo;
+TRUNCATE TABLE foo;
+
 
 -- First way
 ALTER TABLE foo

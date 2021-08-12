@@ -14,6 +14,10 @@ VACUUM FULL foo;
 VACUUM FULL VERBOSE foo;
 VACUUM FULL VERBOSE ANALYZE foo;
 
+-- Monitor VACUUM progress
+-- Phases in https://www.postgresql.org/docs/13/progress-reporting.html
+SELECT * FROM pg_stat_progress_vacuum;
+
 
 -- https://www.postgresql.org/docs/current/sql-vacuum.html
 

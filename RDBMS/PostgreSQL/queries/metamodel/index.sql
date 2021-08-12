@@ -1,19 +1,5 @@
 
--- Invalid indexes
-SELECT
-    'index=>',
-    cls.relname       table_name,
-    ndx.indisvalid    is_valid,
-    ndx.indisunique   is_unique,
-     ndx.indisprimary is_primary,
-    'pg_index=>',
-    ndx.*
-FROM pg_index ndx
-      INNER JOIN pg_class cls ON ndx.indexrelid = cls.oid
-WHERE 1=1
-    AND ndx.indisvalid IS FALSE
---    AND ndx.indisprimary IS TRUE
-;
+
 
 
 -- Indexes
@@ -84,3 +70,38 @@ WHERE 1=1
     AND tbl.n_live_tup <= 100000 --LOG(10, 5)
 ORDER BY tbl.n_live_tup, ndx.tablename ASC
 ;
+
+
+
+
+-- Invalid indexes
+-- Given table name
+SELECT
+    'index=>',
+    cls.relname       table_name,
+    ndx.indisvalid    is_valid,
+    ndx.indisunique   is_unique,
+     ndx.indisprimary is_primary,
+    'pg_index=>',
+    ndx.*
+FROM pg_index ndx
+      INNER JOIN pg_class cls ON ndx.indexrelid = cls.oid
+WHERE 1=1
+    AND ndx.indisvalid IS FALSE
+--    AND ndx.indisprimary IS TRUE
+    AND cls.relname  = 'foo'
+;
+
+-- Monitor index creation
+-- Phases in https://www.postgresql.org/docs/13/progress-reporting.html
+SELECT
+  now()::TIME(0),
+  a.query,
+  p.phase,
+  p.blocks_total,
+  p.blocks_done,
+  TRUNC(p.blocks_done / p.blocks_total ::real * 100) || '%' AS progress,
+  p.tuples_total,
+  p.tuples_done
+FROM pg_stat_progress_create_index p
+JOIN pg_stat_activity a ON p.pid = a.pid;

@@ -131,8 +131,11 @@ FROM
       AND ccu.table_schema = tc.table_schema
 WHERE 1=1
   AND tc.constraint_type = 'FOREIGN KEY'
+  -- referencing_table_name
 --  AND tc.table_name       IN ('answers', 'feedbacks')
-    AND tc.table_name = 'authentication-methods'
+--    AND tc.table_name = 'authentication-methods'
+    -- referenced_table_name
+    AND ccu.table_name = 'users'
 ;
 
 
