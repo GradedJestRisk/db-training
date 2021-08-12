@@ -18,21 +18,23 @@ CREATE TABLE foo (
    referenced_value INTEGER CONSTRAINT referenced_value_unique UNIQUE
  );
 
+-- Insert some data (half-fill table)
 INSERT INTO foo
   (value, referenced_value)
 SELECT
   floor(random() * 2147483627 + 1)::int,
   floor(random() * 2147483627 + 1)::int
 FROM
-  --generate_series( 1, 5000000) -- 5 million => 2 minutes
-    generate_series( 1, 1000000) -- 1 million => 40 seconds
+  generate_series( 1, 5000000) -- 5 million => 2 minutes
+  --  generate_series( 1, 2000000) -- 2 million => ? seconds
+  --  generate_series( 1, 1000000) -- 1 million => 40 seconds
 ON CONFLICT ON CONSTRAINT referenced_value_unique DO NOTHING;
-
-DROP TABLE IF EXISTS bar;
-
 
 -- BAR --
 -- FK on regular column using INTEGER
+
+DROP TABLE IF EXISTS bar;
+
 CREATE TABLE bar (
    value_foo INTEGER REFERENCES foo(referenced_value)
  );
@@ -41,27 +43,44 @@ INSERT INTO bar (value_foo)
 SELECT f.referenced_value FROM foo f;
 
 -- FOOBAR --
+
+-- Insert a sample --
+
 -- FK and NOT NULL on column with INTEGER type
 CREATE TABLE foobar (
-   id    SERIAL PRIMARY KEY,
-   foo_id INTEGER NOT NULL REFERENCES foo(id)
- );
+  id    SERIAL PRIMARY KEY,
+  foo_id INTEGER NOT NULL REFERENCES foo(id)
+);
 
-INSERT INTO foobar (foo_id)
-SELECT f.id FROM foo f ORDER BY RANDOM() LIMIT 1000000; -- 1 million => 40 seconds
+--SELECT f.id FROM foo f ORDER BY RANDOM() LIMIT 2000000; -- 1 million => 40 seconds
+
+-- -- Insert several time whole table --
+--
+-- -- FK and NOT NULL on column with INTEGER type, with PK BIGINT
+-- CREATE TABLE foobar (
+--    id    BIGSERIAL PRIMARY KEY,
+--    foo_id INTEGER NOT NULL REFERENCES foo(id)
+--  );
+--
+-- INSERT INTO foobar (foo_id)
+-- SELECT f.id FROM foo f;
+--
+-- INSERT INTO foobar (foo_id)
+-- SELECT f.id FROM foo f;
+
+
 
 ----------
 -- User  -
 ----------
 CREATE USER activity;
-CREATE USER migration;
 
 ----------
 -- Privileges  -
 ----------
-GRANT CONNECT ON DATABASE database TO activity, migration;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE foo, bar TO activity, migration;
-GRANT ALL PRIVILEGES ON SEQUENCE foo_id_seq TO activity, migration;
+GRANT CONNECT ON DATABASE database TO activity;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE foo, bar, foobar TO activity;
+GRANT ALL PRIVILEGES ON SEQUENCE foo_id_seq, foobar_id_seq TO activity;
 
 ----------
 -- Views  -
@@ -78,3 +97,4 @@ FROM pg_stat_statements stt
     INNER JOIN pg_database db ON db.oid = stt.dbid
 WHERE db.datname = 'database'
 ;
+select * from foobar where foo_id = 1;

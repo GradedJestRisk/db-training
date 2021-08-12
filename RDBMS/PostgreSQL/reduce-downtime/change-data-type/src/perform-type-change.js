@@ -1,7 +1,12 @@
 // https://tech.coffeemeetsbagel.com/reaching-the-max-limit-for-ids-in-postgres-6d6fa2b1c6ea
 const { Client, Pool } = require('pg');
 
+const readline = require('readline');
+
 const migrateRows = require('./migrate-rows');
+
+const MAX_INTEGER = 2147483627;
+const idThatWouldBeRejectedWithInteger = MAX_INTEGER + 1;
 
 const connexion = {
   user: 'postgres',
@@ -32,6 +37,20 @@ const getStatistics = async (client) => {
   const result = await client.query('SELECT * FROM cumulated_statistics');
   return result.rows[0];
 };
+
+function askQuestion(query) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) =>
+    rl.question(query, (ans) => {
+      rl.close();
+      resolve(ans);
+    })
+  );
+}
 
 const changes = [
   // {
@@ -317,6 +336,9 @@ const changes = [
       console.log('Opening maintenance window...');
       console.time();
 
+      await client.query('BEGIN TRANSACTION');
+      console.log('- transaction started');
+
       // Disable migration
       await client.query('DROP TRIGGER trg_foo ON foo');
       await client.query('DROP FUNCTION migrate_id_concurrently');
@@ -401,6 +423,19 @@ const changes = [
               REFERENCES foo (id) NOT VALID`);
       console.log('- referencing FK has been created (no validation)');
 
+      await client.query(
+        `INSERT INTO foo(id)  VALUES (${idThatWouldBeRejectedWithInteger})`
+      );
+      await client.query(
+        `INSERT INTO foobar(foo_id)  VALUES (${idThatWouldBeRejectedWithInteger})`
+      );
+      console.log(
+        `- INSERT has succeeded with id ${idThatWouldBeRejectedWithInteger}`
+      );
+
+      await client.query('COMMIT TRANSACTION');
+      console.log('- transaction committed');
+
       console.log('Closing maintenance window...');
       console.timeEnd();
 
@@ -412,6 +447,11 @@ const changes = [
         phase: 'downtime',
         ...statisticsDowntime,
       });
+
+      // await askQuestion(
+      //   'Changes are to be reverted, and maintenance window to be closed. You can peek on database, then press Enter to proceed'
+      // );
+      // await resetStatistics(client);
 
       // Re-enable login
       await client.query(`ALTER USER "${externalUserName}" WITH LOGIN`);
@@ -439,6 +479,109 @@ const changes = [
       });
     },
     revert: async (client) => {
+      await client.query(
+        `DELETE FROM foobar WHERE foo_id = ${idThatWouldBeRejectedWithInteger}`
+      );
+      await client.query(
+        `DELETE FROM foo WHERE id = ${idThatWouldBeRejectedWithInteger}`
+      );
+
+      await client.query(
+        'ALTER TABLE foobar DROP CONSTRAINT foobar_foo_id_fkey'
+      );
+      await client.query('ALTER TABLE foo DROP CONSTRAINT foo_pkey');
+      await client.query('ALTER SEQUENCE foo_id_seq AS INTEGER');
+      await client.query('ALTER TABLE foo ALTER COLUMN id TYPE INTEGER');
+      await client.query(
+        'ALTER TABLE foo ADD CONSTRAINT foo_pkey PRIMARY KEY(id)'
+      );
+      await client.query(
+        'ALTER TABLE foobar ALTER COLUMN foo_id DROP NOT NULL'
+      );
+      await client.query(`ALTER TABLE foobar ALTER COLUMN foo_id TYPE INTEGER`);
+      await client.query(
+        `ALTER TABLE foobar ADD CONSTRAINT foobar_foo_id_fkey
+         FOREIGN KEY (foo_id) REFERENCES foo (id)`
+      );
+      await client.query('ALTER TABLE foobar ALTER COLUMN foo_id SET NOT NULL');
+    },
+  },
+  {
+    label: 'CHANGE_IN_PLACE_PRIMARY_KEY_AND_FOREIGN_KEY_CONSTRAINT',
+    perform: async (client, results) => {
+      // Disable next login
+      await client.query(`ALTER USER "${externalUserName}" WITH NOLOGIN`);
+      console.log('- user login has been disabled');
+
+      // Terminate established connexion
+      await client.query(`SELECT
+                            pg_terminate_backend(pid)
+                          FROM pg_stat_activity
+                          WHERE 1=1
+                          AND datname = 'database'
+                          AND usename = '${externalUserName}'
+                          AND pid <> pg_backend_pid()`);
+
+      console.log('- all connexions have been terminated');
+
+      ////////// MAINTENANCE WINDOW STARTS HERE ////////////////////////////////
+      console.log('Opening maintenance window...');
+      console.time();
+
+      await client.query('BEGIN TRANSACTION');
+      console.log('- transaction started');
+
+      await client.query('ALTER TABLE foobar ALTER COLUMN foo_id TYPE BIGINT;');
+      console.log('- column foobar.foo_id has been changed to type BIGINT');
+
+      await client.query('ALTER TABLE foo ALTER COLUMN id TYPE BIGINT;');
+      console.log('- column foo.id has been changed to type BIGINT');
+
+      await client.query('ALTER SEQUENCE foo_id_seq AS BIGINT');
+      console.log(
+        '- sequence for foo.id table has been changed to type BIGINT'
+      );
+
+      await client.query(
+        `INSERT INTO foo(id)  VALUES (${idThatWouldBeRejectedWithInteger})`
+      );
+      await client.query(
+        `INSERT INTO foobar(foo_id)  VALUES (${idThatWouldBeRejectedWithInteger})`
+      );
+      console.log(
+        `- INSERT has succeeded with id ${idThatWouldBeRejectedWithInteger}`
+      );
+
+      await client.query('COMMIT TRANSACTION');
+      console.log('- transaction committed');
+
+      console.log('Closing maintenance window...');
+      console.timeEnd();
+
+      ////////// MAINTENANCE WINDOW STOPS HERE ////////////////////////////////
+      const statisticsDowntime = await getStatistics(client);
+      await resetStatistics(client);
+
+      results.push({
+        phase: 'downtime',
+        ...statisticsDowntime,
+      });
+
+      // await askQuestion(
+      //   'Changes are to be reverted, and maintenance window to be closed. You can peek on database, then press Enter to proceed'
+      // );
+
+      // Re-enable login
+      await client.query(`ALTER USER "${externalUserName}" WITH LOGIN`);
+    },
+    revert: async (client) => {
+      await client.query(
+        `DELETE FROM foobar WHERE foo_id = ${idThatWouldBeRejectedWithInteger}`
+      );
+      await client.query(
+        `DELETE FROM foo WHERE id = ${idThatWouldBeRejectedWithInteger}`
+      );
+
       await client.query(
         'ALTER TABLE foobar DROP CONSTRAINT foobar_foo_id_fkey'
       );

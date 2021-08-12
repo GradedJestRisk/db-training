@@ -25,10 +25,13 @@ const queryAgainstTableWhoseDataTypeIsToBeChanged = async (pool) => {
     // Read
     // Short living query
     'SELECT * FROM foo LIMIT 1',
+    'SELECT * FROM foobar LIMIT 1',
     // Long-living query
     'SELECT * FROM foo ORDER BY RANDOM() LIMIT 1',
+    'SELECT * FROM foobar ORDER BY RANDOM() LIMIT 1',
     // Write
     'INSERT INTO foo(value, referenced_value) VALUES( 1, floor(random() * 2147483627 + 1)::int ) ON CONFLICT ON CONSTRAINT referenced_value_unique DO NOTHING',
+    'INSERT INTO foobar(foo_id) VALUES(1)',
   ];
 
   while (true) {
