@@ -4,7 +4,7 @@
 int main(int argc, char **argv)
 {
 
-   const char FILE_PATH[] = "/tmp/foo.txt";
+   const char FILE_PATH[] = "/tmp/unreferenced-pk.txt";
    const int MAX_INTEGER = 2147483627;
    int record_count;
 
