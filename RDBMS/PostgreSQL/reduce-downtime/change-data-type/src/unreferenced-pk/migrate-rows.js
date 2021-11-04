@@ -3,11 +3,11 @@ const migrateFooId = async (client, chunk_size) => {
   let rowsUpdatedCount = 0;
 
   do {
+    // Removed ORDER BY ID
     const result = await client.query(`WITH rows AS (
           SELECT id
           FROM foo
           WHERE new_id IS NULL
-          ORDER BY id
           LIMIT ${chunk_size}
         )
         UPDATE foo
