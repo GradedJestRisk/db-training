@@ -1,0 +1,9 @@
+FROM postgres:13.6
+RUN apt-get update && apt-get install --yes iotop
+
+# docker build --file Dockerfile-pg-iotop --tag pg_iotop:latest .
+# docker run --privileged=true --net=host --detach --env POSTGRES_HOST_AUTH_METHOD=trust --publish 5432:5432 --name pg_iotop pg_iotop:latest
+# docker start pg_iotop
+# psql postgres://postgres@localhost
+
+# docker exec -it pg_iotop bash

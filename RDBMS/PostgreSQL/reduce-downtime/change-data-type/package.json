@@ -15,16 +15,18 @@
     "database:peek-last-logs": "docker logs --follow --tail 20 database",
     "fake_activity:retry": "npm run --silent fake_activity:retry:shell",
     "fake_activity:retry:shell": "./src/retry-fake-activity.sh",
-    "fake_activity": "npm run fake_activity:pool",
+    "fake_activity": "npm run fake_activity:unreferenced",
+    "fake_activity:unreferenced": "CHANGE_SCOPE=UNREFERENCED_FK npm run fake_activity:pool",
     "fake_activity:pool": "node src/fake-activity-pool.js",
     "fake_activity:client": "node src/fake-activity-client.js",
     "test_connexion": "node src/test-connexion.js",
-    "type_change:perform": "node ./src/perform-type-change.js",
+    "type_change:perform": "npm run type_change:perform:unreferenced",
+    "type_change:perform:unreferenced": "node ./src/perform-type-change-unreferenced-pk",
     "type_change:perform-with-activity": "run-p --race fake_activity type_change:perform"
   },
   "license": "ISC",
   "dependencies": {
-    "pg": "^8.6.0"
+    "pg": "^8.7.1"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"

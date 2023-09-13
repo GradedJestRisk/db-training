@@ -13,7 +13,11 @@ SELECT
 FROM
     pg_database db
 WHERE 1=1
-    AND db.datname = 'database'
+--    AND db.datname = 'database'
 ;
 
 select * from information_schema.schemata;
+
+SELECT CURRENT_DATABASE();
+DROP OWNED BY postgres;
+DROP DATABASE pix;

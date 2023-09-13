@@ -90,14 +90,28 @@ WHERE MOD(id, 2) = 0;
 UPDATE foo SET value = -1 * value;
 ;
 
+-- Estimated row count (immediate)
 SELECT
-    COUNT(*)                                        row_count,
-    pg_stat_get_live_tuples('public.foo'::regclass) live_tuples,
-    pg_stat_get_dead_tuples('public.foo'::regclass) dead_tuples
+   stt.n_live_tup,
+   stt.last_analyze,
+   stt.last_autoanalyze
+FROM pg_stat_user_tables stt
+WHERE 1=1
+   AND relname = 'answers'
+;
+
+
+
+
+-- Actual row count (may take time)
+SELECT
+    COUNT(*)                                        live_row_count_actual,
+    pg_stat_get_live_tuples('public.foo'::regclass) live_row_count_estimated,
+    pg_stat_get_dead_tuples('public.foo'::regclass) dead_row_count_estimated
 FROM foo
 ;
 
--- Update statistics;
+-- Update statistics (update estimation)
 VACUUM ANALYZE foo;
 
 -- Reclaim space => 5 seconds
@@ -108,6 +122,22 @@ VACUUM FULL;
 SELECT
     pg_stat_reset_single_table_counters('public.foo'::regclass)
 ;
+
+-- Statistics
+SELECT
+   stt.relname,
+   stt.n_live_tup,
+   stt.n_dead_tup,
+   'events=>',
+   stt.n_tup_ins,
+   stt.n_tup_upd,
+   stt.n_tup_hot_upd,
+   stt.n_tup_del
+FROM pg_stat_user_tables stt
+WHERE 1=1
+   AND relname = 'foo'
+;
+
 
 -- Statistics
 SELECT
@@ -193,12 +223,36 @@ SELECT unnest(name)                AS metric
      , pg_size_pretty(unnest(val)) AS bytes_pretty
      , unnest(val) / NULLIF(ct, 0) AS bytes_per_row
 FROM   x, y
-
 UNION ALL SELECT '------------------------------', NULL, NULL, NULL
 UNION ALL SELECT 'row_count', ct, NULL, NULL FROM x
 UNION ALL SELECT 'live_tuples', pg_stat_get_live_tuples(tbl), NULL, NULL FROM x
 UNION ALL SELECT 'dead_tuples', pg_stat_get_dead_tuples(tbl), NULL, NULL FROM x
 ;
+
+
+-- Without COUNT (can be resource-consuming)
+WITH x AS (
+   SELECT ARRAY [pg_relation_size('foo')
+               , pg_relation_size('foo', 'vm')
+               , pg_relation_size('foo', 'fsm')
+               , pg_table_size('foo')
+               , pg_indexes_size('foo')
+               , pg_total_relation_size('foo')
+             ] AS val
+        , ARRAY ['core_relation_size'
+               , 'visibility_map'
+               , 'free_space_map'
+               , 'table_size_incl_toast'
+               , 'indexes_size'
+               , 'total_size_incl_toast_and_indexes'
+             ] AS name
+)
+SELECT unnest(name)                AS metric
+     , unnest(val)                 AS bytes
+     , pg_size_pretty(unnest(val)) AS bytes_pretty
+FROM x
+;
+
 
 
 ------- Database --------------

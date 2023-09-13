@@ -1,5 +1,5 @@
 -- Build custom PL/SH + NodeJS docker image
-curl --o Dockerfile https://github.com/GradedJestRisk/db-training/tree/master/RDBMS/PostgreSQL/extension/shell/Dockefile
+curl --o Dockerfile https://github.com/GradedJestRisk/db-training/tree/master/RDBMS/PostgreSQL/extension/shell/Dockerfile
 docker build --tag gradedjestrisk/plsh-nodejs:13 .
 docker push gradedjestrisk/plsh-nodejs:13
 
@@ -8,11 +8,15 @@ docker rm plsh-nodejs
 docker run --detach --env POSTGRES_HOST_AUTH_METHOD=trust --publish 5432:5432 --name plsh-nodejs gradedjestrisk/plsh-nodejs:13
 
 -- From standard Pl/SH image
-curl --o Dockerfile https://github.com/GradedJestRisk/db-training/tree/master/RDBMS/PostgreSQL/extension/shell/Dockefile
+curl --output Dockerfile https://github.com/GradedJestRisk/db-training/blob/master/RDBMS/PostgreSQL/extension/shell/Dockerfile
 docker build --tag plsh:latest .
 docker run --detach --env POSTGRES_HOST_AUTH_METHOD=trust --publish 5432:5432 --name postgres_sh plsh:latest
+docker run --privileged=true --net=host --detach --env POSTGRES_HOST_AUTH_METHOD=trust --publish 5432:5432 --name postgres_sh plsh:latest
 docker start postgres_sh
 psql postgres://postgres@localhost
+
+docker exec -it postgres_sh bash
+
 
 
 CREATE EXTENSION IF NOT EXISTS plsh;
@@ -36,3 +40,5 @@ SELECT * FROM hello_shell(who:='world') value;
 
 
 SELECT hello_shell_node( p_name:='bill', p_location:='masschussets' );
+
+

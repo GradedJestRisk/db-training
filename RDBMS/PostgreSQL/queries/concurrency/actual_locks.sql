@@ -2,6 +2,48 @@ SELECT *
 FROM pg_locks
 ;
 
+select pid;
+
+-- Get ungranted locks
+DROP TABLE IF EXISTS foo CASCADE;
+CREATE TABLE foo (id INTEGER UNIQUE);
+
+-- Client 1
+BEGIN; LOCK TABLE foo IN ACCESS EXCLUSIVE MODE;
+
+-- Client 2
+BEGIN; LOCK TABLE foo IN ACCESS EXCLUSIVE MODE;
+
+-- Ungranted locks
+SELECT
+  pid, relation::regclass, lck.locktype, lck.mode, lck.waitstart started_from,
+  ( current_timestamp - lck.waitstart) waiting_since,
+lck.*
+FROM pg_locks lck
+WHERE 1=1
+  AND NOT granted
+  --AND lck.waitstart > current_timestamp - interval '30 second'
+  --AND lck.waitstart > current_timestamp - interval '1 hour'
+;
+
+-- Ungranted locks + session
+SELECT
+   lck.pid session_id
+  ,lck.relation::regclass
+  ,lck.locktype
+  ,lck.mode
+  ,lck.waitstart started_from
+  ,substring(ssn.query from 1 for 30) query
+  ,ssn.wait_event_type
+FROM pg_locks lck
+  INNER JOIN pg_stat_activity ssn ON ssn.pid = lck.pid
+WHERE 1=1
+  AND NOT granted
+  --AND lck.waitstart > current_timestamp - interval '30 second'
+  --AND lck.waitstart > current_timestamp - interval '1 hour'
+;
+
+
 -- Lock
 SELECT
        sch.nspname,
@@ -66,9 +108,29 @@ FROM pg_locks lck
 WHERE 1=1
     AND tbl.relkind  = 'r'
     AND lck.locktype = 'relation'
-      AND sch.nspname  = 'public'
-      AND tbl.relname  = 'foo'
+    AND sch.nspname  = 'public'
+    AND tbl.relname  = 'knowledge-elements'
 ;
+
+-- Table-level lock + Queries (KISS)
+SELECT
+      'Lock:'
+      ,SUBSTRING(qry.query FROM 1 for 10)
+      ,lck.mode
+      ,lck.granted
+      ,tbl.relname tbl_nm
+FROM pg_locks lck
+    INNER JOIN pg_class tbl ON tbl.oid = lck.relation
+        INNER JOIN pg_namespace sch ON sch.oid = tbl.relnamespace
+    INNER JOIN pg_stat_activity qry ON qry.pid = lck.pid
+WHERE 1=1
+    AND tbl.relkind  = 'r'
+    AND lck.locktype = 'relation'
+    AND sch.nspname  = 'public'
+    AND tbl.relname  = 'users'
+;
+
+
 
 -- Row-level lock
 SELECT
@@ -94,19 +156,19 @@ ORDER BY
 
 -- Blocking
 
- SELECT
-         'blocked=>',
-         blocked_locks.pid         AS pid,
+SELECT
+   'blocked=>',
+   blocked_locks.pid         AS pid,
 --          blocked_activity.usename  AS user,
 --          blocked_activity.client_addr AS blocked_IP,
-         blocked_activity.query    AS statement,
-         blocked_locks.mode        AS type,
-        'blocking=>',
-         blocking_locks.pid        AS pid,
+   blocked_activity.query    AS statement,
+   blocked_locks.mode        AS type,
+  'blocking=>',
+   blocking_locks.pid        AS pid,
 --          blocking_activity.usename AS user,
 --          blocking_activity.client_addr AS blocking_IP,
-         blocking_activity.query   AS current_statement_in_blocking_process,
-         blocking_locks.mode       AS type
+   blocking_activity.query   AS current_statement_in_blocking_process,
+   blocking_locks.mode       AS type
 FROM
    pg_catalog.pg_locks         blocked_locks
     JOIN pg_catalog.pg_stat_activity blocked_activity  ON blocked_activity.pid = blocked_locks.pid

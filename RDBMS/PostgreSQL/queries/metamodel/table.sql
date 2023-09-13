@@ -13,6 +13,17 @@ ORDER BY
     t.table_name ASC
 ;
 
+
+SELECT COUNT(1) FROM information_schema.tables t
+WHERE t.table_type = 'BASE TABLE' AND t.table_name = 'answers_bigint'
+
+    and t.table_catalog = 'pix'
+    and t.table_schema = 'public'
+ORDER BY
+    t.table_name ASC
+;
+
+
 -- Table
 -- Given OID (object identifier)
 SELECT

@@ -25,6 +25,19 @@
 -- See table for supplying constraint in CREATE TABLE
 
 ----------------
+-- CHECK   --
+----------------
+
+DROP TABLE IF EXISTS foo;
+CREATE TABLE foo (id INTEGER CHECK (id > 0) );
+
+INSERT INTO foo (id) VALUES (0);
+-- [2021-09-03 11:55:55] [23514] ERROR: new row for relation "foo" violates check constraint "foo_id_check"
+-- [2021-09-03 11:55:55] Detail: Failing row contains (0).
+INSERT INTO foo (id) VALUES (1);
+
+
+----------------
 -- NOT NULL   --
 ----------------
 
@@ -92,18 +105,7 @@ WHERE 1=1
 -- UNIQUE  --
 ----------------
 
-DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (id INTEGER UNIQUE);
-
-INSERT INTO foo (id) VALUES (0);
-INSERT INTO foo (id) VALUES (NULL);
-
--- UNIQUE does not check NULL
-INSERT INTO foo (id) VALUES (NULL);
-SELECT * FROM foo;
-TRUNCATE TABLE foo;
-
-
+..........................................
 -- First way
 ALTER TABLE foo
 ADD CONSTRAINT value_unique
@@ -214,6 +216,10 @@ WHERE 1=1
     AND pgc.contype = 'f'
 ;
 -- true
+
+
+
+
 
 ------------------------
 ------- DROP -----------

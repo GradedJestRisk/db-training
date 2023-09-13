@@ -2,29 +2,35 @@ version: '3.7'
 
 services:
   database:
-    image: postgres:13-alpine
+    image: postgres:12.7-alpine
+#    image: postgres:13-alpine
     container_name: database
     restart: always
-    # enable pg_stat_statements => https://www.postgresql.org/docs/13/runtime-config-client.html#GUC-SHARED-PRELOAD-LIBRARIES
-    # log_temp_files is in kBytes if no unit is given => https://www.postgresql.org/docs/13/runtime-config-logging.html
-    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c log_statement=all -c log_temp_files=100 -c log_min_messages=info
-    #
-    # customize memory handling
-    # work_mem is in kBytes  if no unit is given => https://www.postgresql.org/docs/current/runtime-config-resource.html
-    # command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c log_statement=all -c log_temp_files=100 -c work_mem=100MB -c log_min_messages=info
+    # pg_stat_statements => https://www.postgresql.org/docs/13/runtime-config-client.html#GUC-SHARED-PRELOAD-LIBRARIES
+    # logging => in kBytes if no unit is given https://www.postgresql.org/docs/13/runtime-config-logging.html
+    # work_mem => in kBytes if no unit is given https://www.postgresql.org/docs/current/runtime-config-resource.html
+    # -c work_mem=100MB
+    command: postgres
+      -c shared_preload_libraries=pg_stat_statements,auto_explain
+      -c pg_stat_statements.track=all
+      -c log_statement=all -c log_temp_files=100 -c log_min_messages=info
+      -c auto_explain.log_min_duration=0 -c auto_explain.log_analyze=1
+      -c max_wal_size=2GB
+      -c work_mem=100MB
+
     environment:
       POSTGRES_DB: database
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
-      - ./create-schema.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./create-schema-unreferenced-pk.sql:/docker-entrypoint-initdb.d/init.sql
       - database-data:/var/lib/postgresql/data
     ports:
-      - 5432:5432
+      - "5432:5432"
     deploy:
       resources:
         limits:
-          cpus: '3'
-          memory: 500m
+          cpus: '5'
+          memory: 2GB
 
 volumes:
   database-data:

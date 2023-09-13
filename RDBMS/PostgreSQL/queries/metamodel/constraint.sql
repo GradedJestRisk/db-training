@@ -13,19 +13,20 @@ GROUP BY pgc.contype
 --  => see https://begriffs.com/posts/2017-08-27-deferrable-sql-constraints.html
 
 -- Constraints
+-- Given name
 SELECT
     'constraint=>'
     ,pgc.convalidated
     ,pgc.condeferrable
     ,pgc.condeferred
     ,pgc.contype
-   ,'pg_constraint=>'
-   ,pgc.*
+    --,'pg_constraint=>'
+    --,pgc.*
 FROM pg_constraint pgc
 WHERE 1=1
---    AND pgc.conname = 'id_not_null'
-      AND pgc.conname ILIKE '%recovery%'
-  AND pgc.contype = 'f'
+  AND pgc.conname = 'users_email_unique'
+--  AND pgc.conname ILIKE '%recovery%'
+  AND pgc.contype = 'u'
 --     AND pgc.condeferrable IS TRUE
 ;
 
@@ -44,10 +45,51 @@ FROM pg_constraint pgc
     JOIN pg_class  cls     ON pgc.conrelid = cls.oid
     JOIN information_schema.constraint_column_usage ccu ON pgc.conname = ccu.constraint_name AND nsp.nspname = ccu.constraint_schema
 WHERE 1=1
---    AND pgc.contype = 'p'
-   -- AND ccu.table_name = 'memberships'
+    AND pgc.contype = 'c'
+    --AND ccu.table_name IN('knowledge-elements')
 ORDER BY
     pgc.conname ASC;
+
+
+
+select * from pg_constraint
+;
+
+select * from pg_catalog.pg_constraint
+;
+
+select * from pg_catalog.pg_class
+WHERE relname = 'knowledge-elements'
+;
+
+SELECT true as sametable, conname,
+  pg_catalog.pg_get_constraintdef(r.oid, true) as condef,
+  conrelid::pg_catalog.regclass AS ontable
+FROM pg_catalog.pg_constraint r
+WHERE 1=1
+ --r.conrelid = '24975' AND
+ -- r.contype = 'f'
+     AND conparentid = 0
+     AND conrelid = 24975
+ORDER BY conname
+;
+
+
+
+
+-- Constraints
+SELECT
+--       COUNT(1)
+    pgc.conname
+FROM pg_constraint pgc
+    JOIN pg_namespace nsp ON nsp.oid = pgc.connamespace
+    JOIN pg_class  cls     ON pgc.conrelid = cls.oid
+    JOIN information_schema.constraint_column_usage ccu ON pgc.conname = ccu.constraint_name AND nsp.nspname = ccu.constraint_schema
+WHERE 1=1
+   AND ccu.table_schema = 'public'
+ORDER BY
+    pgc.conname ASC
+;
 
 
 -------------------------
@@ -70,6 +112,7 @@ FROM pg_constraint pgc
     JOIN information_schema.constraint_column_usage ccu ON pgc.conname = ccu.constraint_name AND nsp.nspname = ccu.constraint_schema
 WHERE 1=1
     AND pgc.contype = 'p'
+    AND ccu.table_schema = 'public'
    -- AND ccu.table_name = 'memberships'
 ORDER BY
     pgc.conname ASC;
@@ -84,31 +127,34 @@ ORDER BY
 SELECT *
 FROM pg_constraint pgc  WHERE pgc.contype = 'f';
 
--- FOREIGN KEY constraints + Referencing/referenced tables
+-- FOREIGN KEY constraints
 SELECT
-    tc.constraint_name ,
-    tc.table_name    AS referencing_table_name,
-    kcu.column_name  AS referencing_column_name,
-    ccu.table_name   AS referenced_table_name,
-    ccu.column_name  AS referenced_column_name
+    tc.*
 FROM
-    information_schema.table_constraints AS tc
-    JOIN information_schema.key_column_usage AS kcu
-      ON tc.constraint_name = kcu.constraint_name
-      AND tc.table_schema = kcu.table_schema
-    JOIN information_schema.constraint_column_usage AS ccu
-      ON ccu.constraint_name = tc.constraint_name
-      AND ccu.table_schema = tc.table_schema
+    information_schema.table_constraints tc
 WHERE 1=1
   AND tc.constraint_type = 'FOREIGN KEY'
---  AND tc.table_name       IN ('answers', 'feedbacks')
+  --AND tc.constraint_name = 'knowledge_elements_answerid_foreign'
+  AND tc.table_name       IN ('answers', 'feedbacks')
 --    AND tc.table_name = 'authentication-methods'
     -- references
-    AND ccu.table_name   = 'answers'
-    AND ccu.column_name  = 'id'
+--     AND ccu.table_name   = 'answers'
+--     AND ccu.column_name  = 'id'
 ;
 
-
+-- Valid or not valid ?
+SELECT
+    cls.relname table_name,
+    con.conname fk_name,
+    con.convalidated is_valid
+FROM
+    pg_constraint AS con
+        JOIN pg_class AS cls ON con.conrelid = cls.oid
+WHERE 1=1
+  AND cls.relname = 'knowledge-elements'
+  AND conname = 'knowledge_elements_answerid_foreign'
+  --AND convalidated IS FALSE
+;
 
 -- FOREIGN KEY constraints + Referencing/referenced tables + columns
 SELECT
@@ -135,7 +181,7 @@ WHERE 1=1
 --  AND tc.table_name       IN ('answers', 'feedbacks')
 --    AND tc.table_name = 'authentication-methods'
     -- referenced_table_name
-    AND ccu.table_name = 'users'
+    AND ccu.table_name = 'answers_bigint'
 ;
 
 

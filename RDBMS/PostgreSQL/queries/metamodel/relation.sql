@@ -39,8 +39,7 @@ ORDER BY
 
 -- Relation
 -- Given OID (object identifier)
-SELECT 16393::regclass
-;
+SELECT 75246::regclass;
 
 
 -- Relation

@@ -13,3 +13,9 @@ SELECT
     data->'title' AS title,
     data
 FROM books;
+
+-- Output (multiple lines)
+SELECT b.* FROM books b;
+
+-- Output (single line)
+SELECT json_agg(b.*) FROM books b;

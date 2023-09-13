@@ -6,3 +6,5 @@ WHERE 1=1
 
 SELECT setting FROM pg_settings WHERE name = 'server_version'
 ;
+
+SHOW server_version;

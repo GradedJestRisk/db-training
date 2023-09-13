@@ -1,3 +1,4 @@
+--
 SELECT pg_backend_pid();
 
 SELECT virtualtransaction AS vxid,
@@ -8,6 +9,9 @@ WHERE pid = pg_backend_pid();
 SELECT id backend_id
 FROM pg_stat_get_backend_idset() AS t(id)
 WHERE pg_stat_get_backend_pid(id) = pg_backend_pid();
+
+
+
 
 
 SELECT

@@ -33,7 +33,12 @@ where t.backend_type = 'autovacuum launcher'
 --------------
 
 -- All
-SELECT * from pg_settings where category like 'Autovacuum';
+SELECT * from pg_settings where category = 'Autovacuum'
+;
+
+SELECT * from pg_settings where name ILIKE '%autovacuum%'
+;
+
 
 
 -- Analyze
@@ -68,6 +73,8 @@ ORDER BY stt.n_dead_tup DESC
 SELECT
    TO_CHAR(NOW(),'HH:MI:SS') now,
    stt.relname,
+   stt.n_live_tup,
+   stt.n_dead_tup,
    'analyze=>',
    stt.analyze_count count,
    TO_CHAR(stt.last_analyze,'HH:MI:SS') last_analyze,
@@ -79,10 +86,10 @@ SELECT
    stt.autovacuum_count count,
    TO_CHAR(stt.last_autovacuum,'HH:MI:SS') last_autovacuum,
    'pg_stat_user_tables=>'
-   --,stt.*
+   ,stt.*
 FROM pg_stat_user_tables stt
 WHERE 1=1
-    AND relname = 'vac_ins'
+    AND relname = 'foo'
 --   AND stt.last_autoanalyze IS NOT NULL
 ;
 
@@ -185,3 +192,15 @@ WHERE 1=1
 
 -- Check autovacuum is in queue, waiting
 -- docker exec -it database ps -ef | grep autovacuum
+
+
+-- Logs --
+
+-- Enable logs
+SELECT * from pg_settings where name = 'log_autovacuum_min_duration'
+;
+
+-- Log autovacuum longer than one minute
+ALTER SYSTEM SET log_autovacuum_min_duration='1min';
+
+

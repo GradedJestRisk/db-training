@@ -1,0 +1,9 @@
+FROM ubuntu:21.10
+RUN apt-get update && apt-get install --yes iotop
+CMD ["bin/bash"]
+
+# docker build --file Dockerfile-ubuntu-iotop --tag test:latest .
+# docker run --net=host --pid=host --privileged --interactive --tty test:latest
+# --net=host : if omitted, "File "/usr/sbin/iotop", line 17, in <module>"
+# --pid=host : show a few processes
+# --privileged : if omitted, "Netlink error: Operation not permitted"

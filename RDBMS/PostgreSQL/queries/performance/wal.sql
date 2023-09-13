@@ -5,6 +5,12 @@ SELECT
 FROM pg_settings
 WHERE name IN ('min_wal_size','max_wal_size')
 ;
+-- name	size_megabytes
+-- max_wal_size	1024 --1GB
+-- min_wal_size	80
+
+SHOW max_wal_size;
+
 
 select name, setting
 from pg_settings

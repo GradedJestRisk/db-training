@@ -1,3 +1,7 @@
+-- Working memory size
+SHOW work_mem;
+-- 4MB default
+
 -- Reset
 select pg_stat_statements_reset();
 
@@ -15,9 +19,11 @@ ORDER BY value;
 -- Temporary file = actual file
 -- Used for JOIN, SORT, DISTINCT
 
--- If a query exceed this size in memory while being performed , a temporary file will be used
-SHOW work_mem;
+-- If a query exceed the work memory size while being performed
+-- => a temporary file will be used
+-- https://adriennedomingus.com/blog/understanding-temp-files-in-postgres
 
+-- Show temporary files used by query
 SELECT
        query                                                       AS query,
        to_char(temp_blks_written, 'FM999G999G999G990')             AS temp_blocks_written,

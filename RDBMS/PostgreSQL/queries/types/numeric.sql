@@ -5,11 +5,23 @@
 -- Range
 SELECT
     1::integer,
-    POWER(2,4 * 8 )/2 max_integer, -- 4 * 8-bit bytes (4 octet)
-    POWER(2,32)/2 max_integer
---  ,(POWER(2,32)/2 +1 )::integer --[22003] ERROR: integer out of range
+    8     byte_size_in_bits,
+    4 * 8 integer_size,  -- 4 bytes (4 octet)
+    POWER(2, 4 * 8 )     max_unsigned_integer,
+    POWER(2, 4 * 8 ) / 2 max_signed_integer,
+    POWER(2, 8 * 8 ) / 2 max_signed_biginteger
+--  ,(2147483648 + 1 )::integer --[22003] ERROR: integer out of range
 ;
+--             2 147 483 648 -- INT
+-- 9 223 372 036 854 776 000 -- BIGINT
+--     9 007 199 254 740 991 -- MAX_SAFE_JS
+--     9 007 199 254 740 992 -- INSERT
 
+
+SELECT
+    1::integer,
+    1::integer::bigint
+;
 
 -- Range exceeded
 DROP TABLE IF EXISTS foo CASCADE;
@@ -46,3 +58,6 @@ SHOW lc_numeric;
 SET lc_numeric = 'en_US.utf8';
 
 SET lc_numeric = 'fr_FR.utf8';
+
+SELECT
+TRUNC(1 :: decimal / 3 :: decimal * 100) || '%';

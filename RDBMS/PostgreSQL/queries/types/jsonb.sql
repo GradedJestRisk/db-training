@@ -204,3 +204,38 @@ WHERE 1=1
     AND c.contacts::text          LIKE '%hendrix%'
 
 ;
+
+-- Array
+
+--https://hevodata.com/learn/query-jsonb-array-of-objects/
+
+CREATE TABLE students(
+   id serial PRIMARY KEY,
+   name varchar(50),
+   subject_marks jsonb
+);
+
+INSERT INTO students(name ,subject_marks ) VALUES ('Dandelions',
+'[{
+ "sub_id": 1,
+ "sub_name": "Computer Architecture",
+ "sub_marks": 130
+},
+{
+ "sub_id": 2,
+ "sub_name": "Operating Systems",
+ "sub_marks": 120
+
+}]');
+
+SELECT
+  s.id,
+  arr.item_object
+FROM students s,
+  JSONB_ARRAY_ELEMENTS(subject_marks) WITH ORDINALITY arr (item_object, position)
+WHERE 1=1
+  AND s.id = 1
+  AND arr.position = 1
+  ;
+
+

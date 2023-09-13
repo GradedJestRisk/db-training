@@ -43,3 +43,35 @@ FROM schema1.table_one
 ------------------------------------------------------
 
 -- pg_dump postgres://postgres@localhost:5432 --schema=schema1 > before.sql
+
+
+------------------------------------------------------
+-- Constraints
+------------------------------------------------------
+
+psql postgres://postgres@localhost:5432/
+
+DROP DATABASE IF EXISTS source_database;
+CREATE DATABASE source_database;
+
+DROP DATABASE IF EXISTS target_database;
+CREATE DATABASE target_database;
+
+\c source_database
+CREATE TABLE foo (id INTEGER PRIMARY KEY);
+INSERT INTO foo (id) VALUES (1);
+INSERT INTO foo (id) VALUES (2);
+
+CREATE TABLE foobar (id_foo INTEGER REFERENCES foo(id));
+INSERT INTO foobar (id_foo) VALUES (1);
+
+
+\c target_database
+CREATE TABLE foo (id INTEGER);
+CREATE TABLE foobar (id_foo INTEGER);
+
+-- SOURCE_DATABASE_URL=postgres://postgres@localhost:5432/source_database DATABASE_URL=postgres://postgres@localhost:5432/target_database TABLE_TO_COPY=foobar npm run unreferenced-pk:copy-dataset
+--
+-- pg_restore: error: could not execute query: ERROR:  relation "public.foo" does not exist
+-- Command was: ALTER TABLE ONLY public.foobar
+--     ADD CONSTRAINT foobar_id_foo_fkey FOREIGN KEY (id_foo) REFERENCES public.foo(id);
