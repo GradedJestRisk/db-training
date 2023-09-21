@@ -57,22 +57,3 @@ WHERE 1=1
   AND pid <> pg_backend_pid() -- Not me
 ;
 
-
-Aller-retour en train ou avion
-
-Paris - Bordeaux : 300 € TTC
-France – Bordeaux : 350 € TTC
-Repas
-
-Midi : pendant la formation, repas pris en charge par Lectra dans notre restaurant d’entreprise.
-Soir : 35 € TTC
-Hôtels : par nuitée petit-déjeuner compris
-
-Bordeaux/Cestas 100€ TTC
-
-Lectra a négocié des tarifs avec les hôtels suivants :
-
-Holiday Inn Pessac	Quality Suite Bordeaux Mérignac	Quality & Comfort Hotel Bordeaux Gradignan	Le Chalet Lyrique
-12bis avenue Antoine Becquerel 33608 Pessac cedex	83 avenue JF Kennedy 33700 Mérignac	Avenue de l'Europe 33170 Gradignan	196 cours du Général de Gaulle 33170 Gradignan
-contact@hi-pessac.com	reservation@qualitybordeaux.com	direction.chbg@orange.fr	info@chalet-lyrique.fr
-556075959	557532122	556752000	556891159

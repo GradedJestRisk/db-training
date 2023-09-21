@@ -11,9 +11,6 @@ FROM pg_stat_get_backend_idset() AS t(id)
 WHERE pg_stat_get_backend_pid(id) = pg_backend_pid();
 
 
-
-
-
 SELECT
        pid,
        --age(clock_timestamp(), query_start) duration,
