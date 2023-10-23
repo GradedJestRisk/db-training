@@ -2,6 +2,11 @@
 --- analyze --
 -------------------------
 
+-- Gather data into pg_statistic
+SELECT *
+FROM pg_statistic;
+
+
 -- Analyze is run:
 -- - manually with VACUUM ANALYZE foo;
 -- - automatically with AUTO-VACUUM

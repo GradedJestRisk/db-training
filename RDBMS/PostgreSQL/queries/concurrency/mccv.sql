@@ -1,3 +1,6 @@
+-- Multi-Version Concurrency Control
+-- https://www.postgresql.org/docs/current/mvcc.html
+
 CREATE EXTENSION pageinspect;
 
 DROP TABLE IF EXISTS foo CASCADE;

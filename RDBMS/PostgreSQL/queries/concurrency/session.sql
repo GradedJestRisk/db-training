@@ -6,6 +6,7 @@ SELECT
   ,ssn.pid     session_id
 --  ,ssn.query
   ,substring(ssn.query from 1 for 30) query
+  ,ssn.query  query
   ,ssn.wait_event_type
   ,ssn.state
 --    ,'pg_stat_activity=>' ,ssn.*
@@ -15,8 +16,8 @@ WHERE 1=1
   AND ssn.backend_type = 'client backend'
   --AND ssn.state = 'active'
   --AND ssn.wait_event IS NOT NULL
---  AND ssn.query ILIKE '%VALUES%'
-  --AND pid <> pg_backend_pid() -- Not me
+  AND ssn.query ILIKE '%vacuum%'
+  AND pid <> pg_backend_pid() -- Not me
 ;
 
 -- Session

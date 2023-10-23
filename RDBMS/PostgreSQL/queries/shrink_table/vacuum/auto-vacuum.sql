@@ -32,8 +32,17 @@ where t.backend_type = 'autovacuum launcher'
 -- Settings --
 --------------
 
+
+-- https://www.postgresql.org/docs/current/runtime-config-autovacuum.html
 -- All
-SELECT * from pg_settings where category = 'Autovacuum'
+SELECT
+    name, short_desc, unit, vartype "type",
+    setting  "current_value",
+    boot_val "default value",
+    pending_restart "need_restart",
+    'pg_settings=>',
+    stt.*
+FROM pg_settings stt WHERE category = 'Autovacuum'
 ;
 
 SELECT * from pg_settings where name ILIKE '%autovacuum%'
@@ -61,7 +70,7 @@ SELECT
        relname
        ,stt.n_live_tup
        ,stt.n_dead_tup
-       ,TRUNC(current_setting('autovacuum_vacuum_threshold')::float8 + current_setting('autovacuum_vacuum_scale_factor')::float8 * stt.n_live_tup) ceiling -- if > n_dead_tup, autovaccum is triggered
+     --  ,TRUNC(current_setting('autovacuum_vacuum_threshold')::float8 + current_setting('autovacuum_vacuum_scale_factor')::float8 * stt.n_live_tup) ceiling -- if > n_dead_tup, autovaccum is triggered
 FROM pg_stat_user_tables stt
 WHERE 1=1
 --    AND relname = 'foo'
@@ -89,7 +98,7 @@ SELECT
    ,stt.*
 FROM pg_stat_user_tables stt
 WHERE 1=1
-    AND relname = 'foo'
+    AND relname = 'organization-learners'
 --   AND stt.last_autoanalyze IS NOT NULL
 ;
 

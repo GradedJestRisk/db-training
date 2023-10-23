@@ -21,7 +21,7 @@ GROUP BY ssn.state
 SELECT
    'session=>'
   ,ssn.pid     session_id
-  ,SUBSTRING(ssn.query from 1 for 30) query
+  ,ssn.query  query
   ,TO_CHAR(ssn.query_start,'HH24:MI:SS') query_started_at
   ,TO_CHAR(NOW() - ssn.query_start,'HH24:MI:SS') query_duration
 FROM pg_stat_activity ssn

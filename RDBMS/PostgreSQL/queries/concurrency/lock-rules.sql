@@ -2,6 +2,8 @@
 
 -- https://www.postgresql.org/docs/current/explicit-locking.html
 
+-- https://pglocks.org/
+
 -------------------
 
 Levels:

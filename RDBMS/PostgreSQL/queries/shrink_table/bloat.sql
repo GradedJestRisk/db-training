@@ -1,3 +1,11 @@
+---------------------------------------------
+---- Bloat
+--------------------------------------------
+
+-- Bloat is caused by dead_tuples, they cannot be removed by VACUUM
+-- A VACUUM full is sometimes needed, or to use etension as repack or compact
+-- https://medium.com/compass-true-north/dealing-with-significant-postgres-database-bloat-what-are-your-options-a6c1814a03a5Fs
+
 DROP TABLE IF EXISTS foo;
 
 CREATE TABLE foo (
@@ -26,8 +34,10 @@ select count(1) from foo;
 
 -- https://github.com/ioguix/pgsql-bloat-estimation/blob/master/table/table_bloat.sql
 SELECT
-   current_database(), schemaname, tblname, bs*tblpages AS real_size,
-  (tblpages-est_tblpages)*bs                            AS extra_size,
+--     current_database(), schemaname,
+    tblname,
+   bs*tblpages                      AS real_size,
+  (tblpages-est_tblpages)*bs        AS extra_size,
   CASE WHEN tblpages - est_tblpages > 0
     THEN 100 * (tblpages - est_tblpages)/tblpages::float
     ELSE 0
@@ -85,7 +95,7 @@ FROM (
 ) AS s3
 WHERE 1=1
    AND schemaname = 'public'
---   AND tblname = 'foo'
+   --AND tblname = 'organization-learners'
 -- WHERE NOT is_na
 --   AND tblpages*((pst).free_percent + (pst).dead_tuple_percent)::float4/100 >= 1
 ORDER BY bloat_size DESC,

@@ -47,6 +47,31 @@ FROM pg_constraint pgc
 WHERE 1=1
     AND pgc.contype = 'c'
     --AND ccu.table_name IN('knowledge-elements')
+--     AND pg_get_constraintdef(pgc.oid)  NOT ILIKE '%array%'
+ORDER BY
+    pgc.conname ASC;
+
+
+
+
+-- Constraints with ENUM-emulation
+SELECT
+       'constraint=>'    qry
+       ,pgc.contype      cnt_type
+       ,pgc.conname      constraint_name
+       ,ccu.table_schema "schema"
+       ,ccu.table_name   "table"
+       ,ccu.column_name  "column"
+       ,pg_get_constraintdef(pgc.oid) definition
+       --pgc.*
+FROM pg_constraint pgc
+    JOIN pg_namespace nsp ON nsp.oid = pgc.connamespace
+    JOIN pg_class  cls     ON pgc.conrelid = cls.oid
+    JOIN information_schema.constraint_column_usage ccu ON pgc.conname = ccu.constraint_name AND nsp.nspname = ccu.constraint_schema
+WHERE 1=1
+    AND pgc.contype = 'c'
+    --AND ccu.table_name IN('knowledge-elements')
+    AND pg_get_constraintdef(pgc.oid)  NOT ILIKE '%array%'
 ORDER BY
     pgc.conname ASC;
 

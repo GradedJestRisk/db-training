@@ -1,10 +1,12 @@
--- Lock
+-- Ungranted Lock
   SELECT blocked_locks.pid     AS blocked_pid,
-         blocked_activity.usename  AS blocked_user,
+--          blocked_activity.usename  AS blocked_user,
          blocking_locks.pid     AS blocking_pid,
-         blocking_activity.usename AS blocking_user,
-         substring(blocked_activity.query FROM 1 FOR 60)     AS blocked_statement,
-         substring(blocking_activity.query FROM 1 FOR 60)    AS current_statement_in_blocking_process
+--          blocking_activity.usename AS blocking_user,
+--          blocked_activity.query    AS blocked_statement,
+--          substring(blocked_activity.query FROM 1 FOR 60)     AS blocked_statement,
+         blocking_activity.query    AS current_statement_in_blocking_process
+--          substring(blocking_activity.query FROM 1 FOR 60)    AS current_statement_in_blocking_process
    FROM  pg_catalog.pg_locks         blocked_locks
     JOIN pg_catalog.pg_stat_activity blocked_activity  ON blocked_activity.pid = blocked_locks.pid
     JOIN pg_catalog.pg_locks         blocking_locks
@@ -20,4 +22,10 @@
         AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
         AND blocking_locks.pid != blocked_locks.pid
     JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
-   WHERE NOT blocked_locks.granted;
+WHERE 1=1
+   AND NOT blocked_locks.granted
+   AND blocked_locks.pid = 25797
+;
+
+SELECT * FROM pg_locks
+where pid = 25797;

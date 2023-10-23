@@ -1,3 +1,10 @@
+-- https://medium.com/compass-true-north/postgresql-lessons-we-learned-the-hard-way-663ddf666e4
+-- Lock by idle query
+
+-- Log locks
+-- https://www.postgresql.org/docs/current/runtime-config-logging.html#GUC-LOG-LOCK-WAITS
+
+
 -- https://www.postgresql.org/docs/13/sql-lock.html
 -- LOCK TABLE obtains a table-level lock, waiting if necessary for any conflicting locks to be released.
 -- Once obtained, the lock is held for the remainder of the current transaction.

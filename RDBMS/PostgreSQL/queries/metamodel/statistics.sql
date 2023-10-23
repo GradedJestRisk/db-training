@@ -72,8 +72,9 @@ SELECT
    ,stt.*
 FROM pg_stat_user_tables stt
 WHERE 1=1
-    AND relname = 'foo'
+     AND relname = 'foo'
 --   AND stt.last_autoanalyze IS NOT NULL
-;
+ORDER BY stt.relname ASC;
+
 
 -- https://pgstats.dev/
