@@ -25,6 +25,7 @@ docker container logs sqlserver
 
 ## Connect to instance
 https://stackoverflow.com/questions/4944165/can-you-make-sqlcmd-immediately-run-each-statement-in-a-script-without-the-use-o
+
 ### Using docker
 ```
 docker exec --interactive --tty sqlserver "bash"
@@ -59,6 +60,12 @@ Enter <YourStrong@Passw0rd>
 SELECT name FROM sys.databases;
 GO
 ```
+
+
+### Using another tool
+
+User: SA
+Port : 1433
 
 ## Create a database
 ```sql
