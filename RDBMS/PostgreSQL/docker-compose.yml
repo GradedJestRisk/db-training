@@ -1,0 +1,13 @@
+# https://hub.docker.com/r/bitnami/postgresql
+# psql --dbname "host=localhost port=5432 user=postgres password=password123"
+
+version: '2'
+
+services:
+  postgresql:
+    container_name: postgresql
+    image: docker.io/bitnami/postgresql:16
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRESQL_PASSWORD=password123

@@ -73,7 +73,7 @@ docker exec --interactive --tty sqlserver "bash"
 /opt/mssql-tools/bin/sqlcmd -S localhost -U SA
 ```
 
-Enter <YourStrong@Passw0rd>
+Enter `<YourStrong@Passw0rd>`
 
 You'll get a prompt
 ```shell
