@@ -90,7 +90,12 @@ SELECT '["Fiction", "Thriller"]'::jsonb
 -- Other operators: -> ->> #> #>> @? ?& ...
 -- https://www.postgresql.org/docs/current/functions-json.html#FUNCTIONS-JSON-OP-TABLE
 
+-- Arrays
 
+SELECT
+    '{"a": {"b":"foo"}}'::json->'a',
+    '[{"a":"foo"},{"b":"bar"},{"c":"baz"}]'::json->2
+;
 
 
 -- indexing
@@ -237,5 +242,3 @@ WHERE 1=1
   AND s.id = 1
   AND arr.position = 1
   ;
-
-

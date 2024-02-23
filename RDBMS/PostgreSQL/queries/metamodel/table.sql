@@ -1,4 +1,20 @@
 -- Tables
+-- Given schema
+SELECT
+    t.table_name,
+    t.*
+  FROM information_schema.tables t
+WHERE 1=1
+    AND t.table_type = 'BASE TABLE'
+--    and t.table_name = 'users'
+--     and t.table_catalog = 'pix'
+    and t.table_schema = 'public'
+ORDER BY
+    t.table_name ASC
+;
+
+
+-- Tables
 -- Given table name
 SELECT
     t.table_name,
@@ -94,4 +110,3 @@ WHERE
   nspname NOT IN ('pg_catalog', 'information_schema') AND
   relkind='r'
 ORDER BY reltuples DESC;
-

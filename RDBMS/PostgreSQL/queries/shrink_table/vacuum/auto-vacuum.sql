@@ -70,13 +70,12 @@ SELECT
        relname
        ,stt.n_live_tup
        ,stt.n_dead_tup
-     --  ,TRUNC(current_setting('autovacuum_vacuum_threshold')::float8 + current_setting('autovacuum_vacuum_scale_factor')::float8 * stt.n_live_tup) ceiling -- if > n_dead_tup, autovaccum is triggered
+       ,TRUNC(current_setting('autovacuum_vacuum_threshold')::float8 + current_setting('autovacuum_vacuum_scale_factor')::float8 * stt.n_live_tup) ceiling -- if > n_dead_tup, autovaccum is triggered
 FROM pg_stat_user_tables stt
 WHERE 1=1
 --    AND relname = 'foo'
 ORDER BY stt.n_dead_tup DESC
 ;
-
 
 -- Statistics
 SELECT
@@ -98,7 +97,7 @@ SELECT
    ,stt.*
 FROM pg_stat_user_tables stt
 WHERE 1=1
-    AND relname = 'organization-learners'
+   AND relname LIKE 'traces_metier%'
 --   AND stt.last_autoanalyze IS NOT NULL
 ;
 
@@ -212,4 +211,5 @@ SELECT * from pg_settings where name = 'log_autovacuum_min_duration'
 -- Log autovacuum longer than one minute
 ALTER SYSTEM SET log_autovacuum_min_duration='1min';
 
-
+-- Log autovacuum longer than one minute
+ALTER SYSTEM SET log_autovacuum_min_duration=100;
