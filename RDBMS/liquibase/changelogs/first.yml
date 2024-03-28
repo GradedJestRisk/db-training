@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: foo
+      changes:
+        - sql:
+            sql: >
+              CREATE TABLE person (
+                  id int,
+                  name varchar(50) not null
+              );

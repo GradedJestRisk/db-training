@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: changelogs/first.yml
+  - include:
+      file: changelogs/second.yml
+  - include:
+      file: changelogs/third.yml

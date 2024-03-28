@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: foo
+      changes:
+        - sql:
+            sql: >
+              CREATE TABLE planet (
+                  id int,
+                  name varchar(50) not null
+              );

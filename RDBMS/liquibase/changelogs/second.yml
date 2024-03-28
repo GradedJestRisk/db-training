@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: foo
+      changes:
+        - sql:
+            sql: >
+              CREATE TABLE country (
+                  id int,
+                  name varchar(50) not null
+              );
