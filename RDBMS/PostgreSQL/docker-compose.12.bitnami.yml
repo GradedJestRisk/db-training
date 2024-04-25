@@ -13,3 +13,4 @@ services:
       - '5432:5432'
     environment:
       - POSTGRESQL_PASSWORD=password123
+      - POSTGRESQL_DATABASE=example

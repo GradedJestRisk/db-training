@@ -1,3 +1,5 @@
+-- https://clarkdave.net/2013/06/what-can-you-do-with-postgresql-and-json/
+
 -- Insert
 CREATE TABLE books (
   id   SERIAL NOT NULL,

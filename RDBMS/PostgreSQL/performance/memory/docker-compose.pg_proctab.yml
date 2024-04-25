@@ -1,0 +1,17 @@
+# https://github.com/aptible/docker-postgresql
+# psql --dbname "host=localhost port=5432 user=postgres password=password123"
+
+services:
+  postgresql:
+    container_name: postgresql
+    image: quay.io/aptible/postgresql:16
+    shm_size: 2GB
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_PASSWORD=password123
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512m

@@ -1,0 +1,3 @@
+-- SELECT * FROM traces_metier WHERE id = 'ccae7916-3a6b-4f47-85ef-83a470bcdee7';
+SELECT * FROM traces_metier trc WHERE date_trace::DATE BETWEEN '2021-01-01' AND '2021-08-01' AND trc.declencheur = 'MODIFICATION-ADRESSE' AND trc.perimetre = '950590100194';
+-- SELECT * FROM traces_metier trc WHERE trc.changes::JSONB->'version'::TEXT = '"1"' AND trc.changes::JSONB->'changements'->0->'champ' = '"precision[B]"';

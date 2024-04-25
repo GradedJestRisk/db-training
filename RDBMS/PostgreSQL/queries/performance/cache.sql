@@ -13,7 +13,26 @@ SHOW shared_buffers;
 select (round(sum(blks_hit) * 100 / sum(blks_hit + blks_read), 2))::varchar || '%' as hit_ratio
 from pg_stat_database;
 
+select (round(sum(blks_hit) * 100 / sum(blks_hit + blks_read), 2))::varchar || '%' as hit_ratio
+from pg_stat_database;
 
+-- Hit by table
+select
+    --*
+   (round(sum(heap_blks_hit) * 100 / sum(heap_blks_hit + heap_blks_read), 2))::varchar || '%' as hit_ratio
+from pg_statio_all_tables t
+where 1=1
+ and t.relname LIKE 'traces_metier%'
+;
+
+-- Hit by table
+SELECT
+    --*
+    (round(sum(idx_blks_hit) * 100 / sum(idx_blks_hit + idx_blks_read), 2))::varchar || '%' as hit_ratio
+FROM pg_statio_all_tables t
+WHERE 1=1
+  AND t.relname LIKE 'traces_metier%'
+;
 
 -- Database
 SELECT

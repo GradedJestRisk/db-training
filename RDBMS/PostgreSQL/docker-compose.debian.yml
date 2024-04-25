@@ -1,10 +1,10 @@
 # https://github.com/docker-library/postgres/blob/c86568af4a6861cb30b8f1b736b0868a3129bdd6/16/bookworm/Dockerfile
+# docker compose --file=docker-compose.debian.yml up --detach
 # psql --dbname "host=localhost port=5432 user=postgres password=password123"
-version: '2'
 
 services:
   postgresql:
-    container_name: postgresql
+    container_name: postgresql-debian
     image: postgres:16-bookworm
     shm_size: 2GB
     ports:

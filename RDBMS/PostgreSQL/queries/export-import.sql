@@ -140,7 +140,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE foo TO activity;
 -- pg_restore --help
 --  -c, --clean                  clean (drop) database objects before recreating
 
--- tar -czf test.tar.gz test.sql
+-- tar -czf test.tar.gz test.md
 --
 -- tar --to-stdout -xzvf test.tar.gz | cat
 -- tar --to-stdout -xzvf test.tar.gz | pv | cat

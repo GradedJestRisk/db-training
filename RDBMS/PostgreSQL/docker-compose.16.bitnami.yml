@@ -2,7 +2,9 @@
 # docker compose --file docker-compose.16.bitnami.yml up --renew-anon-volumes --force-recreate
 # psql --dbname "host=localhost port=5432 user=postgres password=password123"
 # https://github:com/bitnami/containers/blob/main/bitnami/postgresql/12/debian-11/Dockerfile:
-version: '2'
+
+# Connect to container
+# docker exec --user root --tty --interactive postgresql bash
 
 services:
   postgresql:
@@ -11,5 +13,6 @@ services:
     shm_size: 2GB
     ports:
       - '5432:5432'
+#    https://github.com/bitnami/containers/blob/main/bitnami/postgresql/README.md#customizable-environment-variables
     environment:
       - POSTGRESQL_PASSWORD=password123

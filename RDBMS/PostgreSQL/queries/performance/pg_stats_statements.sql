@@ -5,8 +5,9 @@ SHOW shared_preload_libraries;
 SELECT *
 FROM pg_available_extensions
 WHERE 1=1
-  AND name = 'pg_stat_statements'
-  AND installed_version IS NOT NULL
+   AND name = 'pg_stat_statements'
+--   AND installed_version IS NOT NULL
+ORDER BY name ASC
 ;
 
 -- Reset
