@@ -44,8 +44,6 @@ INSERT INTO foo (id) VALUES (generate_series( 1, 10000000));
 
 ## Local
 
-
-
 ## Docker (eg. bitnami)
 
 Get the process ID 
@@ -186,4 +184,84 @@ select
 --     get_pid_cpu_mem(pid).mem_perc,
     query 
 from pg_stat_activity;
+```
+
+## Exhaust memory
+
+### Start container
+
+Use [limited memory](./postgresql.conf)
+```
+shared_buffers=256MB
+work_mem=5MB
+temp_buffers=10MB
+maintenance_work_mem=10MB
+```
+
+Start
+```shell
+docker compose --file=docker-compose.exhaust.yml up --detach
+```
+
+Check 
+```text
+docker logs --follow postgresql
+postgresql 06:58:26.73 INFO  ==> Loading custom scripts...
+```
+
+```postgresql
+SHOW shared_buffers;
+SHOW work_mem;
+SHOW temp_buffers;
+SHOW maintenance_work_mem;
+```
+
+### Cache tooling
+
+As `postgresql`
+```postgresql
+CREATE EXTENSION pg_buffercache;
+GRANT EXECUTE ON FUNCTION pg_buffercache_pages() TO jane;
+GRANT SELECT ON pg_buffercache TO jane;
+```
+
+Check access
+```postgresql
+SELECT * FROM pg_extension
+WHERE extname = 'pg_buffercache'
+```
+
+```postgresql
+CREATE FUNCTION buffercache(rel regclass)
+RETURNS TABLE(
+bufferid integer, relfork text, relblk bigint,
+isdirty boolean, usagecount smallint, pins integer
+) AS $$
+SELECT bufferid,
+CASE relforknumber
+WHEN 0 THEN 'main'
+WHEN 1 THEN 'fsm'
+WHEN 2 THEN 'vm'
+END,
+relblocknumber,
+isdirty,
+usagecount,
+pinning_backends
+FROM pg_buffercache
+WHERE relfilenode = pg_relation_filenode(rel)
+ORDER BY relforknumber, relblocknumber;
+$$ LANGUAGE sql;
+```
+
+Force-feed the cache
+```postgresql
+CREATE TABLE cacheme(
+id integer
+) WITH (autovacuum_enabled = off);
+INSERT INTO cacheme VALUES (1);
+```
+
+Get
+```postgresql
+SELECT * FROM buffercache('cacheme');
 ```

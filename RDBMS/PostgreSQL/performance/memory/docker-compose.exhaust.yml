@@ -1,0 +1,31 @@
+# Source:
+
+# Usage
+# - start container : docker compose --file=docker-compose.exhaust.yml up --detach && docker logs --follow postgresql
+# - stop container : docker stop postgresql && docker rm postgresql
+# - connect to database : psql --dbname "host=localhost port=5432 user=jane password=password123 dbname=test"
+# - connect to database as administrator : psql --dbname "host=localhost port=5432 user=postgres password=password123 dbname=test"
+# - connect to container as administrator : docker exec --user root --tty --interactive postgresql bash
+
+# if crash on first run: https://github.com/bitnami/containers/issues/41431
+
+services:
+  postgresql:
+    container_name: postgresql
+    image: docker.io/bitnami/postgresql:14
+    volumes:
+      - ./postgresql.conf:/opt/bitnami/postgresql/conf/conf.d/postgresql.conf
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRESQL_DATABASE=test
+      # https://github.com/bitnami/containers/blob/main/bitnami/postgresql/README.md#creating-a-database-user-on-first-run
+      - POSTGRESQL_USERNAME=jane
+      - POSTGRESQL_PASSWORD=password123
+      # https://github.com/bitnami/containers/blob/main/bitnami/postgresql/README.md#creating-a-database-user-on-first-run
+      - POSTGRESQL_POSTGRES_PASSWORD=password123
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512m
