@@ -266,6 +266,17 @@ Get cached pages
 SELECT * FROM buffercache('cacheme');
 ```
 
+Get table size
+```postgresql
+SELECT pg_size_pretty( pg_total_relation_size('cacheme') );
+```
+
+Get cached pages size
+```postgresql
+SELECT pg_size_pretty(COUNT(1) * 8 * 1024)
+FROM buffercache('cacheme');
+```
+
 Empty cache
 ```shell
 docker exec postgresql bash -c "pg_ctl restart -D /bitnami/postgresql/data"
@@ -314,17 +325,30 @@ WHERE 1=1
 ORDER BY rel.relname DESC;
 ```
 
+Cache total size
 ```postgresql
-SELECT rel.relname,
-       bfr.*
+SELECT pg_size_pretty(COUNT(1) * 8 * 1024)
 FROM pg_buffercache bfr
-    INNER JOIN pg_class rel ON rel.relfilenode = bfr.relfilenode
-WHERE bfr.relfilenode IS NOT NULL
-ORDER BY usagecount DESC
-GROUP BY rel.relname;
 ```
 
-Hot data (always in cahce)
+Cache free
+```postgresql
+SELECT pg_size_pretty(COUNT(1) * 8 * 1024)
+FROM pg_buffercache bfr
+WHERE relfilenode IS NULL
+```
+
+Cache used
+```postgresql
+SELECT pg_size_pretty(COUNT(1) * 8 * 1024)
+FROM pg_buffercache bfr
+WHERE relfilenode IS NOT NULL
+```
+
+
+
+How much of the table is cached ?
+Hot data (always in cache)
 ```postgresql
 SELECT c.relname,
 count(*) blocks,
@@ -372,3 +396,6 @@ Get cached pages
 ```postgresql
 SELECT * FROM buffercache('cacheme');
 ```
+
+PG cache and OS cache
+https://dev.to/franckpachot/postgresql-double-buffering-understand-the-cache-size-in-a-managed-service-oci-2oci
