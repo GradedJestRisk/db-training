@@ -261,7 +261,114 @@ id integer
 INSERT INTO cacheme VALUES (1);
 ```
 
-Get
+Get cached pages
+```postgresql
+SELECT * FROM buffercache('cacheme');
+```
+
+Empty cache
+```shell
+docker exec postgresql bash -c "pg_ctl restart -D /bitnami/postgresql/data"
+```
+
+Cache is preserved if restarting container
+```shell
+docker restart postgresql
+```
+
+Cache hit
+```postgresql
+SELECT heap_blks_read, heap_blks_hit
+FROM pg_statio_all_tables
+WHERE relname = 'cacheme';
+```
+
+Query table to trigger cache loading
+```postgresql
+SELECT * FROM cacheme;
+```
+
+Repartition
+```postgresql
+SELECT usagecount, count(*)
+FROM pg_buffercache
+GROUP BY usagecount
+ORDER BY usagecount;
+```
+
+Buffer by relation
+```postgresql
+SELECT rel.relname
+       ,bfr.usagecount
+       ,'pg_buffercache:'
+       ,bfr.*
+       ,'pg_class:'
+       ,rel.*
+FROM pg_buffercache bfr
+    INNER JOIN pg_class rel ON rel.relfilenode = bfr.relfilenode
+       INNER JOIN pg_namespace ns ON ns.oid = rel.relnamespace
+WHERE 1=1
+    AND bfr.relfilenode IS NOT NULL
+    AND ns.nspname  = 'public'
+    AND rel.relname = 'cacheme'
+ORDER BY rel.relname DESC;
+```
+
+```postgresql
+SELECT rel.relname,
+       bfr.*
+FROM pg_buffercache bfr
+    INNER JOIN pg_class rel ON rel.relfilenode = bfr.relfilenode
+WHERE bfr.relfilenode IS NOT NULL
+ORDER BY usagecount DESC
+GROUP BY rel.relname;
+```
+
+Hot data (always in cahce)
+```postgresql
+SELECT c.relname,
+count(*) blocks,
+round( 100.0 * 8192 * count(*) /
+pg_table_size(c.oid) ) AS "% of rel",
+round( 100.0 * 8192 * count(*) FILTER (WHERE b.usagecount > 1) /
+pg_table_size(c.oid) ) AS "% hot"
+FROM pg_buffercache b
+    JOIN pg_class c ON pg_relation_filenode(c.oid) = b.relfilenode
+     INNER JOIN pg_namespace ns ON ns.oid = c.relnamespace
+WHERE b.reldatabase IN (
+0, -- cluster-wide objects
+(SELECT oid FROM pg_database WHERE datname = current_database())
+)
+AND b.usagecount IS NOT NULL
+  AND ns.nspname  = 'public'
+GROUP BY c.relname, c.oid
+ORDER BY 2 DESC
+LIMIT 10;
+```
+
+SELECT pg_prewarm('big');
+
+### Pre-warm
+
+```postgresql
+CREATE EXTENSION pg_prewarm;
+ALTER SYSTEM SET shared_preload_libraries = 'pg_prewarm';
+```
+Restart
+```shell
+psql --dbname "host=localhost port=5432 user=postgres password=password123 dbname=test"
+```
+
+Get cached pages
+```postgresql
+SELECT * FROM buffercache('cacheme');
+```
+Empty
+```postgresql
+SELECT pg_prewarm('cacheme');
+```
+
+Get cached pages
 ```postgresql
 SELECT * FROM buffercache('cacheme');
 ```

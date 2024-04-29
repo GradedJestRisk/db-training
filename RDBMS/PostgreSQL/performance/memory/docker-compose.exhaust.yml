@@ -13,6 +13,7 @@ services:
   postgresql:
     container_name: postgresql
     image: docker.io/bitnami/postgresql:14
+    restart: no
     volumes:
       - ./postgresql.conf:/opt/bitnami/postgresql/conf/conf.d/postgresql.conf
     ports:
