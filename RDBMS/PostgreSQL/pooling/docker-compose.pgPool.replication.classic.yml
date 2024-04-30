@@ -1,42 +1,47 @@
+# Source: https://www.refurbed.org/posts/load-balancing-sql-queries-using-pgpool/
+# docker compose --file=docker-compose.pgPool.replication.classic.yml up --remove-orphans --renew-anon-volumes --force-recreate
 services:
-  pgprimary:
-    image: bitnami/postgresql:13.1.0
+  postgresql_primary:
+    image: docker.io/bitnami/postgresql:13.1.0
     ports:
       - 5432
     environment:
+      - POSTGRESQL_DATABASE=test
+      - POSTGRESQL_USERNAME=jane
+      - POSTGRESQL_PASSWORD=password123
+      - POSTGRESQL_POSTGRES_PASSWORD=password123
       - POSTGRESQL_REPLICATION_MODE=master
       - POSTGRESQL_REPLICATION_USER=postgres
-      - POSTGRESQL_REPLICATION_PASSWORD=s3cret
-      - POSTGRESQL_PASSWORD=s3cret
-      - POSTGRESQL_DATABASE=test
-  pgreplica:
-    image: bitnami/postgresql:13.1.0
+      - POSTGRESQL_REPLICATION_PASSWORD=password123
+  postgresql_replica:
+    image: docker.io/bitnami/postgresql:13.1.0
     ports:
       - 5432
     depends_on:
-      - pgprimary
+      - postgresql_primary
     environment:
       - POSTGRESQL_REPLICATION_MODE=slave
       - POSTGRESQL_REPLICATION_USER=postgres
-      - POSTGRESQL_REPLICATION_PASSWORD=s3cret
-      - POSTGRESQL_MASTER_HOST=pgprimary
-      - POSTGRESQL_PASSWORD=s3cret
+      - POSTGRESQL_REPLICATION_PASSWORD=password123
+      - POSTGRESQL_MASTER_HOST=postgresql_primary
+      - POSTGRESQL_PASSWORD=password123
   pgpool:
     image: bitnami/pgpool:4.2.1
     ports:
       - 5432:5432
     depends_on:
-      - pgprimary
+      - postgresql_primary
     environment:
-      - PGPOOL_BACKEND_NODES=0:pgprimary:5432:4:primary:ALWAYS_PRIMARY,1:pgreplica:5432:6:replica
+      - PGPOOL_BACKEND_NODES=0:postgresql_primary:5432:4:primary:ALWAYS_PRIMARY,1:postgresql_replica:5432:6:replica
       - PGPOOL_POSTGRES_USERNAME=postgres
-      - PGPOOL_POSTGRES_PASSWORD=s3cret
-      - PGPOOL_ADMIN_USERNAME=admin
-      - PGPOOL_ADMIN_PASSWORD=s3cret
+      - PGPOOL_POSTGRES_PASSWORD=password123
+      - PGPOOL_ADMIN_USERNAME=pgpool
+      - PGPOOL_ADMIN_PASSWORD=password123
       - PGPOOL_SR_CHECK_USER=postgres
-      - PGPOOL_SR_CHECK_PASSWORD=s3cret
-      - PGPOOL_ENABLE_LOAD_BALANCING=yes
-      - PGPOOL_ENABLE_STATEMENT_LOAD_BALANCING=yes
-      - PGPOOL_NUM_INIT_CHILDREN=10
-      - PGPOOL_MAX_POOL=1
-
+      - PGPOOL_SR_CHECK_PASSWORD=password123
+      - PGPOOL_NUM_INIT_CHILDREN=2
+      - PGPOOL_MAX_POOL=2
+      - PGPOOL_CONNECTION_LIFE_TIME=0
+      - PGPOOL_CHILD_LIFE_TIME=0
+      - PGPOOL_CLIENT_IDLE_LIMIT=0
+      - PGPOOL_ENABLE_LOG_CONNECTIONS=yes
