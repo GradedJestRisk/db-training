@@ -1,0 +1,75 @@
+# Doc:
+# - README: https://hub.docker.com/r/bitnami/pgpool
+# Start
+# - docker-compose --file=docker-compose.pgPool.yml up
+
+networks:
+  my-network:
+    driver: bridge
+
+services:
+  postgresql_primary:
+    container_name: postgresql_primary
+    image: docker.io/bitnami/postgresql:14
+    restart: no
+    volumes:
+      - ./database-setup/postgresql.conf:/opt/bitnami/postgresql/conf/conf.d/postgresql.conf
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRESQL_DATABASE=test
+      - POSTGRESQL_USERNAME=jane
+      - POSTGRESQL_PASSWORD=password123
+      - POSTGRESQL_POSTGRES_PASSWORD=password123
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=postgres
+      - POSTGRESQL_REPLICATION_PASSWORD=password123
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512m
+  postgresql_replica:
+    container_name: postgresql_replica
+    image: docker.io/bitnami/postgresql:14
+    restart: no
+    depends_on:
+      - postgresql_primary
+    volumes:
+      - ./database-setup/postgresql.conf:/opt/bitnami/postgresql/conf/conf.d/postgresql.conf
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=postgres
+      - POSTGRESQL_REPLICATION_PASSWORD=password123
+      - POSTGRESQL_MASTER_HOST=postgresql_primary
+      - POSTGRESQL_PASSWORD=password123
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512m
+
+  pgpool:
+    image: bitnami/pgpool:4
+    ports:
+      - 5433:5432
+    depends_on:
+      - postgresql_primary
+    environment:
+      - PGPOOL_BACKEND_NODES=0:postgresql_primary:5432:4:primary:ALWAYS_PRIMARY,1:postgresql_replica:5432:6:replica
+      - PGPOOL_POSTGRES_USERNAME=postgres
+      - PGPOOL_POSTGRES_PASSWORD=password123
+      - PGPOOL_ADMIN_USERNAME=postgres
+      - PGPOOL_ADMIN_PASSWORD=password123
+      - PGPOOL_SR_CHECK_USER=postgres
+      - PGPOOL_SR_CHECK_PASSWORD=password123
+      - PGPOOL_NUM_INIT_CHILDREN=1
+      - PGPOOL_MAX_POOL=1
+      - PGPOOL_ENABLE_LOG_CONNECTIONS=yes
+    healthcheck:
+      test: ["CMD", "/opt/bitnami/scripts/pgpool/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

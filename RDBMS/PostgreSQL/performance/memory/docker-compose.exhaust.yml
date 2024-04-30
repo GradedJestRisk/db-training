@@ -1,4 +1,6 @@
 # Source:
+# - Dockerfile: https://github.com/bitnami/containers/blob/main/bitnami/postgresql/14/debian-12/Dockerfile
+# - documentation: https://github.com/bitnami/containers/blob/main/bitnami/postgresql/README.md
 
 # Usage
 # - start container : docker compose --file=docker-compose.exhaust.yml up --detach && docker logs --follow postgresql
@@ -15,7 +17,10 @@ services:
     image: docker.io/bitnami/postgresql:14
     restart: no
     volumes:
-      - ./postgresql.conf:/opt/bitnami/postgresql/conf/conf.d/postgresql.conf
+      - ./database-setup/postgresql.conf:/opt/bitnami/postgresql/conf/conf.d/postgresql.conf
+#      Does not work !
+#      - https://stackoverflow.com/questions/68801224/install-postgres-extension-into-bitnami-container-as-superuser-on-initial-startu
+#      - ./database-setup/startup-script.sql:/docker-entrypoint-initdb.d/startup-script.sql
     ports:
       - '5432:5432'
     environment:

@@ -53,7 +53,7 @@ SELECT
 FROM
    pg_stat_activity cnn
 WHERE 1=1
-      AND cnn.query ILIKE 'CREATE UNIQUE INDEX%'
+      AND cnn.query ILIKE '%INSERT%'
 ```
 
 Connect to container
@@ -190,7 +190,7 @@ from pg_stat_activity;
 
 ### Start container
 
-Use [limited memory](./postgresql.conf)
+Use [limited memory](database-setup/postgresql.conf)
 ```
 shared_buffers=256MB
 work_mem=5MB
@@ -203,12 +203,13 @@ Start
 docker compose --file=docker-compose.exhaust.yml up --detach
 ```
 
-Check 
-```text
-docker logs --follow postgresql
-postgresql 06:58:26.73 INFO  ==> Loading custom scripts...
+Setup
+```shell
+psql --dbname "host=localhost port=5432 user=postgres password=password123 dbname=test" \
+    --file ./database-setup/startup-script.sql
 ```
 
+Check memory allocation
 ```postgresql
 SHOW shared_buffers;
 SHOW work_mem;
@@ -223,6 +224,7 @@ As `postgresql`
 CREATE EXTENSION pg_buffercache;
 GRANT EXECUTE ON FUNCTION pg_buffercache_pages() TO jane;
 GRANT SELECT ON pg_buffercache TO jane;
+GRANT EXECUTE ON FUNCTION pg_log_backend_memory_contexts() TO integration;
 ```
 
 Check access
@@ -399,3 +401,50 @@ SELECT * FROM buffercache('cacheme');
 
 PG cache and OS cache
 https://dev.to/franckpachot/postgresql-double-buffering-understand-the-cache-size-in-a-managed-service-oci-2oci
+
+Connection memory drift metadata
+https://dba.stackexchange.com/questions/160887/how-can-i-find-the-source-of-postgresql-per-connection-memory-leaks
+https://wiki.postgresql.org/wiki/Developer_FAQ#Examining_backend_memory_use
+
+### Dump connection memory content
+
+Start connexion, do stuff without committing
+
+Get the process ID
+```shell
+ps aux | grep "postgres:.*INSERT"
+```
+
+Get the process ID
+```shell
+SELECT
+    cnn.pid,
+    'pg_log_backend_memory_contexts(' || cnn.pid || ')'
+FROM
+   pg_stat_activity cnn
+WHERE 1=1
+      AND cnn.query ILIKE '%INSERT%';
+```
+
+In container as `postgres`
+```postgresql
+SELECT pg_log_backend_memory_contexts(79672)
+```
+
+Will give you [this file](./memory-dump.log).
+
+[Doc](https://git.postgresql.org/gitweb/?p=postgresql.git;a=blob;f=src/backend/utils/mmgr/README):
+
+
+Metadata cache
+```text
+LOG:  level: 1; CacheMemoryContext: 524 288 total in 7 blocks; 59 648 free (0 chunks); 464 640 used
+```
+
+`524288` is `524 288` bytes, so 524 kbytes
+
+Doesn't match with 7 blocks 8 kb
+```postgresql
+SELECT pg_size_pretty(7 * 8 * 1024::numeric);
+```
+

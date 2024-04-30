@@ -1,0 +1,44 @@
+# Source: https://www.refurbed.org/posts/load-balancing-sql-queries-using-pgpool/
+# docker compose --file=docker-compose.pgPool.replication.classic.yml up --remove-orphans --renew-anon-volumes --force-recreate
+services:
+  postgresql_primary:
+    image: docker.io/bitnami/postgresql:14
+    ports:
+      - 5432
+    environment:
+      - POSTGRESQL_DATABASE=test
+      - POSTGRESQL_USERNAME=jane
+      - POSTGRESQL_PASSWORD=password123
+      - POSTGRESQL_POSTGRES_PASSWORD=password123
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=postgres
+      - POSTGRESQL_REPLICATION_PASSWORD=password123
+  postgresql_replica:
+    image: docker.io/bitnami/postgresql:14
+    ports:
+      - 5432
+    depends_on:
+      - postgresql_primary
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=postgres
+      - POSTGRESQL_REPLICATION_PASSWORD=password123
+      - POSTGRESQL_MASTER_HOST=postgresql_primary
+      - POSTGRESQL_PASSWORD=password123
+  pgpool:
+    image: bitnami/pgpool:4.2.1
+    ports:
+      - 5432:5432
+    depends_on:
+      - postgresql_primary
+    environment:
+      - PGPOOL_BACKEND_NODES=0:postgresql_primary:5432:4:primary:ALWAYS_PRIMARY,1:postgresql_replica:5432:6:replica
+      - PGPOOL_POSTGRES_USERNAME=postgres
+      - PGPOOL_POSTGRES_PASSWORD=password123
+      - PGPOOL_ADMIN_USERNAME=pgpool
+      - PGPOOL_ADMIN_PASSWORD=password123
+      - PGPOOL_SR_CHECK_USER=postgres
+      - PGPOOL_SR_CHECK_PASSWORD=password123
+      - PGPOOL_NUM_INIT_CHILDREN=1
+      - PGPOOL_MAX_POOL=1
+      - PGPOOL_ENABLE_LOG_CONNECTIONS=yes
