@@ -1,6 +1,19 @@
 # PG bench(mark)
-
 https://www.postgresql.org/docs/current/pgbench.html
+
+## Fundamentals
+
+https://dev.to/yugabyte/pgbench-client-jobs-68g
+
+`--client` : number of concurrent database clients
+Each client is a connection to the DB, which means a backend process.
+
+`--jobs` : number of threads
+Each thread is a Linux process. Each thread can manage several transaction at the same time.
+The threads cannot share the connections
+
+`--transactions` : number of transactions each client runs
+
 
 ## Normalized scenario
 
@@ -74,4 +87,23 @@ Run tests
 ```shell
 export FILE=<PATH>
 pgbench --client=10 --jobs=2 --transactions=10000 --file=$FILE example
+```
+
+## More
+
+Display statistics in interval (seconds)
+```shell
+--progress=10
+```
+
+### Run test from stdin, using SQL variable 
+
+```shell
+pgbench --client=2 --transactions=10 --max-tries 5 --report-per-command --no-vacuum --file=/dev/stdin <<'\q'
+    \set my_value random(1,3)
+    select * from demo where k=:my_value;
+    update demo set v=v+1 where k=:my_value;
+    select pg_sleep(1);
+    commit;
+    \q
 ```
