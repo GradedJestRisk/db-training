@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS big_table;
+CREATE TABLE big_table (id INTEGER PRIMARY KEY, code INTEGER);
+
+INSERT INTO big_table
+    (id, code)
+SELECT
+    id, id
+FROM GENERATE_SERIES(1, 1000000) AS id;

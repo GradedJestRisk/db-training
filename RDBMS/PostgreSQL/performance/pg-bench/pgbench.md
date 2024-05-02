@@ -14,6 +14,8 @@ The threads cannot share the connections
 
 `--transactions` : number of transactions each client runs
 
+Use psql variable `\set` to create randomness
+https://dev.to/aws-heroes/custom-sql-scripts-in-pgbench-502i
 
 ## Normalized scenario
 

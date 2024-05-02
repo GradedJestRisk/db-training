@@ -19,6 +19,17 @@ https://severalnines.com/blog/guide-pgpool-postgresql-part-one/
 
 https://www.refurbed.org/posts/load-balancing-sql-queries-using-pgpool/
 
+### Configure
+
+```yaml
+      - PGPOOL_CONNECTION_LIFE_TIME=0
+      - PGPOOL_CHILD_LIFE_TIME=0
+      - PGPOOL_CLIENT_IDLE_LIMIT=0
+      - PGPOOL_CHILD_MAX_CONNECTIONS=0
+      - PGPOOL_CONNECTION_LIFE_TIME=0
+```
+
+
 #### Start containers
 
 ```shell

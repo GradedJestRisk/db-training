@@ -1,6 +1,7 @@
 CREATE EXTENSION pg_buffercache;
 
-CREATE FUNCTION buffercache(rel regclass)
+\c test
+CREATE OR REPLACE FUNCTION buffercache(rel regclass)
     RETURNS TABLE(
                      bufferid integer, relfork text, relblk bigint,
                      isdirty boolean, usagecount smallint, pins integer
@@ -20,8 +21,7 @@ WHERE relfilenode = pg_relation_filenode(rel)
 ORDER BY relforknumber, relblocknumber;
 $$ LANGUAGE sql;
 
-GRANT EXECUTE ON FUNCTION buffercache() TO jane;
-GRANT SELECT ON buffercache TO jane;
+GRANT EXECUTE ON FUNCTION buffercache TO jane;
 
 GRANT EXECUTE ON FUNCTION pg_buffercache_pages() TO jane;
 GRANT SELECT ON pg_buffercache TO jane;
