@@ -5,6 +5,15 @@ https://dba.stackexchange.com/questions/12501/view-postgresql-memory-usage
 Tune usage
 https://pgtune.leopard.in.ua/
 
+PG cache and OS cache
+https://dev.to/franckpachot/postgresql-double-buffering-understand-the-cache-size-in-a-managed-service-oci-2oci
+
+Connection memory drift metadata
+https://dba.stackexchange.com/questions/160887/how-can-i-find-the-source-of-postgresql-per-connection-memory-leaks
+https://wiki.postgresql.org/wiki/Developer_FAQ#Examining_backend_memory_use
+https://aws.amazon.com/blogs/database/resources-consumed-by-idle-postgresql-connections/
+
+
 ## Usage
 
 https://severalnines.com/blog/what-check-if-postgresql-memory-utilization-high/
@@ -13,7 +22,6 @@ La mémoire est répartie entre les différents usages, notamment `shared_buffer
 via [configuration](postgresql.sh). 
 
 En limitant l'usage, on peut obtenir que les requêtes ne soient pas toutes mises en cache.
-
 
 Get actual memory share
 ```postgresql
@@ -186,6 +194,18 @@ select
 from pg_stat_activity;
 ```
 
+### pg_buffercache
+
+```shell
+psql --dbname "host=localhost port=5432 user=postgres password=password123 dbname=test" --file ./database-setup/activate-extensions.sql
+```
+
+Check access
+```postgresql
+SELECT * FROM pg_extension
+WHERE extname = 'pg_buffercache'
+```
+
 ## Exhaust memory
 
 ### Start container
@@ -200,13 +220,14 @@ maintenance_work_mem=10MB
 
 Start
 ```shell
-docker compose --file=docker-compose.exhaust.yml up --detach
+docker compose --file=docker-compose.exhaust.yml up --remove-orphans --renew-anon-volumes --force-recreate --detach
+docker logs --follow postgresql
 ```
 
 Setup
 ```shell
 psql --dbname "host=localhost port=5432 user=postgres password=password123 dbname=test" \
-    --file ./database-setup/startup-script.sql
+    --file ./database-setup/activate-extensions.sql
 ```
 
 Check memory allocation
@@ -219,41 +240,6 @@ SHOW maintenance_work_mem;
 
 ### Cache tooling
 
-As `postgresql`
-```postgresql
-CREATE EXTENSION pg_buffercache;
-GRANT EXECUTE ON FUNCTION pg_buffercache_pages() TO jane;
-GRANT SELECT ON pg_buffercache TO jane;
-GRANT EXECUTE ON FUNCTION pg_log_backend_memory_contexts() TO integration;
-```
-
-Check access
-```postgresql
-SELECT * FROM pg_extension
-WHERE extname = 'pg_buffercache'
-```
-
-```postgresql
-CREATE FUNCTION buffercache(rel regclass)
-RETURNS TABLE(
-bufferid integer, relfork text, relblk bigint,
-isdirty boolean, usagecount smallint, pins integer
-) AS $$
-SELECT bufferid,
-CASE relforknumber
-WHEN 0 THEN 'main'
-WHEN 1 THEN 'fsm'
-WHEN 2 THEN 'vm'
-END,
-relblocknumber,
-isdirty,
-usagecount,
-pinning_backends
-FROM pg_buffercache
-WHERE relfilenode = pg_relation_filenode(rel)
-ORDER BY relforknumber, relblocknumber;
-$$ LANGUAGE sql;
-```
 
 Force-feed the cache
 ```postgresql
@@ -399,12 +385,6 @@ Get cached pages
 SELECT * FROM buffercache('cacheme');
 ```
 
-PG cache and OS cache
-https://dev.to/franckpachot/postgresql-double-buffering-understand-the-cache-size-in-a-managed-service-oci-2oci
-
-Connection memory drift metadata
-https://dba.stackexchange.com/questions/160887/how-can-i-find-the-source-of-postgresql-per-connection-memory-leaks
-https://wiki.postgresql.org/wiki/Developer_FAQ#Examining_backend_memory_use
 
 ### Dump connection memory content
 
@@ -447,4 +427,117 @@ Doesn't match with 7 blocks 8 kb
 ```postgresql
 SELECT pg_size_pretty(7 * 8 * 1024::numeric);
 ```
+#### Exhaust
+
+Build volume
+```shell
+mkdir /tmp/postgres
+sudo chown 1001 /tmp/postgres
+```
+
+Start container
+```shell
+docker compose --file=docker-compose.exhaust.yml up --remove-orphans --renew-anon-volumes --force-recreate --detach
+docker logs --follow postgresql
+```
+
+Add extensions
+```shell
+psql --dbname "host=localhost port=5432 user=postgres password=password123 dbname=test" \
+    --file ./database-setup/activate-extensions.sql
+```
+
+Load data
+```postgresql
+psql --file ./load-test/load-data.sql
+```
+
+
+Monitor database primary container memory usage
+```shell
+while :; do docker stats --no-stream | grep postgres | awk '{print $4}' | sed -e 's/MiB//g' \
+    | LC_ALL=en_US numfmt --from-unit Mi --to-unit Mi; sleep 1; done | ttyplot -u Mi
+```
+
+Empty cache
+```shell
+docker exec postgresql bash -c "pg_ctl restart -D /bitnami/postgresql/data"
+```
+
+Start container
+```shell
+docker compose --file=docker-compose.exhaust.yml up --detach
+docker logs --follow postgresql
+```
+
+Start client connexion
+```shell
+psql
+```
+
+Start idle query
+```shell
+SELECT pg_sleep(60);
+SELECT * FROM table_1 LIMIT 5;
+```
+
+Check you can see it in process
+```shell
+ps -C postgres --no-headers --format pid --format cmd
+```
+
+Check you can see it in process
+```shell
+ps -C postgres --no-headers --format pid --format cmd | grep "jane test" | tr -s ' ' | cut -f 2 -d ' '
+```
+
+Monitor connexion memory
+```shell
+export PID_MONITOR=$(ps -C postgres --no-headers --format pid --format cmd | grep "jane test" | tr -s ' ' | cut -f 2 -d ' ')
+while :; do grep -oP '^VmRSS:\s+\K\d+' /proc/$PID_MONITOR/status \
+    | numfmt --from-unit Ki --to-unit Mi; sleep 1; done | ttyplot -u Mi
+```
+
+```postgresql
+select pid, query from pg_stat_activity
+WHERE usename = 'jane' and application_name = 'psql'
+```
+
+Get cached pages
+```postgresql
+SELECT * FROM pg_buffercache('table_1');
+```
+
+Cache hit
+```postgresql
+SELECT relname, heap_blks_read, heap_blks_hit
+FROM pg_statio_all_tables
+WHERE relname ILIKE 'table_%';
+AND relname NOT ILIKE '%pkey'
+ORDER BY relname ASC
+```
+
+How much of the table is cached ?
+Hot data (always in cache)
+```postgresql
+SELECT c.relname,
+count(*) blocks,
+round( 100.0 * 8192 * count(*) /
+pg_table_size(c.oid) ) AS "% of rel",
+round( 100.0 * 8192 * count(*) FILTER (WHERE b.usagecount > 1) /
+pg_table_size(c.oid) ) AS "% hot"
+FROM pg_buffercache b
+    JOIN pg_class c ON pg_relation_filenode(c.oid) = b.relfilenode
+     INNER JOIN pg_namespace ns ON ns.oid = c.relnamespace
+WHERE b.reldatabase IN (
+0, -- cluster-wide objects
+(SELECT oid FROM pg_database WHERE datname = current_database())
+)
+AND b.usagecount IS NOT NULL
+  AND ns.nspname  = 'public'
+GROUP BY c.relname, c.oid
+ORDER BY 2 DESC
+LIMIT 10;
+```
+
 

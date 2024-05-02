@@ -18,6 +18,7 @@ services:
     restart: no
     volumes:
       - ./database-setup/postgresql.conf:/opt/bitnami/postgresql/conf/conf.d/postgresql.conf
+      - /tmp/postgres:/bitnami/postgresql
 #      Does not work !
 #      - https://stackoverflow.com/questions/68801224/install-postgres-extension-into-bitnami-container-as-superuser-on-initial-startu
 #      - ./database-setup/startup-script.sql:/docker-entrypoint-initdb.d/startup-script.sql
@@ -34,4 +35,4 @@ services:
       resources:
         limits:
           cpus: '1'
-          memory: 512m
+          memory: 256m

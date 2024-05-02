@@ -35,7 +35,7 @@ pgpool-1              | 2024-05-01 15:55:57: pid 123: DETAIL:  connecting host=1
 pgpool-1              | 2024-05-01 15:55:57: pid 123: LOG:  pool_reuse_block: blockid: 0
 ```
 
-Monitor databse primary container memory usage
+Monitor database primary container memory usage
 ```shell
 while :; do docker stats --no-stream | grep primary | awk '{print $4}' | sed -e 's/MiB//g' \
     | LC_ALL=en_US numfmt --from-unit Mi --to-unit Mi; sleep 1; done | ttyplot -u Mi
