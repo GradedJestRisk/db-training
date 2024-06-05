@@ -23,7 +23,7 @@ Create folder to store data
 ```shell
 mkdir --parents ~/.docker-data/sqlserver
 ```
-If you use another path, update this line [compose](./compose.yaml) file.
+If you use another path, update this line [compose](./docker-compose.yaml) file.
 ```shell
 device: ~/.docker-data/sqlserver
 ```
@@ -114,6 +114,12 @@ jdbc:sqlserver://localhost:1433;database=master
 | host     | localhost |
 | database | master    |
 
+
+## Load schema from file 
+
+```
+sqlcmd -S localhost -U SA -No -i ./schema.sql
+```
 
 ## Create a database, table and records
 
