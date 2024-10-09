@@ -1,0 +1,8 @@
+services:
+#  https://hub.docker.com/r/openstackswift/saio
+  swift:
+    image: openstackswift/saio:latest
+    container_name: swift
+    hostname: swift
+    ports:
+      - '8080:8080'

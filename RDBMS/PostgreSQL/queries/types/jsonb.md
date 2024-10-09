@@ -1,6 +1,13 @@
 # JSONB
 
+[Doc](https://www.postgresql.org/docs/current/datatype-json.html)
 
+> The json and jsonb data types accept almost identical sets of values as input. The major practical difference is one of efficiency. jsonb also supports indexing, which can be a significant advantage.
+
+> The json data type stores an exact copy of the input text, which processing functions must reparse on each execution; while jsonb data is stored in a decomposed binary format that makes it slightly slower to input due to added conversion overhead, but significantly faster to process, since no reparsing is needed.
+
+
+ https://www.postgresql.org/docs/16/functions-json.html
 
 ## Check if JSON
 
@@ -14,7 +21,7 @@ WHERE 1=1
 ```
 
 
-## 15 and downward
+### 15 and downward
 https://stackoverflow.com/questions/30187554/how-to-verify-a-string-is-valid-json-in-postgresql
 
 ```postgresql
@@ -42,32 +49,58 @@ SELECT
     f_is_json('{"b":"foo"')
 ```
 
+##  Display
 
-## 
+### Raw
 
-
-
--- Display
+Single-line
+```postgresql
 SELECT
-       '{"what": "is this", "nested": {"items 1": "are the best", "items 2": [1, 2, 3]}}'::jsonb;
+       '{"what": "is this", "nested": {"items 1": "are the best", "items 2": [1, 2, 3]}}'::JSONB;
+```
+
+Multi-line
+```postgresql
+SELECT
+    '{'
+        '  "version": "1",'
+        '  "operation": "",'
+        '  "cle": [],'
+        '  "changements": ['
+        '    {'
+        '      "champ": "adresse.adresse",'
+        '      "valeur_apres": "3 RUE DE LA GARE",'
+        '     "valeur_avant": "1 RUE DA GARE"'
+        '    }, {'
+        '      "champ": "adresse.complementAdresse",'
+        '      "valeur_apres": "3E ETAGE",'
+        '     "valeur_avant": ""'
+        '    }'
+        '  ]'
+        '}' :: JSONB
+```
 
 
--- Pretty-print
+### Pretty-print
+
+```postgresql
 SELECT
        jsonb_pretty('{"what": "is this", "nested": {"items 1": "are the best", "items 2": [1, 2, 3]}}'::jsonb);
+```
 
 
+## Search
 
--- https://www.postgresql.org/docs/current/datatype-json.html
--- The json and jsonb data types accept almost identical sets of values as input.
--- The major practical difference is one of efficiency.
--- jsonb also supports indexing, which can be a significant advantage.
---
--- The json data type stores an exact copy of the input text, which processing functions must reparse on each execution;
--- while jsonb data is stored in a decomposed binary format that makes it slightly slower to input due to added conversion overhead,
--- but significantly faster to process, since no reparsing is needed.
+### JSON path 
 
+https://www.postgresql.org/docs/16/functions-json.html#FUNCTIONS-SQLJSON-PATH
 
+With regular expression !
+https://www.postgresql.org/docs/current/functions-json.html#JSONPATH-REGULAR-EXPRESSIONS
+
+## Tutorial
+
+```postgresql
 DROP TABLE IF EXISTS foo;
 CREATE TABLE foo (bar JSONB);
 INSERT INTO foo (bar) VALUES ('{ "foz": "old"}');
@@ -290,3 +323,5 @@ WHERE 1=1
   AND s.id = 1
   AND arr.position = 1
   ;
+
+```

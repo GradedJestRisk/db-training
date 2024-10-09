@@ -1,3 +1,14 @@
+# JSON
+
+Prefer [JSONB](jsonb.md) which is: 
+- slower to insert;
+- faster to query.
+
+## Tutorial
+
+```postgresql
+
+
 -- https://clarkdave.net/2013/06/what-can-you-do-with-postgresql-and-json/
 
 -- Insert
@@ -21,3 +32,5 @@ SELECT b.* FROM books b;
 
 -- Output (single line)
 SELECT json_agg(b.*) FROM books b;
+
+```
