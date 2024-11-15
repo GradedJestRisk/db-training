@@ -9,6 +9,15 @@
 
  https://www.postgresql.org/docs/16/functions-json.html
 
+## Generate
+
+```postgresql
+SELECT 
+       TO_JSON('value'::TEXT) AS quote_value,
+       JSONB_BUILD_OBJECT('KEY', 'value') AS build_object 
+```
+
+
 ## Check if JSON
 
 ### 16 and upward
@@ -91,12 +100,80 @@ SELECT
 
 ## Search
 
+To sort:
+- https://stackoverflow.com/questions/77317468/variable-substitution-for-postgres-jsonpath-operator-like-regex
+- https://stackoverflow.com/questions/77036083/parameter-inside-a-jsonpath-expression-in-postgres
+- https://stackoverflow.com/questions/66600968/usage-of-in-native-sql-query-on-jsonb
+
 ### JSON path 
 
 https://www.postgresql.org/docs/16/functions-json.html#FUNCTIONS-SQLJSON-PATH
 
-With regular expression !
+#### With equality
+
+Search an object property by constant
+```postgresql
+SELECT
+    t.value    
+FROM ( VALUES 
+           ('{ "foo" : "bar" }'::JSONB), 
+           ('{ "fooz" : "baz" }'::JSONB)
+     ) AS t (value)
+WHERE 1=1
+    AND JSONB_PATH_EXISTS( t.value, '$.foo ? (@ == "bar" )')
+```
+
+### With variable
+
+If you use parameters
+```postgresql
+SELECT *
+FROM ( VALUES
+           ('{ "foo" : "bar" }'::JSONB),
+           ('{ "fooz" : "baz" }'::JSONB)
+     ) AS t (value)
+WHERE 1=1
+AND JSONB_PATH_EXISTS(
+              t.value, '$.foo ? (@ == $VALUE )',
+--               JSONB_BUILD_OBJECT('VALUE', 'bar')
+              JSONB_BUILD_OBJECT('VALUE', :value) -- On prompt, type 'bar' (with quotes)
+    );
+```
+
+#### With regular expression - LIKE_REGEX
 https://www.postgresql.org/docs/current/functions-json.html#JSONPATH-REGULAR-EXPRESSIONS
+
+> Keep in mind that the pattern argument of like_regex is a JSON path string literal
+> This means in particular that any backslashes you want to use in the regular expression must be doubled. 
+
+```postgresql
+$.* ? (@ like_regex "^\\d+$")
+```
+
+Search an object property by constant
+```postgresql
+SELECT
+    t.value
+    ,JSONB_PATH_EXISTS( t.value, '$ ? (@.foo LIKE_REGEX "^bar$")')
+FROM ( VALUES 
+           ('{ "foo" : "bar" }'::JSONB), 
+           ('{ "fooz" : "baz" }'::JSONB)
+     ) AS t (value)
+```
+
+Search an object property by regex
+```postgresql
+SELECT
+    t.value
+    ,JSONB_PATH_EXISTS( t.value, '$ ? (@.foo LIKE_REGEX "^\\[bar$")')
+    ,JSONB_PATH_EXISTS( t.value, '$ ? (@.foo LIKE_REGEX "^\133bar$")')
+    ,JSONB_PATH_EXISTS( t.value, '$ ? (@.foo LIKE_REGEX "' || '[' || 'bar$")' ::JSONPATH)
+FROM ( VALUES 
+           ('{ "foo" : "[bar" }'::JSONB), 
+           ('{ "fooz" : "baz" }'::JSONB)
+     ) AS t (value)
+```
+
 
 ## Tutorial
 

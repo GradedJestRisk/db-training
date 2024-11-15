@@ -2,7 +2,8 @@
 
 ## Generate
 
-Delimited by simple quotes: double quotes are for column names.
+Delimited by simple quotes (`'`).
+Double quotes (\"\) are for column names.
 ```postgresql
 SELECT 'Hello, world!'
 ```
@@ -10,6 +11,49 @@ SELECT 'Hello, world!'
 Even so, double quote can be used
 ```postgresql
 SELECT '"Hello, world!", says Emma'
+```
+
+### Long text
+
+[Several ways](https://stackoverflow.com/questions/35068285/how-to-create-a-huge-string-in-postgresql)
+
+Repeating fixed pattern
+```postgresql
+SELECT REPEAT('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 3);
+```
+
+#### Lorem ipsum
+
+##### Custom
+
+```postgresql
+create or replace function lorem_ipsum( quantity_ integer ) returns character varying
+    language plpgsql
+    as $$
+  declare
+    words_       text[];
+    returnValue_ text := '';
+    random_      integer;
+    ind_         integer;
+  begin
+  words_ := array['lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'a', 'ac', 'accumsan', 'ad', 'aenean', 'aliquam', 'aliquet', 'ante', 'aptent', 'arcu', 'at', 'auctor', 'augue', 'bibendum', 'blandit', 'class', 'commodo', 'condimentum', 'congue', 'consequat', 'conubia', 'convallis', 'cras', 'cubilia', 'cum', 'curabitur', 'curae', 'cursus', 'dapibus', 'diam', 'dictum', 'dictumst', 'dignissim', 'dis', 'donec', 'dui', 'duis', 'egestas', 'eget', 'eleifend', 'elementum', 'enim', 'erat', 'eros', 'est', 'et', 'etiam', 'eu', 'euismod', 'facilisi', 'facilisis', 'fames', 'faucibus', 'felis', 'fermentum', 'feugiat', 'fringilla', 'fusce', 'gravida', 'habitant', 'habitasse', 'hac', 'hendrerit', 'himenaeos', 'iaculis', 'id', 'imperdiet', 'in', 'inceptos', 'integer', 'interdum', 'justo', 'lacinia', 'lacus', 'laoreet', 'lectus', 'leo', 'libero', 'ligula', 'litora', 'lobortis', 'luctus', 'maecenas', 'magna', 'magnis', 'malesuada', 'massa', 'mattis', 'mauris', 'metus', 'mi', 'molestie', 'mollis', 'montes', 'morbi', 'mus', 'nam', 'nascetur', 'natoque', 'nec', 'neque', 'netus', 'nibh', 'nisi', 'nisl', 'non', 'nostra', 'nulla', 'nullam', 'nunc', 'odio', 'orci', 'ornare', 'parturient', 'pellentesque', 'penatibus', 'per', 'pharetra', 'phasellus', 'placerat', 'platea', 'porta', 'porttitor', 'posuere', 'potenti', 'praesent', 'pretium', 'primis', 'proin', 'pulvinar', 'purus', 'quam', 'quis', 'quisque', 'rhoncus', 'ridiculus', 'risus', 'rutrum', 'sagittis', 'sapien', 'scelerisque', 'sed', 'sem', 'semper', 'senectus', 'sociis', 'sociosqu', 'sodales', 'sollicitudin', 'suscipit', 'suspendisse', 'taciti', 'tellus', 'tempor', 'tempus', 'tincidunt', 'torquent', 'tortor', 'tristique', 'turpis', 'ullamcorper', 'ultrices', 'ultricies', 'urna', 'ut', 'varius', 'vehicula', 'vel', 'velit', 'venenatis', 'vestibulum', 'vitae', 'vivamus', 'viverra', 'volutpat', 'vulputate'];
+    for ind_ in 1 .. quantity_ loop
+      ind_ := ( random() * ( array_upper( words_, 1 ) - 1 ) )::integer + 1;
+      returnValue_ := returnValue_ || ' ' || words_[ind_];
+    end loop;
+    return returnValue_;
+  end;
+$$;
+```
+
+Then use : specify how much words you want (no fixed length)
+```postgresql
+select lorem_ipsum( 3 );
+```
+
+##### Using extension
+```postgresql
+SELECT anon.lorem_ipsum()
 ```
 
 ### Multi-line
@@ -27,23 +71,31 @@ SELECT
 
 ## Escape
 
-If you need a simple quote, escape it using another simple quote.
-
-```postgresql
-SELECT 'Lovely day, isn''t it ?'
-```
-
-This is cumbersome but works.
-```postgresql
-SELECT 'Lovely day, isn'|| CHR(39)||'t it ?'
-```
+You should escape
+- simple quote `'`
+- newline `\n`
 
 Backslash does not need to be escaped
 ```postgresql
 SELECT 'I need a backslash: \'
 ```
 
-### Dollar-quoting
+### Using simple quote
+
+If you need a simple quote, escape it using another simple quote.
+
+```postgresql
+SELECT 'Lovely day, isn''t it ?'
+```
+
+### Using CHR
+
+This is cumbersome but works.
+```postgresql
+SELECT 'Lovely day, isn' || CHR(39)|| 't it ?'
+```
+
+### Using dollar-quoting `$$`
 
 [Heredoc](https://en.wikipedia.org/wiki/Here_document) whose tag delimiter is `$$`
 https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-DOLLAR-QUOTING
@@ -58,6 +110,13 @@ But in doubt, use it
 SELECT $STRING$Lovely day, isn't it ?$STRING$
 ```
 
+### Using `E`
+
+Escape newline
+```postgresql
+SELECT E'a \n b'
+```
+
 ## Generate text sample
 
 ```postgresql
@@ -69,6 +128,16 @@ FROM (
 ;
 
 ```
+
+## Concatenate
+
+```postgresql
+SELECT
+ 'a' || 'b',
+ CONCAT('a','b'),
+ CONCAT('a','b') ESCAPE '/'
+```
+
 
 ## Pattern matching 
 
@@ -210,6 +279,35 @@ WHERE 1=1
   AND t.data ~ '^adresse\..*(\*)'
 ;
 ```
+
+##### ASCI code
+
+https://www.postgresql.org/docs/current/functions-matching.html#POSIX-CLASS-SHORTHAND-ESCAPES-TABLE
+
+Escaping `[` using ASCII code : 
+- 133 is octal, use `\133`
+- 5B is hexadecimal , use `\u005B`
+- 5B is hexadecimal , use `\u005B`
+
+```postgresql
+SELECT
+    t.value, 
+    t.value ~ '^\[foo$',
+    t.value ~ '^\133foo$',
+    t.value ~ '^\u005Bfoo$'
+FROM ( VALUES 
+           ('[foo'), 
+           ('foo')
+     ) AS t (value)
+```
+
+To get the octal value, get the decimal first
+```postgresql
+SELECT ASCII('[')
+```
+Here we get 91
+
+Then [translate to octal](https://www.rapidtables.com/convert/number/decimal-to-octal.html?x=91) to get `133`.
 
 Sandbox
 ```postgresql
