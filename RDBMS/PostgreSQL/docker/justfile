@@ -1,0 +1,13 @@
+start-instance:
+    docker compose up --detach --wait
+
+stop-instance:
+    docker compose down
+
+get-console:
+    psql --dbname "$CONNECTION_STRING"
+
+install-packages:
+    docker exec --interactive --tty --user=root  batch-queries-postgresql-postgresql-1 bash
+    # apt update
+    # apt install postgresql-15-dirtyread

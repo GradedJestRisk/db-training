@@ -386,10 +386,6 @@ Empty
 SELECT pg_prewarm('cacheme');
 ```
 
-Get cached pages
-```postgresql
-SELECT * FROM buffercache('cacheme');
-```
 
 
 ### Dump connection memory content

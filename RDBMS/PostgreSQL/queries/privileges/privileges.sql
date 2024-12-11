@@ -9,7 +9,7 @@ SELECT "current_user"()
 --         Yes: Check column privileges.
 
 
--- Roles
+-- Roles are users
 SELECT
        rl.oid     rl_dtf,
        rl.rolname rl_nm
