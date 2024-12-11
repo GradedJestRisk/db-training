@@ -1,13 +1,16 @@
 start-instance:
     docker compose up --detach --wait
 
+start-fresh-instance:
+    docker compose up --force-recreate --renew-anon-volumes --detach --wait
+    docker exec --interactive --tty --user=root db-training-postgresql-1 bash -c "apt update; apt install --assume-yes postgresql-15-dirtyread;"
+    psql --dbname "$CONNECTION_STRING" --command="CREATE EXTENSION pg_dirtyread;"
+
 stop-instance:
     docker compose down
 
 get-console:
     psql --dbname "$CONNECTION_STRING"
 
-install-packages:
-    docker exec --interactive --tty --user=root  batch-queries-postgresql-postgresql-1 bash
-    # apt update
-    # apt install postgresql-15-dirtyread
+get-bash:
+    docker exec --interactive --tty --user=root db-training-postgresql-1 bash

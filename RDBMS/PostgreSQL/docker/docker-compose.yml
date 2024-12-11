@@ -1,20 +1,19 @@
 # Source:
-# - Dockerfile: https://github.com/bitnami/containers/blob/main/bitnami/postgresql/14/debian-12/Dockerfile
-# - documentation: https://github.com/bitnami/containers/blob/main/bitnami/postgresql/README.md
+# - Dockerfile:
+# - documentation:
 
 services:
 
   postgresql:
-    image: ${POSTGRESQL_IMAGE_NAME}:${POSTGRESQL_IMAGE_VERSION}
+    image: postgres:${POSTGRESQL_IMAGE_VERSION}
     ports:
       - "${POSTGRESQL_EXPOSED_PORT}:${POSTGRESQL_INTERNAL_PORT}"
     environment:
       POSTGRES_USER: ${POSTGRESQL_USER_NAME}
       POSTGRES_PASSWORD: ${POSTGRESQL_USER_PASSWORD}
       POSTGRES_DB: ${POSTGRESQL_DATABASE_NAME}
-      POSTGRESQL_POSTGRES_PASSWORD: ${POSTGRESQL_POSTGRES_PASSWORD}
-    volumes:
-      - ./configuration:/bitnami/postgresql/conf
+#    volumes:
+#      - ./configuration:/usr/share/postgresql/
     healthcheck:
       test: "psql --dbname \"host=localhost port=${POSTGRESQL_INTERNAL_PORT} dbname=${POSTGRESQL_DATABASE_NAME} user=${POSTGRESQL_USER_NAME} password=${POSTGRESQL_USER_PASSWORD}\""
       interval: 1s
