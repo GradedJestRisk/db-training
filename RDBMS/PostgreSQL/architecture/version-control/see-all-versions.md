@@ -1,6 +1,10 @@
 # See all versions
 
-[DOC](https://github.com/df7cb/pg_dirtyread)
+You can use the following extensions:
+- [pg_dirtyread](https://github.com/df7cb/pg_dirtyread), which should be installed;
+- [pg_visibility](https://www.postgresql.org/docs/current/pgvisibility.html), which is available out-of-the-box, but display actual data in cumbersome.
+
+https://www.highgo.ca/2024/04/19/a-deeper-look-inside-postgresql-visibility-check-mechanism/
 
 ## Setup
 
@@ -51,7 +55,6 @@ You see version 1
 
 ## Create another version
 
-
 Create another version
 ```postgresql
 UPDATE versions 
@@ -79,7 +82,8 @@ You see version 2 only
 
 ## See all version
 
-Now use the extension
+Now use the extension `pg_diryread`
+
 ```postgresql
 SELECT
     'values=>',

@@ -2,6 +2,9 @@
 
 [DOC](https://www.interdb.jp/pg/pgsql05/10.html)
 
+Transaction identifiers (txid) are 32-bit quantities. 
+This creates a hard limit of 232 (4 billion) transactions.
+
 ## Setup
 
 Start instance with [pg-dirtyread](https://tracker.debian.org/pkg/pg-dirtyread) extension.
@@ -64,11 +67,18 @@ VACUUM FREEZE VERBOSE versions;
 
 You'll get
 ```text
-removable cutoff: 760, which was 0 XIDs old when operation ended
-new relfrozenxid: 760, which is 6 XIDs ahead of previous value
+removable cutoff: 827, which was 0 XIDs old when operation ended
+new relfrozenxid: 827, which is 6 XIDs ahead of previous value
 ```
 
 ## Check frozen 
+
+```postgresql
+SELECT relfrozenxid 
+FROM pg_class r
+WHERE r.relname = 'versions'
+```
+-- 827
 
 Check
 ```postgresql
@@ -161,3 +171,19 @@ WHERE t_infomask IS NOT NULL OR t_infomask2 IS NOT NULL;
 |:-------|:-------------------|
 | (0,3)  | {HEAP_XMIN_FROZEN} |
 | (0,3)  | {}                 |
+
+## Check VM
+
+```postgresql
+CREATE EXTENSION pg_visibility;
+```
+
+Get VM or relation
+```postgresql
+SELECT
+   pg_visibility_map.*    
+FROM
+    pg_visibility_map('versions') 
+```
+
+All tuples are frozen and visible in block 0.

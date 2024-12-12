@@ -1,8 +1,43 @@
 # Datafile structure
 
+
+## Structure
+
+https://www.postgresql.org/docs/current/storage-file-layout.html
+
+Each relation is stored in a file on FS, under $PGDATA
+```postgresql
+SELECT pg_relation_filepath('versions')
+```
+
+Each relation is stored in several blocks (=pages), 8 kbytes each.
+```postgresql
+SHOW block_size;
+```
+
+Each tuple can be located by using ctid, which is (block_number, offset).
+```postgresql
+SELECT ctid
+FROM versions;
+```
+
+There are 2 tuples, all in the same block (0) at offset 1 and 2
+
+| ctid  |
+|:------|
+| (0,1) |
+| (0,2) |
+
+
+## pageinspect
+
+To display the block content:
+- header
+- its tuple
+
 > All tuples are shown, whether or not the tuples were visible to an MVCC snapshot at the time the raw page was copied.
 
-## Create data, single column
+### Create data, single column
 
 Create a table
 ```postgresql
@@ -26,7 +61,7 @@ INSERT INTO versions (id, version) VALUES (1, 66);
 ```
 
 
-## Inspect
+### Inspect
 
 
 Tuples pointers, with tuple data as single value
@@ -57,7 +92,7 @@ FROM
     );
 ```
 
-## Decode data (manually)
+### Decode data (manually)
 
 ```postgresql
 DROP TABLE IF EXISTS versions;
@@ -131,9 +166,9 @@ FROM (
 ```
 
 
-## Flags
+### Flags
 
-Tuple flags
+Tuple flags, eg `frozen`
 ```postgresql
 SELECT 
     t_ctid, 
