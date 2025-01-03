@@ -12,8 +12,8 @@ services:
       POSTGRES_USER: ${POSTGRESQL_USER_NAME}
       POSTGRES_PASSWORD: ${POSTGRESQL_USER_PASSWORD}
       POSTGRES_DB: ${POSTGRESQL_DATABASE_NAME}
-#    volumes:
-#      - ./configuration:/usr/share/postgresql/
+    #    https://www.postgresql.org/docs/current/app-postgres.html
+    #    command: postgres $SOME_CONFIGURATION
     healthcheck:
       test: "psql --dbname \"host=localhost port=${POSTGRESQL_INTERNAL_PORT} dbname=${POSTGRESQL_DATABASE_NAME} user=${POSTGRESQL_USER_NAME} password=${POSTGRESQL_USER_PASSWORD}\""
       interval: 1s

@@ -1,0 +1,17 @@
+start-instance:
+    docker compose up --detach --wait
+
+create-start-instance:
+    docker compose up --force-recreate --renew-anon-volumes --remove-orphans --detach --wait
+
+stop-instance:
+    docker compose down
+
+console:
+    psql --dbname "$CONNECTION_STRING"
+
+logs:
+    docker logs oracle bash
+
+bash:
+    docker exec --interactive --tty oracle bash

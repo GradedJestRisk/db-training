@@ -1,18 +1,42 @@
--- Indexes
--- Given schema
+# Index
+
+
+## Indexes
+
+### Given schema
+
+Count
+```postgresql
 SELECT
     --ndx.indexname
     COUNT(1)
 FROM pg_indexes ndx
 WHERE 1=1
     AND ndx.schemaname = 'public'
-ORDER BY
-    ndx.indexname ASC
 ;
+```
 
+Indexes
+```postgresql
+SELECT
+       'Indexes=>' qry
+       ,ndx.indexname ndxl_nm
+       ,ndx.tablename tbl_nm
+       ,ndx.indexdef  dfn
+       ,'pg_indexes=>' qry
+       ,ndx.*
+FROM pg_indexes ndx
+WHERE 1=1
+    AND ndx.schemaname = 'public'
+    --AND ndx.indexname = 'users_createdAt_idx'
+    AND ndx.indexname NOT ILIKE '%_pkey'
+    AND ndx.indexname NOT ILIKE 'fk_%'
+;
+```
 
--- Indexes
--- Given name
+### Given table name
+
+```postgresql
 SELECT
        'Indexes=>' qry
        ,ndx.indexname ndxl_nm
@@ -25,39 +49,13 @@ WHERE 1=1
     AND ndx.schemaname = 'public'
 --    AND ndx.indexname = 'knowledge_elements_assessmentid_foreign'
     AND ndx.tablename = 'knowledge-elements'
-;
-
-
--- Indexes
--- Given table name
-SELECT
-       'Indexes=>' qry
-       ,ndx.indexname ndxl_nm
-       ,ndx.tablename tbl_nm
-       ,ndx.indexdef  dfn
-       ,'pg_indexes=>' qry
-       ,ndx.*
-FROM pg_indexes ndx
-WHERE 1=1
-    --AND ndx.schemaname <> 'pg_catalog'
-    AND ndx.tablename = 'answers'
 --    AND ndx.tablename LIKE 'account%'
 ;
+```
 
--- Indexes
--- Given schema name
-SELECT
-       'Indexes=>' qry
-       ,ndx.indexname ndxl_nm
-       ,ndx.tablename tbl_nm
-       ,ndx.indexdef  dfn
-       ,'pg_indexes=>' qry
-       ,ndx.*
-FROM pg_indexes ndx
-WHERE 1=1
-    AND ndx.schemaname = 'public'
-    --AND ndx.indexname = 'users_createdAt_idx'
-;
+
+
+
 
 SELECT
    a.attname,

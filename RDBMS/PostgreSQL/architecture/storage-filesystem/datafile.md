@@ -1,14 +1,65 @@
 # Datafile structure
 
+## Files
 
-## Structure
+### Relation (heap)
+
+Each relation is stored in at least one file on FS.
+
+The filename is the relation oid, eg. `16433` for table `big_table', followed by a dot if table exceeds 1 GB.
+
+All relation files are stored in a folder, named with the database oid, eg. `16384` for database "database".
+
+All database folder are stored in a folder named `base`, pointed by $PGDATA or `data_directory` setting.
+
+Eg
+```text
+root@845f5da6d8e1:/# ls -ltrah /var/lib/postgresql/data/base/16384/16385
+-rw------- 1 postgres postgres 346M Dec 26 10:44 /var/lib/postgresql/data/base/16384/16385
+```
+
+### Find files 
+
+To get the fragment under $PGDATA for a relation
+```postgresql
+SELECT  pg_relation_filepath('big_table')
+```
+
+You get.
+```text
+base/16384/16433
+```
+
+Which is.
+```text
+base/$DATABASE_OID/$TABLE_OID
+```
+
+Relation
+```postgresql
+SELECT *
+FROM pg_class 
+WHERE relname = 'big_table' and oid  = 16433
+```
+
+Database
+```postgresql
+SELECT *
+FROM pg_database 
+WHERE oid=16384 and datname = 'database'
+```
+
+In a container, you can get all files for a relation by executing
+```postgresql
+SELECT 'docker exec --tty postgresql bash -c ' || '"' || 'du -sh ' || setting || '/' ||  pg_relation_filepath('big_table') || '"'
+FROM pg_settings WHERE name = 'data_directory';
+```
+
+## Structure of a file
+
+### Relation
 
 https://www.postgresql.org/docs/current/storage-file-layout.html
-
-Each relation is stored in a file on FS, under $PGDATA
-```postgresql
-SELECT pg_relation_filepath('versions')
-```
 
 Each relation is stored in several blocks (=pages), 8 kbytes each.
 ```postgresql

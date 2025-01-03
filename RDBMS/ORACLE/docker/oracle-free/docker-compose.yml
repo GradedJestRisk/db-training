@@ -1,0 +1,21 @@
+# https://hub.docker.com/r/gvenzl/oracle-free
+# Starts in 2 minutes 30 seconds, then 30 seconds
+# Connection - IDE: Service=FREEPDB1, User=username, Password=password
+#            - CLI: sqlplus username/password@//localhost/FREEPDB1
+services:
+  oracle:
+    container_name: oracle
+    image: gvenzl/oracle-free:latest-faststart
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: sys_user_password
+      APP_USER: username
+      APP_USER_PASSWORD: password
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+      start_interval: 5s

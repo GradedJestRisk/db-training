@@ -21,7 +21,7 @@ SELECT
 ## Relation (heap)
 
 ```postgresql
-SELECT pg_relation_filenode('') 
+SELECT pg_relation_filenode('some_table') 
 ```
 
 

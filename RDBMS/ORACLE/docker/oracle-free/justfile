@@ -1,0 +1,20 @@
+start-instance:
+    docker compose up --detach --wait
+
+create-start-instance:
+    docker compose up --force-recreate --renew-anon-volumes --remove-orphans --detach --wait
+
+stop-instance:
+    docker compose down
+
+console:
+    psql --dbname "$CONNECTION_STRING"
+
+logs:
+    docker logs --follow oracle
+
+bash:
+    docker exec --interactive --tty oracle bash
+
+sqlplus:
+    docker exec --interactive --tty oracle bash -c "sqlplus username/password@//localhost/FREEPDB1"

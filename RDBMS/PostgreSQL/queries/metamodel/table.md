@@ -1,5 +1,9 @@
--- Tables
--- Given schema
+# Table
+
+## Tables
+
+Given schema
+```postgresql
 SELECT
     t.table_name,
     t.*
@@ -12,10 +16,10 @@ WHERE 1=1
 ORDER BY
     t.table_name ASC
 ;
+```
 
-
--- Tables
--- Given table name
+Given table name
+```postgresql
 SELECT
     t.table_name,
     t.*
@@ -28,7 +32,7 @@ WHERE 1=1
 ORDER BY
     t.table_name ASC
 ;
-
+```
 
 SELECT COUNT(1) FROM information_schema.tables t
 WHERE t.table_type = 'BASE TABLE' AND t.table_name = 'answers_bigint'
@@ -40,8 +44,8 @@ ORDER BY
 ;
 
 
--- Table
--- Given OID (object identifier)
+Given OID (object identifier)
+```postgresql
 SELECT
    oid     obj_dtf ,
    relname tbl_nm,
@@ -55,8 +59,11 @@ WHERE 1=1
 ORDER BY
     relname ASC
 ;
+```
 
--- Table + OID
+
+Table + OID
+```postgresql
 SELECT
   --sch.nspname sch,
   tbl.relname tbl_nm,
@@ -67,12 +74,12 @@ WHERE 1=1
     AND tbl.relkind = 'r'
     AND sch.nspname = 'public'
 ORDER BY relname ASC;
+```
 
+## record count
 
-
-
-
--- Table record count
+All schemas
+```postgresql
 SELECT
    tbl.schemaname schm_nm,
    tbl.relname tbl_nm,
@@ -85,28 +92,36 @@ WHERE 1=1
 ORDER BY
    tbl.relname ASC
 ;
+```
 
--- Table record count
+Given schema
+```postgresql
 SELECT
+   tbl.schemaname schm_nm,
    tbl.relname tbl_nm,
    tbl.n_live_tup record_count
 FROM
      pg_stat_user_tables tbl
 WHERE 1=1
     AND tbl.schemaname = 'public'
+--    AND tbl.relname = 'users'
 ORDER BY
-   tbl.relname ASC;
+   tbl.relname ASC
+;
+```
 
 
+Use ANALYZE BEFORE
 
--- Use ANALYZE BEFORE !!
+```postgresql
 SELECT
   nspname AS schemaname,
   relname,
   reltuples
 FROM pg_class C
-LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
-WHERE
-  nspname NOT IN ('pg_catalog', 'information_schema') AND
-  relkind='r'
+    LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
+WHERE 1=1
+   AND nspname NOT IN ('pg_catalog', 'information_schema') 
+   AND relkind='r'
 ORDER BY reltuples DESC;
+```

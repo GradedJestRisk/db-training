@@ -1,17 +1,24 @@
--- https://www.postgresql.org/docs/current/catalog-pg-class.html
--- When we mean all of these kinds of objects we speak of “relations”
--- relkind = content
--- r = ordinary table
--- i = index
--- S = sequence
--- v = view
--- m = materialized view
--- c = composite type
--- t = TOAST table
--- f = foreign table
+# Relation
 
 
--- Relation
+https://www.postgresql.org/docs/current/catalog-pg-class.html
+
+When we mean all of these kinds of objects we speak of “relations”
+- relkind = content
+- r = ordinary table
+- i = index
+- S = sequence
+- v = view
+- m = materialized view
+- c = composite type
+- t = TOAST table
+- f = foreign table
+
+
+## relation
+
+
+```postgresql
 SELECT
    rl.oid     obj_dtf,
    rl.relkind rlt_typ,
@@ -35,15 +42,15 @@ WHERE 1=1
 ORDER BY
     relname ASC
 ;
+```
 
-
--- Relation
--- Given OID (object identifier)
+Given OID (object identifier)
+```postgresql
 SELECT 75246::regclass;
+```
 
-
--- Relation
--- Given OID (object identifier)
+Given OID (object identifier)
+```postgresql
 SELECT
    rl.oid     obj_dtf,
    rl.relkind rlt_typ,
@@ -57,10 +64,16 @@ WHERE 1=1
 ORDER BY
     relname ASC
 ;
+```
 
 
--- Relation + Namespace
--- Given namespace/name
+
+## relation + namespace
+
+
+Given namespace/name
+
+```postgresql
 SELECT
    rl.oid     obj_dtf,
    rl.relkind rlt_typ,
@@ -78,8 +91,13 @@ WHERE 1=1
 ORDER BY
     relname ASC
 ;
+```
+
+## namespace
 
 
+```
 SELECT *
 FROM pg_namespace
 ;
+```

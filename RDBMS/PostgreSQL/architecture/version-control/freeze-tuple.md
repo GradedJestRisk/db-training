@@ -71,6 +71,12 @@ removable cutoff: 827, which was 0 XIDs old when operation ended
 new relfrozenxid: 827, which is 6 XIDs ahead of previous value
 ```
 
+```postgresql
+SELECT *
+FROM pg_stat_all_tables 
+WHERE relname = 'versions'
+```
+
 ## Check frozen 
 
 ```postgresql
