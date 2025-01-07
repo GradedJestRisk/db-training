@@ -1,9 +1,10 @@
----------------------------------------------------------------------------
---------------   System  privileges (NOT ON OBJECTS)                  -------------
----------------------------------------------------------------------------
+# Privileges
 
--- System  privileges
--- Granted to X
+##  System privileges (NOT ON OBJECTS)
+
+System privileges
+Granted to X
+```oracle
 SELECT
   sys_prv.*
 FROM
@@ -11,9 +12,25 @@ FROM
 WHERE 1=1
    AND sys_prv.grantee = 'DBOFAP'
 ;
+```
 
--- System  privileges
--- For a specific privilege
+System privileges
+Granted to X
+```oracle
+SELECT
+    sys_prv.*
+FROM
+    dba_sys_privs sys_prv
+WHERE 1=1
+--   AND sys_prv.grantee = 'DBOFAP'
+  AND sys_prv.privilege LIKE '%VIEW%'
+;
+```
+
+
+System  privileges
+For a specific privilege
+```oracle
 SELECT
   sys_prv.*
 FROM
@@ -24,17 +41,22 @@ WHERE 1=1
 ORDER BY 
    sys_prv.grantee
 ;
+```
 
--- current user
+Current user
+```oracle
 select * from user_sys_privs
 ;
----------------------------------------------------------------------------
---------------   Direct privileges (on objects)                  -------------
----------------------------------------------------------------------------
+```
 
+##  Direct privileges (on objects) 
 
 -- Directly granted privileges
 -- Example of SYS to a SYS role
+
+```oracle
+
+
 SELECT
   prv_drc.grantor,
   prv_drc.privilege,
@@ -45,8 +67,10 @@ FROM
 WHERE 1=1
 --   AND prv_drc.grantor    =   'SYS'
 --   AND prv_drc.grantee    =   'SELECT_CATALOG_ROLE'
-   AND prv_drc.table_name =   UPPER ('REF_K_BATCHS')   
+--    AND prv_drc.table_name =   UPPER ('REF_K_BATCHS')   
+   AND UPPER(prv_drc.table_name) LIKE 'V_$SESS_TIME_MODEL%'   
 ;
+```
 
 -- Directly granted privileges
 -- Example of SYS to a user
@@ -80,11 +104,11 @@ WHERE 1=1
 ;
 
 
----------------------------------------------------------------------------
---------------      Role granted privileges                    -------------
----------------------------------------------------------------------------
+##  Role granted privileges
 
 -- Indirectly granted privileges (by role)
+
+```oracle
 SELECT
   prv_rl.granted_role,
   prv_rl.grantee
@@ -92,23 +116,21 @@ FROM
   dba_role_privs prv_rl
 WHERE 1=1
 --   AND prv_rl.granted_role  =   'DBOFAP'
-   AND prv_rl.grantee       =   'EXPRDO'
+   AND prv_rl.grantee       =   'USERNAME'
 --   AND prv_rl.table_name = UPPER ('filiere')      
 ;
+```
 
 
-
------------------------------------------------------------------------------
-----------  Privil�ges -----------------
------------------------------------------------------------------------------
-
+## Privileges
 -- Privil�ges syst�mes (CREATE USER, DROP USER,..)
 SELECT * FROM 
    user_sys_privs
 ;
 
--- Privil�ges objets tables
--- Pour utilisateur
+Privil�ges objets tables
+Pour utilisateur
+```oracle
 SELECT 
    prv_tls.grantor,
    prv_tls.grantee,
@@ -117,10 +139,12 @@ SELECT
    prv_tls.*
 FROM all_tab_privs prv_tls
 WHERE 1=1
-   AND prv_tls.grantee      =   'SYSTEM'
-   AND prv_tls.table_name   =   'TBL_TEST' --UPPER('wrk_gen_trc_fil')
+   --AND prv_tls.grantee      =   'SYSTEM'
+--    AND prv_tls.table_name   =   'TBL_TEST' --UPPER('wrk_gen_trc_fil')
 --   AND prv_tls.table_name LIKE 'V$%'
 ;
+
+```
 
 
 -- Privil�ges objets tables
@@ -148,9 +172,8 @@ WHERE 1=1
 --   AND   tls_rl.grantee   = 'THCC'
 ;
 
--------------------------------
----------- R�le         -------
--------------------------------
+# Role
+
 SELECT *
 FROM 
    role_role_privs rl
@@ -165,9 +188,7 @@ WHERE 1=1
    AND rl.role = 'EXP_RDO_ROLE'
 ;
 
--------------------------------
----------- R�le + Droits        -------
--------------------------------
+## Roles + rights
 
 -- R�le: droits sur tables
 SELECT * 
@@ -193,10 +214,7 @@ WHERE 1=1
    AND rl_tbl.table_name =  UPPER('wrk_gen_trc_fil')
 ;
 
--------------------------------
----------- R�le + Utilisateur        -------
--------------------------------
-
+## Role + user
 -- R�le: droits sur tables
 SELECT   
     rl_tls.username     rl_tls
@@ -220,11 +238,7 @@ ORDER BY
 
 
 
-
----------------------------------------------------------------------------
---------------      Role                   -------------
----------------------------------------------------------------------------
-
+## Role
 
 -- Priorit�
 -- Tous       
@@ -262,11 +276,10 @@ WHERE 1=1
 
 
 
+## Add privileges
 
-
--------------------------------
----------- Ajout privil�ges         -------
--------------------------------
+Table
+```oracle
 GRANT 
    SELECT, INSERT, UPDATE, DELETE 
 ON 
@@ -274,21 +287,16 @@ ON
 TO 
    ptop
 ;
+```
 
-CREATE SYNONYM 
-   ptop.db_mt_kp
-FOR pegase.db_mt_kp
-;
+All system views
+```oracle
+GRANT select any dictionary TO USERNAME;
+GRANT execute ON sys.dbms_session TO USERNAME;
+```
 
-select * from db_mt_kp
-;
-
-DROP synonym is_capital_protege
-;
-
-CREATE SYNONYM 
-   ptop.is_capital_protege_seq 
-FOR pegase.is_capital_protege_seq
-;
-
-
+System view
+```oracle
+GRANT SELECT ON V$SESS_TIME_MODEL TO USERNAME;
+GRANT SELECT ON sys.v_$sess_time_model TO USERNAME;
+```

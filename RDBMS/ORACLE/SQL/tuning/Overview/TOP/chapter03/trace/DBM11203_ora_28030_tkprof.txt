@@ -1,0 +1,236 @@
+
+TKPROF: Release 11.2.0.3.0 - Development on Fri Nov 30 23:45:57 2012
+
+Copyright (c) 1982, 2011, Oracle and/or its affiliates.  All rights reserved.
+
+Trace file: DBM11203_ora_28030.trc
+Sort options: prsela  exeela  fchela  
+********************************************************************************
+count    = number of times OCI procedure was executed
+cpu      = cpu time in seconds executing 
+elapsed  = elapsed time in seconds executing
+disk     = number of physical reads of buffers from disk
+query    = number of buffers gotten for consistent read
+current  = number of buffers gotten in current mode (usually for update)
+rows     = number of rows processed by the fetch or execute call
+--------------------------------------------------------------------------------
+
+*** SESSION ID:(156.29) 2012-11-30 23:21:45.691
+
+********************************************************************************
+
+SQL ID: 7wd0gdwwgph1r Plan Hash: 961378228
+
+SELECT EXTRACT(YEAR 
+FROM
+ D), ID, PAD FROM T ORDER BY EXTRACT(YEAR FROM D), ID
+
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        1      0.00       0.00          0          0          0           0
+Execute      1      0.00       0.00          0          0          0           0
+Fetch    10001      6.49      11.92      71499      38474          8     1000000
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total    10003      6.49      11.92      71499      38474          8     1000000
+
+Misses in library cache during parse: 1
+Misses in library cache during execute: 1
+Optimizer mode: ALL_ROWS
+Parsing user id: 34  (CHRIS)   (recursive depth: 1)
+Number of plan statistics captured: 1
+
+Rows (1st) Rows (avg) Rows (max)  Row Source Operation
+---------- ---------- ----------  ---------------------------------------------------
+   1000000    1000000    1000000  SORT ORDER BY (cr=38474 pr=71499 pw=33035 time=11123996 us cost=216750 size=264000000 card=1000000)
+   1000000    1000000    1000000   TABLE ACCESS FULL T (cr=38474 pr=38463 pw=0 time=5674541 us cost=21 size=264000000 card=1000000)
+
+
+Rows     Execution Plan
+-------  ---------------------------------------------------
+      0  SELECT STATEMENT   MODE: ALL_ROWS
+1000000   SORT (ORDER BY)
+1000000    TABLE ACCESS   MODE: ANALYZED (FULL) OF 'T' (TABLE)
+
+
+Elapsed times include waiting on following events:
+  Event waited on                             Times   Max. Wait  Total Waited
+  ----------------------------------------   Waited  ----------  ------------
+  db file sequential read                         2        0.00          0.00
+  db file scattered read                        530        0.06          2.79
+  direct path write temp                      11002        0.00          0.51
+  direct path read temp                       24015        0.00          2.41
+--------------------------------------------------------------------------------
+
+DECLARE
+  l_count INTEGER;
+BEGIN
+  FOR c IN (SELECT extract(YEAR FROM d), id, pad
+            FROM t
+            ORDER BY extract(YEAR FROM d), id)
+  LOOP
+    NULL;
+  END LOOP;
+  FOR i IN 1..10
+  LOOP
+    SELECT count(n) INTO l_count
+    FROM t
+    WHERE id < i*123;
+  END LOOP;
+END;
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        1      0.00       0.00          0          0          0           0
+Execute      1      0.44       0.40          0          0          0           1
+Fetch        0      0.00       0.00          0          0          0           0
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total        2      0.45       0.41          0          0          0           1
+
+Misses in library cache during parse: 1
+Optimizer mode: ALL_ROWS
+Parsing user id: 34  (CHRIS)
+
+Elapsed times include waiting on following events:
+  Event waited on                             Times   Max. Wait  Total Waited
+  ----------------------------------------   Waited  ----------  ------------
+  SQL*Net message to client                       1        0.00          0.00
+  SQL*Net message from client                     1        0.00          0.00
+********************************************************************************
+
+SQL ID: 7fjjjf0yvd05m Plan Hash: 4270555908
+
+SELECT COUNT(N) 
+FROM
+ T WHERE ID < :B1 *123
+
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        1      0.00       0.00          0          0          0           0
+Execute     10      0.00       0.00          0          0          0           0
+Fetch       10      0.00       0.02         53        303          0          10
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total       21      0.01       0.02         53        303          0          10
+
+Misses in library cache during parse: 1
+Misses in library cache during execute: 1
+Optimizer mode: ALL_ROWS
+Parsing user id: 34  (CHRIS)   (recursive depth: 1)
+Number of plan statistics captured: 10
+
+Rows (1st) Rows (avg) Rows (max)  Row Source Operation
+---------- ---------- ----------  ---------------------------------------------------
+         1          1          1  SORT AGGREGATE (cr=30 pr=5 pw=0 time=2607 us)
+       122        676       1229   TABLE ACCESS BY INDEX ROWID T (cr=30 pr=5 pw=0 time=2045 us cost=8 size=1098 card=122)
+       122        676       1229    INDEX RANGE SCAN T_PK (cr=4 pr=0 pw=0 time=872 us cost=3 size=0 card=122)(object id 20991)
+
+
+Rows     Execution Plan
+-------  ---------------------------------------------------
+      0  SELECT STATEMENT   MODE: ALL_ROWS
+      1   SORT (AGGREGATE)
+    122    TABLE ACCESS   MODE: ANALYZED (BY INDEX ROWID) OF 'T' (TABLE)
+    122     INDEX   MODE: ANALYZED (RANGE SCAN) OF 'T_PK' (INDEX (UNIQUE)
+                )
+
+
+Elapsed times include waiting on following events:
+  Event waited on                             Times   Max. Wait  Total Waited
+  ----------------------------------------   Waited  ----------  ------------
+  db file sequential read                        53        0.00          0.02
+--------------------------------------------------------------------------------
+
+SQL ID: 96g93hntrzjtr Plan Hash: 2239883476
+
+select /*+ rule */ bucket_cnt, row_cnt, cache_cnt, null_cnt, timestamp#, 
+  sample_size, minimum, maximum, distcnt, lowval, hival, density, col#, 
+  spare1, spare2, avgcln 
+from
+ hist_head$ where obj#=:1 and intcol#=:2
+
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        0      0.00       0.00          0          0          0           0
+Execute      4      0.00       0.00          0          0          0           0
+Fetch        4      0.00       0.01          5         12          0           4
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total        8      0.00       0.01          5         12          0           4
+
+Misses in library cache during parse: 0
+Optimizer mode: RULE
+Parsing user id: SYS   (recursive depth: 2)
+
+Elapsed times include waiting on following events:
+  Event waited on                             Times   Max. Wait  Total Waited
+  ----------------------------------------   Waited  ----------  ------------
+  db file sequential read                         5        0.00          0.01
+
+
+
+********************************************************************************
+
+OVERALL TOTALS FOR ALL NON-RECURSIVE STATEMENTS
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        2      0.00       0.00          0          0          0           0
+Execute      3      0.45       0.42         20        226          0           3
+Fetch        0      0.00       0.00          0          0          0           0
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total        5      0.45       0.42         20        226          0           3
+
+Misses in library cache during parse: 2
+Misses in library cache during execute: 1
+
+Elapsed times include waiting on following events:
+  Event waited on                             Times   Max. Wait  Total Waited
+  ----------------------------------------   Waited  ----------  ------------
+  SQL*Net message to client                       2        0.00          0.00
+  SQL*Net message from client                     2        0.00          0.00
+
+
+OVERALL TOTALS FOR ALL RECURSIVE STATEMENTS
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        2      0.00       0.00          0          0          0           0
+Execute     29      0.00       0.00          0          0          0           0
+Fetch    10037      6.50      11.97      71569      38832          8     1000028
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total    10068      6.50      11.97      71569      38832          8     1000028
+
+Misses in library cache during parse: 2
+Misses in library cache during execute: 2
+
+Elapsed times include waiting on following events:
+  Event waited on                             Times   Max. Wait  Total Waited
+  ----------------------------------------   Waited  ----------  ------------
+  db file sequential read                        72        0.00          0.04
+  db file scattered read                        530        0.06          2.79
+  direct path write temp                      11002        0.00          0.51
+  direct path read temp                       24015        0.00          2.41
+
+    5  user  SQL statements in session.
+   13  internal SQL statements in session.
+   18  SQL statements in session.
+    2  statements EXPLAINed in this session.
+********************************************************************************
+Trace file: DBM11203_ora_28030.trc
+Trace file compatibility: 11.1.0.7
+Sort options: prsela  exeela  fchela  
+       1  session in tracefile.
+       5  user  SQL statements in trace file.
+      13  internal SQL statements in trace file.
+      18  SQL statements in trace file.
+      18  unique SQL statements in trace file.
+       2  SQL statements EXPLAINed using schema:
+           CHRIS.prof$plan_table
+             Default table was used.
+             Table was created.
+             Table was dropped.
+   46125  lines in trace file.
+      12  elapsed seconds in trace file.
+
+

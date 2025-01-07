@@ -215,3 +215,11 @@ WHERE 1=1
    AND v.sql_id          = sss.sql_id
    ;
 
+
+-- Query type: CREATE, INSERT
+SELECT * FROM v$sqlcommand;
+
+SELECT qry.*
+FROM v$session ssn INNER JOIN v$sqlcommand qry ON qry.command_type = ssn.command
+WHERE ssn.username = 'USERNAME';
+

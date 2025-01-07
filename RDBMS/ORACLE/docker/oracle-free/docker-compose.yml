@@ -1,21 +1,35 @@
 # https://hub.docker.com/r/gvenzl/oracle-free
-# Starts in 2 minutes 30 seconds, then 30 seconds
+# https://stackoverflow.com/questions/77282455/dockerfile-not-using-the-docker-compose-service-correctly
+#
+# Starts in 30 seconds on creation, then 15 seconds on each start
+#
 # Connection - IDE: Service=FREEPDB1, User=username, Password=password
 #            - CLI: sqlplus username/password@//localhost/FREEPDB1
+#            - CLI: sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba
 services:
   oracle:
     container_name: oracle
-    image: gvenzl/oracle-free:latest-faststart
+    image: gvenzl/oracle-free:${ORACLE_IMAGE_VERSION}
     ports:
-      - "1521:1521"
+      - "${ORACLE_EXPOSED_PORT}:${ORACLE_INTERNAL_PORT}"
     environment:
-      ORACLE_PASSWORD: sys_user_password
-      APP_USER: username
-      APP_USER_PASSWORD: password
+      ORACLE_PASSWORD: ${ORACLE_ADMINISTRATOR_PASSWORD}
+      APP_USER: ${ORACLE_USER_NAME}
+      APP_USER_PASSWORD: ${ORACLE_USER_PASSWORD}
+      TARGET_PDB: ${ORACLE_PLUGGABLE_DATABASE_NAME}
+    volumes:
+      - ./initialization-scripts:/container-entrypoint-initdb.d
+      - ./scripts:/tmp/scripts
+#      - ./traces:/tmp/traces:rw
+      - oracle-volume:/opt/oracle/oradata
     healthcheck:
       test: ["CMD", "healthcheck.sh"]
-      interval: 10s
+      interval: 2s
       timeout: 5s
-      retries: 10
+      retries: 50
       start_period: 5s
       start_interval: 5s
+
+
+volumes:
+  oracle-volume:

@@ -2,10 +2,15 @@ start-instance:
     docker compose up --detach --wait
 
 create-start-instance:
+    just stop-instance
+    just remove-volume
     docker compose up --force-recreate --renew-anon-volumes --remove-orphans --detach --wait
 
 stop-instance:
     docker compose down
+
+remove-volume:
+    docker volume rm  oracle-free_oracle-volume
 
 console:
     psql --dbname "$CONNECTION_STRING"
@@ -16,5 +21,32 @@ logs:
 bash:
     docker exec --interactive --tty oracle bash
 
-sqlplus:
+sqlplus-container:
     docker exec --interactive --tty oracle bash -c "sqlplus username/password@//localhost/FREEPDB1"
+
+sqlplus:
+    sqlplus $CONNECTION_STRING
+
+sqlplus-administrator:
+    sqlplus $CONNECTION_STRING
+
+#sqlplus-administrator:
+#    docker exec --interactive --tty oracle bash -c "sqlplus SYSTEM/administrator_password@//localhost/FREEPDB1"
+
+change-system-password:
+    docker exec oracle resetPassword $ORACLE_ADMINISTRATOR_PASSWORD
+
+create-table:
+    cat scripts/create-table.sql | sqlplus $CONNECTION_STRING
+
+query-table:
+    cat scripts/query-table.sql | sqlplus $CONNECTION_STRING
+
+grant:
+    docker exec --interactive --tty oracle bash -c "cat /tmp/scripts/grant.sql | sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba"
+
+profile-session:
+    rm ./traces/trace.txt
+    sqlplus $CONNECTION_STRING @scripts/profile-session.sql
+    docker exec --interactive --tty $CONTAINER_NAME /tmp/scripts/process-last-trace.sh
+    docker cp $CONTAINER_NAME:/tmp/trace.txt ./traces/trace.txt

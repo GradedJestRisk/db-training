@@ -1,0 +1,680 @@
+
+******************************************** TVD$XTAT **********************************************
+
+TriVaDis eXtended Tracefile Analysis Tool 4.0 Beta 10 (9 March 2012 09:43)
+
+Copyright 2000-2011 by Christian Antognini (christian.antognini@trivadis.com)
+
+Trivadis AG
+Europa-Strasse 5
+CH-8152 Glattbrugg / Zurich
+
+*************************************** OVERALL INFORMATION ****************************************
+
+Database Version
+****************
+Oracle Database 11g Enterprise Edition Release 11.2.0.3.0 - 64bit Production
+With the Partitioning, Automatic Storage Management, Oracle Label Security, OLAP,
+Data Mining and Real Application Testing options
+
+Analyzed Trace File
+*******************
+/u00/app/oracle/diag/rdbms/dbm11203/DBM11203/trace/DBM11203_ora_28030.trc
+
+Interval
+********
+Beginning 30 Nov 2012 23:21:45.691
+End       30 Nov 2012 23:21:58.097
+Duration  12.407 [s]
+
+Transactions
+************
+Committed  0
+Rollbacked 0
+
+Resource Usage Profile
+**********************
+                                                          Total             Number of      Duration per
+Component                                          Duration [s]       %        Events        Events [s]
+--------------------------------------------- ----------------- ------- ------------- -----------------
+CPU                                                       6.969  56.171           n/a               n/a
+db file scattered read                                    2.792  22.502           530             0.005
+direct path read temp                                     2.417  19.479        24,015             0.000
+direct path write temp                                    0.513   4.136        11,002             0.000
+db file sequential read                                   0.041   0.326            72             0.001
+SQL*Net message from client                               0.001   0.008             2             0.001
+SQL*Net message to client                                 0.000   0.000             2             0.000
+unaccounted-for                                          -0.325  -2.623           n/a               n/a
+--------------------------------------------- ----------------- -------
+Total                                                    12.407 100.000
+
+The input file contains 18 distinct statements, 15 of which are recursive.
+In the following table, only non-recursive statements are reported.
+
+                                                           Total             Number of      Duration per
+Statement ID  Type                                  Duration [s]       %    Executions     Execution [s]
+------------- -------------------------------- ----------------- ------- ------------- -----------------
+#1            PL/SQL                                      12.724 102.561             1            12.724
+#5            PL/SQL                                       0.006   0.045             1             0.006
+#9            PL/SQL                                       0.002   0.016             1             0.002
+------------- -------------------------------- ----------------- -------
+Total                                                     12.732 102.623
+
+CPU
+***
+
+18 statements contributed to this event.
+
+                                                           Total        
+Statement ID  Type                                  Duration [s]       %
+------------- -------------------------------- ----------------- -------
+#2            SELECT                                       6.493  93.171
+#1            PL/SQL                                       0.453   6.499
+#3            SELECT                                       0.013   0.186
+#5            PL/SQL                                       0.005   0.072
+#9            PL/SQL                                       0.002   0.029
+#4            SELECT (SYS recursive)                       0.002   0.029
+#10           SELECT (SYS recursive)                       0.001   0.014
+#6            SELECT (SYS recursive)                       0.000   0.000
+#7            SELECT (SYS recursive)                       0.000   0.000
+#8            SELECT (SYS recursive)                       0.000   0.000
+#11           SELECT (SYS recursive)                       0.000   0.000
+#12           SELECT (SYS recursive)                       0.000   0.000
+#13           SELECT (SYS recursive)                       0.000   0.000
+#14           SELECT (SYS recursive)                       0.000   0.000
+#15           SELECT (SYS recursive)                       0.000   0.000
+#16           SELECT (SYS recursive)                       0.000   0.000
+#17           SELECT (SYS recursive)                       0.000   0.000
+#18           SELECT (SYS recursive)                       0.000   0.000
+------------- -------------------------------- ----------------- -------
+Total                                                      6.969 100.000
+
+db file scattered read
+**********************
+                                               Total             Number of          Duration per                  Blocks per
+Range [us]                              Duration [s]       %        Events       %    Event [us]    Blocks [b]     Event [b]
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+256 ≥ duration < 512                           0.003   0.111             7       1           443            56             8
+512 ≥ duration < 1024                          0.008   0.288             9       2           892            72             8
+1024 ≥ duration < 2048                         0.033   1.191            18       3         1,847           826            46
+2048 ≥ duration < 4096                         0.517  18.525           166      31         3,115        11,627            70
+4096 ≥ duration < 8192                         1.465  52.459           264      50         5,547        20,742            79
+8192 ≥ duration < 16384                        0.579  20.736            60      11         9,648         4,722            79
+16384 ≥ duration < 32768                       0.126   4.496             5       1        25,101           336            67
+32768 ≥ duration < 65536                       0.061   2.195             1       0        61,274            81            81
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+Total                                          2.792 100.000           530 100.000         5,267        38,462            73
+
+File                      Total             Number of                                Duration per 
+Number             Duration [s]       %        Events       %    Blocks [b]       %    Event [us] 
+------------- ----------------- ------- ------------- ------- ------------- ------- ------------- 
+4                         2.792 100.000           530 100.000        38,462 100.000         5,267 
+
+1 statement contributed to this event.
+
+                                                           Total        
+Statement ID  Type                                  Duration [s]       %
+------------- -------------------------------- ----------------- -------
+#2            SELECT                                       2.792 100.000
+
+direct path read temp
+*********************
+                                               Total             Number of          Duration per                  Blocks per
+Range [us]                              Duration [s]       %        Events       %    Event [us]    Blocks [b]     Event [b]
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+4 ≥ duration < 8                               0.002   0.078           264       1             7           264             1
+8 ≥ duration < 16                              0.086   3.559         6,576      27            13         6,576             1
+16 ≥ duration < 32                             0.073   3.003         3,065      13            24         3,065             1
+32 ≥ duration < 64                             0.080   3.301         1,585       7            50         1,585             1
+64 ≥ duration < 128                            0.799  33.046         7,724      32           103         7,724             1
+128 ≥ duration < 256                           0.688  28.485         4,276      18           161         4,276             1
+256 ≥ duration < 512                           0.115   4.770           356       1           324           356             1
+512 ≥ duration < 1024                          0.004   0.167             5       0           809             5             1
+1024 ≥ duration < 2048                         0.035   1.438            23       0         1,511            23             1
+2048 ≥ duration < 4096                         0.430  17.797           119       0         3,614           119             1
+4096 ≥ duration < 8192                         0.097   3.997            21       0         4,599            21             1
+8192 ≥ duration < 16384                        0.009   0.359             1       0         8,673             1             1
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+Total                                          2.417 100.000        24,015 100.000           101        24,015             1
+
+File                      Total             Number of                                Duration per 
+Number             Duration [s]       %        Events       %    Blocks [b]       %    Event [us] 
+------------- ----------------- ------- ------------- ------- ------------- ------- ------------- 
+201                       2.417 100.000        24,015 100.000        24,015 100.000           101 
+
+1 statement contributed to this event.
+
+                                                           Total        
+Statement ID  Type                                  Duration [s]       %
+------------- -------------------------------- ----------------- -------
+#2            SELECT                                       2.417 100.000
+
+direct path write temp
+**********************
+                                               Total             Number of          Duration per                  Blocks per
+Range [us]                              Duration [s]       %        Events       %    Event [us]    Blocks [b]     Event [b]
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+4 ≥ duration < 8                               0.001   0.141            91       1             8            91             1
+8 ≥ duration < 16                              0.007   1.283           520       5            13           520             1
+16 ≥ duration < 32                             0.004   0.844           169       2            26           169             1
+32 ≥ duration < 64                             0.423  82.467         9,340      85            45         9,340             1
+64 ≥ duration < 128                            0.068  13.263           865       8            79           865             1
+128 ≥ duration < 256                           0.001   0.189             6       0           162             6             1
+256 ≥ duration < 512                           0.001   0.193             3       0           330             3             1
+512 ≥ duration < 1024                          0.003   0.633             4       0           812             4             1
+1024 ≥ duration < 2048                         0.005   0.987             4       0         1,266             4             1
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+Total                                          0.513 100.000        11,002 100.000            47        11,002             1
+
+File                      Total             Number of                                Duration per 
+Number             Duration [s]       %        Events       %    Blocks [b]       %    Event [us] 
+------------- ----------------- ------- ------------- ------- ------------- ------- ------------- 
+201                       0.513 100.000        11,002 100.000        11,002 100.000            47 
+
+1 statement contributed to this event.
+
+                                                           Total        
+Statement ID  Type                                  Duration [s]       %
+------------- -------------------------------- ----------------- -------
+#2            SELECT                                       0.513 100.000
+
+db file sequential read
+***********************
+                                               Total             Number of          Duration per                  Blocks per
+Range [us]                              Duration [s]       %        Events       %    Event [us]    Blocks [b]     Event [b]
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+32 ≥ duration < 64                             0.000   0.311             2       3            63             2             1
+64 ≥ duration < 128                            0.001   2.449            12      17            83            12             1
+128 ≥ duration < 256                           0.007  18.450            43      60           174            43             1
+256 ≥ duration < 512                           0.002   5.997             6       8           405             6             1
+512 ≥ duration < 1024                          0.001   1.299             1       1           526             1             1
+2048 ≥ duration < 4096                         0.015  38.221             5       7         3,096             5             1
+4096 ≥ duration < 8192                         0.013  33.273             3       4         4,492             3             1
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+Total                                          0.041 100.000            72 100.000           563            72             1
+
+File                      Total             Number of                                Duration per 
+Number             Duration [s]       %        Events       %    Blocks [b]       %    Event [us] 
+------------- ----------------- ------- ------------- ------- ------------- ------- ------------- 
+4                         0.021  50.837            54  75.000            54  75.000           381 
+1                         0.020  48.924            17  23.611            17  23.611         1,166 
+201                       0.000   0.239             1   1.389             1   1.389            97 
+------------- ----------------- ------- ------------- ------- ------------- ------- -------------
+Total                     0.041 100.000            72 100.000            72 100.000           563
+
+11 statements contributed to this event.
+
+                                                           Total        
+Statement ID  Type                                  Duration [s]       %
+------------- -------------------------------- ----------------- -------
+#3            SELECT                                       0.020  50.551
+#4            SELECT (SYS recursive)                       0.013  31.486
+#6            SELECT (SYS recursive)                       0.004   9.577
+#8            SELECT (SYS recursive)                       0.002   6.172
+#2            SELECT                                       0.000   0.526
+#7            SELECT (SYS recursive)                       0.000   0.420
+#11           SELECT (SYS recursive)                       0.000   0.388
+#12           SELECT (SYS recursive)                       0.000   0.343
+#13           SELECT (SYS recursive)                       0.000   0.195
+#14           SELECT (SYS recursive)                       0.000   0.173
+#15           SELECT (SYS recursive)                       0.000   0.170
+------------- -------------------------------- ----------------- -------
+Total                                                      0.041 100.000
+
+SQL*Net message from client
+***************************
+                                               Total             Number of          Duration per
+Range [us]                              Duration [s]       %        Events       %    Event [us]
+---------------------------------- ----------------- ------- ------------- ------- -------------
+256 ≥ duration < 512                           0.000  36.941             1      50           372
+512 ≥ duration < 1024                          0.001  63.059             1      50           635
+---------------------------------- ----------------- ------- ------------- ------- -------------
+Total                                          0.001 100.000             2 100.000           504
+
+2 statements contributed to this event.
+
+                                                           Total        
+Statement ID  Type                                  Duration [s]       %
+------------- -------------------------------- ----------------- -------
+#5            PL/SQL                                       0.001  63.059
+#1            PL/SQL                                       0.000  36.941
+------------- -------------------------------- ----------------- -------
+Total                                                      0.001 100.000
+
+SQL*Net message to client
+*************************
+                                               Total             Number of          Duration per
+Range [us]                              Duration [s]       %        Events       %    Event [us]
+---------------------------------- ----------------- ------- ------------- ------- -------------
+2 ≥ duration < 4                               0.000  44.444             1      50             4
+4 ≥ duration < 8                               0.000  55.556             1      50             5
+---------------------------------- ----------------- ------- ------------- ------- -------------
+Total                                          0.000 100.000             2 100.000             4
+
+2 statements contributed to this event.
+
+                                                           Total        
+Statement ID  Type                                  Duration [s]       %
+------------- -------------------------------- ----------------- -------
+#5            PL/SQL                                       0.000  55.556
+#1            PL/SQL                                       0.000  44.444
+------------- -------------------------------- ----------------- -------
+Total                                                      0.000 100.000
+
+****************************************** STATEMENT #1 ******************************************
+
+Session ID           156.29
+Service Name         SYS$USERS
+Module Name          SQL*Plus
+Parsing User         34
+Hash Value           166910891
+SQL ID               15p0p084z5qxb
+
+DECLARE
+  l_count INTEGER;
+BEGIN
+  FOR c IN (SELECT extract(YEAR FROM d), id, pad
+            FROM t
+            ORDER BY extract(YEAR FROM d), id)
+  LOOP
+    NULL;
+  END LOOP;
+  FOR i IN 1..10
+  LOOP
+    SELECT count(n) INTO l_count
+    FROM t
+    WHERE id < i*123;
+  END LOOP;
+END;
+
+Database Call Statistics with Recursive Statements
+**************************************************
+
+Call                            Count        Misses           CPU [s]       Elapsed [s]       PIO [b]       LIO [b]    Consistent [b]   Current [b]          Rows
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Parse                               1             1             0.005             0.006             7            20                20             0             0
+Execute                             1             0             6.957            12.387        71,562        38,820            38,812             8             1
+Fetch                               0             0             0.000             0.000             0             0                 0             0             0
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Total                               2             1             6.962            12.393        71,569        38,840            38,832             8             1
+
+Database Call Statistics without Recursive Statements
+*****************************************************
+
+Call                            Count        Misses           CPU [s]       Elapsed [s]       PIO [b]       LIO [b]    Consistent [b]   Current [b]          Rows
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Parse                               1             1             0.005             0.004             0             0                 0             0             0
+Execute                             1             0             0.448             0.410             0             0                 0             0             1
+Fetch                               0             0             0.000             0.000             0             0                 0             0             0
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Total                               2             1             0.453             0.414             0             0                 0             0             1
+
+Resource Usage Profile
+**********************
+                                                          Total             Number of      Duration per
+Component                                          Duration [s]       %        Events        Events [s]
+--------------------------------------------- ----------------- ------- ------------- -----------------
+recursive statements                                     12.271  96.437           n/a               n/a
+CPU                                                       0.453   3.560           n/a               n/a
+SQL*Net message from client                               0.000   0.003             1             0.000
+SQL*Net message to client                                 0.000   0.000             1             0.000
+--------------------------------------------- ----------------- -------
+Total                                                    12.724 100.000
+
+7 recursive statements were executed.
+
+                                                           Total        
+Statement ID  Type                                  Duration [s]       %
+------------- -------------------------------- ----------------- -------
+#2            SELECT                                      12.234  96.150
+#3            SELECT                                       0.033   0.263
+#7            SELECT (SYS recursive)                       0.003   0.022
+#11           SELECT (SYS recursive)                       0.000   0.001
+#12           SELECT (SYS recursive)                       0.000   0.001
+#14           SELECT (SYS recursive)                       0.000   0.001
+#16           SELECT (SYS recursive)                       0.000   0.000
+------------- -------------------------------- ----------------- -------
+Total                                                     12.252  96.286
+
+SQL*Net message from client
+***************************
+                                               Total             Number of          Duration per
+Range [us]                              Duration [s]       %        Events       %    Event [us]
+---------------------------------- ----------------- ------- ------------- ------- -------------
+256 ≥ duration < 512                           0.000 100.000             1     100           372
+
+SQL*Net message to client
+*************************
+                                               Total             Number of          Duration per
+Range [us]                              Duration [s]       %        Events       %    Event [us]
+---------------------------------- ----------------- ------- ------------- ------- -------------
+2 ≥ duration < 4                               0.000 100.000             1     100             4
+
+****************************************** STATEMENT #2 ******************************************
+
+Session ID           156.29
+Service Name         SYS$USERS
+Module Name          SQL*Plus
+Parsing User         34
+Recursive Level      1
+Parent Statement ID  1
+Hash Value           955957303
+SQL ID               7wd0gdwwgph1r
+
+SELECT EXTRACT(YEAR FROM D), ID, PAD FROM T ORDER BY EXTRACT(YEAR FROM D), ID
+
+Execution Plan
+**************
+
+Optimizer Mode       ALL_ROWS
+Hash Value           961378228
+
+         Rows Operation
+------------- --------------------------------------------------------------------------------------
+    1,000,000 SORT ORDER BY (cr=38474 pr=71499 pw=33035 time=11123996 us cost=216750 size=264000000 card=1000000)
+    1,000,000   TABLE ACCESS FULL T (cr=38474 pr=38463 pw=0 time=5674541 us cost=21 size=264000000 card=1000000)
+
+Database Call Statistics with Recursive Statements
+**************************************************
+
+Call                            Count        Misses           CPU [s]       Elapsed [s]       PIO [b]       LIO [b]    Consistent [b]   Current [b]          Rows
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Parse                               1             1             0.004             0.010             7            32                32             0             0
+Execute                             1             1             0.000             0.000             0             0                 0             0             0
+Fetch                          10,001             0             6.492            11.926        71,499        38,482            38,474             8     1,000,000
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Total                          10,003             2             6.496            11.936        71,506        38,514            38,506             8     1,000,000
+Average (per row)                   0             0             0.000             0.000             0             0                 0             0             1
+
+Database Call Statistics without Recursive Statements
+*****************************************************
+
+Call                            Count        Misses           CPU [s]       Elapsed [s]       PIO [b]       LIO [b]    Consistent [b]   Current [b]          Rows
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Parse                               1             1             0.001             0.001             0             9                 9             0             0
+Execute                             1             1             0.000             0.000             0             0                 0             0             0
+Fetch                          10,001             0             6.492            11.926        71,499        38,482            38,474             8     1,000,000
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Total                          10,003             2             6.493            11.927        71,499        38,491            38,483             8     1,000,000
+Average (per row)                   0             0             0.000             0.000             0             0                 0             0             1
+
+Resource Usage Profile
+**********************
+                                                          Total             Number of      Duration per
+Component                                          Duration [s]       %        Events        Events [s]
+--------------------------------------------- ----------------- ------- ------------- -----------------
+CPU                                                       6.493  53.071           n/a               n/a
+db file scattered read                                    2.792  22.818           530             0.005
+direct path read temp                                     2.417  19.753        24,015             0.000
+direct path write temp                                    0.513   4.194        11,002             0.000
+recursive statements                                      0.020   0.161           n/a               n/a
+db file sequential read                                   0.000   0.002             2             0.000
+--------------------------------------------- ----------------- -------
+Total                                                    12.234 100.000
+
+6 recursive statements were executed.
+
+                                                           Total        
+Statement ID  Type                                  Duration [s]       %
+------------- -------------------------------- ----------------- -------
+#4            SELECT (SYS recursive)                       0.015   0.121
+#6            SELECT (SYS recursive)                       0.004   0.032
+#10           SELECT (SYS recursive)                       0.001   0.008
+#13           SELECT (SYS recursive)                       0.000   0.001
+#17           SELECT (SYS recursive)                       0.000   0.000
+#18           SELECT (SYS recursive)                       0.000   0.000
+------------- -------------------------------- ----------------- -------
+Total                                                      0.006   0.050
+
+db file scattered read
+**********************
+                                               Total             Number of          Duration per                  Blocks per
+Range [us]                              Duration [s]       %        Events       %    Event [us]    Blocks [b]     Event [b]
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+256 ≥ duration < 512                           0.003   0.111             7       1           443            56             8
+512 ≥ duration < 1024                          0.008   0.288             9       2           892            72             8
+1024 ≥ duration < 2048                         0.033   1.191            18       3         1,847           826            46
+2048 ≥ duration < 4096                         0.517  18.525           166      31         3,115        11,627            70
+4096 ≥ duration < 8192                         1.465  52.459           264      50         5,547        20,742            79
+8192 ≥ duration < 16384                        0.579  20.736            60      11         9,648         4,722            79
+16384 ≥ duration < 32768                       0.126   4.496             5       1        25,101           336            67
+32768 ≥ duration < 65536                       0.061   2.195             1       0        61,274            81            81
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+Total                                          2.792 100.000           530 100.000         5,267        38,462            73
+
+File                      Total             Number of                                Duration per 
+Number             Duration [s]       %        Events       %    Blocks [b]       %    Event [us] 
+------------- ----------------- ------- ------------- ------- ------------- ------- ------------- 
+4                         2.792 100.000           530 100.000        38,462 100.000         5,267 
+
+direct path read temp
+*********************
+                                               Total             Number of          Duration per                  Blocks per
+Range [us]                              Duration [s]       %        Events       %    Event [us]    Blocks [b]     Event [b]
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+4 ≥ duration < 8                               0.002   0.078           264       1             7           264             1
+8 ≥ duration < 16                              0.086   3.559         6,576      27            13         6,576             1
+16 ≥ duration < 32                             0.073   3.003         3,065      13            24         3,065             1
+32 ≥ duration < 64                             0.080   3.301         1,585       7            50         1,585             1
+64 ≥ duration < 128                            0.799  33.046         7,724      32           103         7,724             1
+128 ≥ duration < 256                           0.688  28.485         4,276      18           161         4,276             1
+256 ≥ duration < 512                           0.115   4.770           356       1           324           356             1
+512 ≥ duration < 1024                          0.004   0.167             5       0           809             5             1
+1024 ≥ duration < 2048                         0.035   1.438            23       0         1,511            23             1
+2048 ≥ duration < 4096                         0.430  17.797           119       0         3,614           119             1
+4096 ≥ duration < 8192                         0.097   3.997            21       0         4,599            21             1
+8192 ≥ duration < 16384                        0.009   0.359             1       0         8,673             1             1
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+Total                                          2.417 100.000        24,015 100.000           101        24,015             1
+
+File                      Total             Number of                                Duration per 
+Number             Duration [s]       %        Events       %    Blocks [b]       %    Event [us] 
+------------- ----------------- ------- ------------- ------- ------------- ------- ------------- 
+201                       2.417 100.000        24,015 100.000        24,015 100.000           101 
+
+direct path write temp
+**********************
+                                               Total             Number of          Duration per                  Blocks per
+Range [us]                              Duration [s]       %        Events       %    Event [us]    Blocks [b]     Event [b]
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+4 ≥ duration < 8                               0.001   0.141            91       1             8            91             1
+8 ≥ duration < 16                              0.007   1.283           520       5            13           520             1
+16 ≥ duration < 32                             0.004   0.844           169       2            26           169             1
+32 ≥ duration < 64                             0.423  82.467         9,340      85            45         9,340             1
+64 ≥ duration < 128                            0.068  13.263           865       8            79           865             1
+128 ≥ duration < 256                           0.001   0.189             6       0           162             6             1
+256 ≥ duration < 512                           0.001   0.193             3       0           330             3             1
+512 ≥ duration < 1024                          0.003   0.633             4       0           812             4             1
+1024 ≥ duration < 2048                         0.005   0.987             4       0         1,266             4             1
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+Total                                          0.513 100.000        11,002 100.000            47        11,002             1
+
+File                      Total             Number of                                Duration per 
+Number             Duration [s]       %        Events       %    Blocks [b]       %    Event [us] 
+------------- ----------------- ------- ------------- ------- ------------- ------- ------------- 
+201                       0.513 100.000        11,002 100.000        11,002 100.000            47 
+
+db file sequential read
+***********************
+                                               Total             Number of          Duration per                  Blocks per
+Range [us]                              Duration [s]       %        Events       %    Event [us]    Blocks [b]     Event [b]
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+64 ≥ duration < 128                            0.000 100.000             2     100           106             2             1
+
+File                      Total             Number of                                Duration per 
+Number             Duration [s]       %        Events       %    Blocks [b]       %    Event [us] 
+------------- ----------------- ------- ------------- ------- ------------- ------- ------------- 
+4                         0.000  54.460             1  50.000             1  50.000           116 
+201                       0.000  45.540             1  50.000             1  50.000            97 
+------------- ----------------- ------- ------------- ------- ------------- ------- -------------
+Total                     0.000 100.000             2 100.000             2 100.000           106
+
+****************************************** STATEMENT #3 ******************************************
+
+Session ID           156.29
+Service Name         SYS$USERS
+Module Name          SQL*Plus
+Parsing User         34
+Recursive Level      1
+Parent Statement ID  1
+Hash Value           1035370675
+SQL ID               7fjjjf0yvd05m
+
+SELECT COUNT(N) FROM T WHERE ID < :B1 *123
+
+Bind Variables
+**************
+
+10 bind variable sets were used to execute this statement.
+
+Number of
+Execution     Bind          Datatype                          Value
+------------- ------------- --------------------------------- ----------------------------------------
+1             1             NUMBER                            "1"
+2             1             NUMBER                            "2"
+3             1             NUMBER                            "3"
+4             1             NUMBER                            "4"
+5             1             NUMBER                            "5"
+6             1             NUMBER                            "6"
+7             1             NUMBER                            "7"
+8             1             NUMBER                            "8"
+9             1             NUMBER                            "9"
+10            1             NUMBER                            "10"
+
+Execution Plan
+**************
+
+Optimizer Mode       ALL_ROWS
+Hash Value           4270555908
+
+         Rows Operation
+------------- --------------------------------------------------------------------------------------
+            1 SORT AGGREGATE (cr=8 pr=8 pw=0 time=11588 us)
+          122   TABLE ACCESS BY INDEX ROWID T (cr=8 pr=8 pw=0 time=7037 us cost=8 size=1098 card=122)
+          122     INDEX RANGE SCAN T_PK (cr=3 pr=3 pw=0 time=4316 us cost=3 size=0 card=122) (object id 20991)
+
+Database Call Statistics
+************************
+
+Call                            Count        Misses           CPU [s]       Elapsed [s]       PIO [b]       LIO [b]    Consistent [b]   Current [b]          Rows
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Parse                               1             1             0.001             0.000             0             0                 0             0             0
+Execute                            10             1             0.004             0.015             3             3                 3             0             0
+Fetch                              10             0             0.008             0.026            53           303               303             0            10
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Total                              21             2             0.013             0.041            56           306               306             0            10
+Average (per execution)             2             0             0.001             0.004             5            30                30             0             1
+Average (per row)                   2             0             0.001             0.004             5            30                30             0             1
+
+Resource Usage Profile
+**********************
+                                                          Total             Number of      Duration per
+Component                                          Duration [s]       %        Events        Events [s]
+--------------------------------------------- ----------------- ------- ------------- -----------------
+db file sequential read                                   0.020  61.171            53             0.000
+CPU                                                       0.013  38.829           n/a               n/a
+--------------------------------------------- ----------------- -------
+Total                                                     0.033 100.000
+
+db file sequential read
+***********************
+                                               Total             Number of          Duration per                  Blocks per
+Range [us]                              Duration [s]       %        Events       %    Event [us]    Blocks [b]     Event [b]
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+128 ≥ duration < 256                           0.007  36.498            43      81           174            43             1
+256 ≥ duration < 512                           0.002  11.863             6      11           405             6             1
+512 ≥ duration < 1024                          0.001   2.569             1       2           526             1             1
+2048 ≥ duration < 4096                         0.006  28.752             2       4         2,944             2             1
+4096 ≥ duration < 8192                         0.004  20.317             1       2         4,160             1             1
+---------------------------------- ----------------- ------- ------------- ------- ------------- ------------- -------------
+Total                                          0.020 100.000            53 100.000           386            53             1
+
+File                      Total             Number of                                Duration per 
+Number             Duration [s]       %        Events       %    Blocks [b]       %    Event [us] 
+------------- ----------------- ------- ------------- ------- ------------- ------- ------------- 
+4                         0.020 100.000            53 100.000            53 100.000           386 
+
+****************************************** STATEMENT #5 ******************************************
+
+Session ID           156.29
+Service Name         SYS$USERS
+Module Name          SQL*Plus
+Parsing User         34
+Hash Value           833218128
+SQL ID               7shpzfwsumtkh
+
+BEGIN dbms_session.session_trace_enable(binds=>TRUE, waits=>TRUE, plan_stat=>'all_executions'); END;
+
+Database Call Statistics
+************************
+
+Call                            Count        Misses           CPU [s]       Elapsed [s]       PIO [b]       LIO [b]    Consistent [b]   Current [b]          Rows
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Parse                               0             0             0.000             0.000             0             0                 0             0             0
+Execute                             1             1             0.005             0.010            20           226               226             0             1
+Fetch                               0             0             0.000             0.000             0             0                 0             0             0
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Total                               1             1             0.005             0.010            20           226               226             0             1
+
+Resource Usage Profile
+**********************
+                                                          Total             Number of      Duration per
+Component                                          Duration [s]       %        Events        Events [s]
+--------------------------------------------- ----------------- ------- ------------- -----------------
+CPU                                                       0.005  88.648           n/a               n/a
+SQL*Net message from client                               0.001  11.263             1             0.001
+SQL*Net message to client                                 0.000   0.089             1             0.000
+--------------------------------------------- ----------------- -------
+Total                                                     0.006 100.000
+
+SQL*Net message from client
+***************************
+                                               Total             Number of          Duration per
+Range [us]                              Duration [s]       %        Events       %    Event [us]
+---------------------------------- ----------------- ------- ------------- ------- -------------
+512 ≥ duration < 1024                          0.001 100.000             1     100           635
+
+SQL*Net message to client
+*************************
+                                               Total             Number of          Duration per
+Range [us]                              Duration [s]       %        Events       %    Event [us]
+---------------------------------- ----------------- ------- ------------- ------- -------------
+4 ≥ duration < 8                               0.000 100.000             1     100             5
+
+****************************************** STATEMENT #9 ******************************************
+
+Session ID           156.29
+Service Name         SYS$USERS
+Module Name          SQL*Plus
+Parsing User         34
+Hash Value           2223273708
+SQL ID               4pzfk82288xrc
+
+BEGIN dbms_session.session_trace_disable; END;
+
+Database Call Statistics
+************************
+
+Call                            Count        Misses           CPU [s]       Elapsed [s]       PIO [b]       LIO [b]    Consistent [b]   Current [b]          Rows
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Parse                               1             1             0.002             0.001             0             0                 0             0             0
+Execute                             1             0             0.000             0.000             0             0                 0             0             1
+Fetch                               0             0             0.000             0.000             0             0                 0             0             0
+----------------------- ------------- ------------- ----------------- ----------------- ------------- ------------- ----------------- ------------- -------------
+Total                               2             1             0.002             0.002             0             0                 0             0             1
+
+Resource Usage Profile
+**********************
+                                                          Total             Number of      Duration per
+Component                                          Duration [s]       %        Events        Events [s]
+--------------------------------------------- ----------------- ------- ------------- -----------------
+CPU                                                       0.002 100.000           n/a               n/a
+
+
+***************************************** UNITS OF MEASURE *****************************************
+
+[s]  seconds
+[us] microseconds
+[b]  database blocks
+
+****************************************************************************************************
