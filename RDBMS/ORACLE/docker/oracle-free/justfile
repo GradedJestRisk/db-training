@@ -26,7 +26,7 @@ sqlplus-container:
     docker exec --interactive --tty oracle bash -c "sqlplus username/password@//localhost/FREEPDB1"
 
 sqlplus:
-    sqlplus $CONNECTION_STRING
+    sqlplus $CONNECTION_STRING @scripts/cli.sql
 
 sqlplus-administrator:
     sqlplus $CONNECTION_STRING_ADMINISTRATOR
