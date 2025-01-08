@@ -6,6 +6,9 @@
 # Connection - IDE: Service=FREEPDB1, User=username, Password=password
 #            - CLI: sqlplus username/password@//localhost/FREEPDB1
 #            - CLI: sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba
+#
+# OS is Oracle Linux Server  - https://github.com/oracle/oracle-linux
+
 services:
   oracle:
     container_name: oracle

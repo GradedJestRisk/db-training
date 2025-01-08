@@ -50,14 +50,18 @@ profile-session:
     docker exec --interactive --tty $CONTAINER_NAME /tmp/scripts/process-last-trace.sh
     docker cp $CONTAINER_NAME:/tmp/trace.txt ./traces/trace.txt
 
-profile-identifier:
+trace-identifier:
     just create-table
-    rm --force ./traces/trace.txt
     sqlplus $CONNECTION_STRING @scripts/profile-identifier.sql
-    docker exec --interactive --tty $CONTAINER_NAME /tmp/scripts/process-last-trace.sh
-    docker cp $CONTAINER_NAME:/tmp/trace.txt ./traces/trace.txt
 
-extract-last-trace:
-    rm --force ./traces/trace.txt
+profile-identifier:
+    rm --force ./traces/trace.trc
+    rm --force ./traces/tkprof/trace.txt
+    rm --force ./traces/tvdxtat/trace.txt
+    rm --force ./traces/tvdxtat/trace.html
     docker exec --interactive --tty $CONTAINER_NAME /tmp/scripts/process-last-trace.sh
-    docker cp $CONTAINER_NAME:/tmp/trace.txt ./traces/trace.txt
+    docker cp $CONTAINER_NAME:/tmp/trace.txt ./traces/tkprof/trace.txt
+    docker exec --interactive --tty $CONTAINER_NAME /tmp/scripts/export-last-trace.sh
+    docker cp $CONTAINER_NAME:/tmp/trace.trc ./traces/trace.trc
+    tvdxtat --input ./traces/trace.trc --output ./traces/tvdxtat/trace.txt  --sys no --wait yes --template text
+    tvdxtat --input ./traces/trace.trc --output ./traces/tvdxtat/trace.html --sys no --wait yes --template html

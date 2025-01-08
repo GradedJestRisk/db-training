@@ -29,61 +29,90 @@ Type:
 
 [V$SESS_TIME_MODEL](https://docs.oracle.com/en/database/oracle/oracle-database/21/refrn/V-SESS_TIME_MODEL.html)
 
+> You can know what **kind** of processing a database engine is doing on behalf of an application by looking at the time model statistics.
+
 Check time spent on behalf of an application
 - opening new sessions
 - parsing SQL statements
 - processing calls with one of the engines (SQL, PL/SQL)
 
-For a session
+> adding up the time reported by all children does NOT gives their parent's time
+> - a specific operation is not exclusively associated to a single child
+> - some operations aren’t attributed to any child.
+
+#### All stats
+
+For a session id
 ```oracle
-SELECT ssn.sid
-      ,ssn.program
-      ,ssn.service_name
-     ,ssn.status
-     ,ssn.schemaname
-     ,ssn.state
-     ,ssn.event
-     ,ssn.logon_time
-     ,ssn.type
-     -- ,ssn.*
-FROM v$session ssn
+SELECT 
+    ssn.sid, 
+    tm.stat_name,
+    tm.value time_micros
+FROM v$session ssn INNER JOIN v$sess_time_model tm
+        ON tm.sid = ssn.sid
 WHERE 1=1
---     AND ssn.sid=6
-    AND ssn.status ='ACTIVE'
---     AND ssn.username = 'USERNAME'
-;
-
-select ssn.sid,
-       ssn.sql_id,
-       ssn.command, ssn.*
-from v$sqltext qry, v$session ssn
-where ssn.sql_hash_value = qry.hash_value
-  and ssn.sql_address = qry.address
-  and ssn.username = 'USERNAME'
-order by qry.piece;
-
-
-SELECT sid, value
-FROM v$sess_time_model
-WHERE 1=1
---  AND sid = 42
- AND stat_name = 'DB time'
+    AND ssn.client_identifier = 'profiling'
+--  AND ssn.sid = 42
+--     AND stat_name = 'DB time'
+ORDER BY 
+--     tm.value DESC
+    tm.stat_name ASC
 ```
 
+#### DB time
 
+For a session id
+```oracle
+SELECT 
+    ssn.sid, 
+    tm.stat_name,
+    tm.value time_micros
+FROM v$session ssn INNER JOIN v$sess_time_model tm
+        ON tm.sid = ssn.sid
+WHERE 1=1
+    AND ssn.client_identifier = 'profiling'
+--  AND ssn.sid = 42
+     AND stat_name = 'DB time'
+ORDER BY 
+    tm.value DESC
+```
+
+#### Background time
+
+For a session id
+```oracle
+SELECT 
+    ssn.sid, 
+    tm.stat_name,
+    tm.value time_micros
+FROM v$session ssn INNER JOIN v$sess_time_model tm
+        ON tm.sid = ssn.sid
+WHERE 1=1
+    AND ssn.client_identifier = 'profiling'
+--  AND ssn.sid = 42
+     AND stat_name = 'background elapsed time'
+ORDER BY 
+    tm.value DESC
+```
+
+#### On each leaf
+
+> the time spent by the database engine waiting on user calls isn’t included
+> to know exactly what’s going on, information about wait classes and wait events is necessary.
 ```oracle
 WITH
   db_time AS (SELECT sid, value
               FROM v$sess_time_model
-              WHERE sid = 42
+              WHERE sid = 22 -- <= SID HERE
               AND stat_name = 'DB time')
 SELECT ses.stat_name AS statistic,
        round(ses.value / 1E6, 3) AS seconds,
        round(ses.value / nullif(tot.value, 0) * 1E2, 1) AS "%"
 FROM v$sess_time_model ses, db_time tot
-WHERE ses.sid = tot.sid
-AND ses.stat_name <> 'DB time'
-AND ses.value > 0
+WHERE 1=1
+    AND ses.sid = tot.sid
+    AND ses.stat_name <> 'DB time'
+    AND ses.value > 0
 ORDER BY ses.value DESC;
 ```
 
@@ -132,7 +161,7 @@ ALTER SESSION SET max_dump_file_size = 'unlimited'
 
 #### Capture
 
-##### Session level
+##### session level
 
 ###### from session itself
 
@@ -192,6 +221,35 @@ END;
 ```
 
 ###### from another session
+
+Get session id
+```oracle
+SELECT 'session id is : ' || sys_context('userenv','sessionid')
+FROM dual;
+```
+
+Or
+```oracle
+SELECT 
+    sss.logon_time
+   ,sss.username       --tls_dtf
+   ,sss.osuser
+   ,sss.program
+   ,sss.client_info
+  ,sss.*
+FROM 
+   v$session   sss
+WHERE 1=1
+  -- AND sss.sid IN (1165,1152,23)
+   AND sss.username   =  'DBOFAP'
+   AND sss.osuser     =  'fap'
+  -- AND sss.status     =   'ACTIVE'
+   AND sss.program    LIKE    'sqlplus%'
+ORDER BY
+   sss.client_info
+;
+```
+
 Activate
 ```oracle
 dbms_monitor.session_trace_enable(session_id => 127,
@@ -216,9 +274,14 @@ serial_num => 29)
 
 ##### client level
 
+Set client identifier
+```oracle
+CALL dbms_session.set_identifier('client_identifier');
+```
+
 Activate
 ```oracle
-dbms_monitor.client_id_trace_enable(client_id => 'helicon.antognini.ch',
+dbms_monitor.client_id_trace_enable(client_id => 'client_identifier',
                                     waits     => TRUE,
                                     binds     => TRUE,
                                     plan_stat => 'first_execution')
@@ -226,14 +289,20 @@ dbms_monitor.client_id_trace_enable(client_id => 'helicon.antognini.ch',
 
 Deactivate
 ```oracle
-dbms_monitor.client_id_trace_disable(client_id => 'helicon.antognini.ch')
+dbms_monitor.client_id_trace_disable(client_id => 'client_identifier')
 ```
 
-##### component level
+##### component level (module, action)
+
+Get service name
+```oracle
+SELECT * FROM global_name;
+```
+You may get `FREEPDB1`
 
 Activate
 ```oracle
-dbms_monitor.serv_mod_act_trace_enable(service_name  => 'DBM11203.antognini.ch',
+dbms_monitor.serv_mod_act_trace_enable(service_name  => 'FREEPDB1',
                                        module_name   => 'mymodule',
                                        action_name   => 'myaction',
                                        waits         => TRUE,
@@ -244,7 +313,7 @@ dbms_monitor.serv_mod_act_trace_enable(service_name  => 'DBM11203.antognini.ch',
 
 Deactivate
 ```oracle
-dbms_monitor.serv_mod_act_trace_disable(service_name  => 'DBM11203.antognini.ch',
+dbms_monitor.serv_mod_act_trace_disable(service_name  => 'FREEPDB1',
                                         module_name   => 'mymodule',
                                         action_name   => 'myaction',
                                         instance_name => NULL)
@@ -255,20 +324,23 @@ dbms_monitor.serv_mod_act_trace_disable(service_name  => 'DBM11203.antognini.ch'
 
 Get instance name
 ```oracle
-SELECT * FROM gv$instance
+SELECT instance_name 
+FROM gv$instance
 ```
+
+You mey get `FREE`
 
 Activate
 ```oracle
 dbms_monitor.database_trace_enable(waits         => TRUE,
                                    binds         => TRUE,
-                                   instance_name => 'DBM11203',
+                                   instance_name => 'instance_name',
                                    plan_stat     => 'first_execution')
 ```
 
 Deactivate
 ```oracle
-dbms_monitor.database_trace_disable(instance_name => 'DBM11203')
+dbms_monitor.database_trace_disable(instance_name => 'instance_name')
 ```
 
 ##### Sample output
@@ -428,6 +500,8 @@ Elapsed times include waiting on following events:
 ```
 
 #### TVD$XTAT
+
+[Source](https://antognini.ch/category/apmtools/tvdxtat/)
 
 Install
 

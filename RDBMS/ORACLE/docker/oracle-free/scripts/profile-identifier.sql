@@ -8,18 +8,21 @@ SET ECHO ON;
 
 SET LINESIZE 200;
 
+CALL dbms_session.set_identifier('profiling');
 
-CALL dbms_session.set_identifier('identifier');
+SELECT distinct sid FROM v$mystat;
 
 CALL dbms_monitor.client_id_trace_enable(
-          client_id => 'identifier' ,
+          client_id => 'profiling' ,
           waits     => TRUE,
           binds     => TRUE,
           plan_stat => 'all_executions');
 
 
-INSERT INTO simple_table VALUES(4);
+-- INSERT INTO simple_table VALUES(4);
+SELECT MAX(id)
+FROM simple_table;
 
-CALL dbms_monitor.client_id_trace_disable(client_id => 'identifier');
+CALL dbms_monitor.client_id_trace_disable(client_id => 'profiling');
 
 EXIT;
