@@ -164,6 +164,11 @@ END;
 /
 ```
 
+Or `EXEC` syntax instead of a PL/SQL block
+```oracle
+    EXEC DBMS_SESSION.SESSION_TRACE_ENABLE();
+```
+
 Check
 ```oracle
 SELECT sql_trace, sql_trace_waits, sql_trace_binds, sql_trace_plan_stats

@@ -16,4 +16,6 @@ SELECT  level
 FROM    dual
 CONNECT BY LEVEL <= 1000000 ;
 
+COMMIT;
+
 EXIT;

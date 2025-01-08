@@ -5,6 +5,7 @@ create-start-instance:
     just stop-instance
     just remove-volume
     docker compose up --force-recreate --renew-anon-volumes --remove-orphans --detach --wait
+    just grant
 
 stop-instance:
     docker compose down
@@ -28,25 +29,35 @@ sqlplus:
     sqlplus $CONNECTION_STRING
 
 sqlplus-administrator:
-    sqlplus $CONNECTION_STRING
+    sqlplus $CONNECTION_STRING_ADMINISTRATOR
 
-#sqlplus-administrator:
-#    docker exec --interactive --tty oracle bash -c "sqlplus SYSTEM/administrator_password@//localhost/FREEPDB1"
-
-change-system-password:
-    docker exec oracle resetPassword $ORACLE_ADMINISTRATOR_PASSWORD
+sqlplus-administrator-bash:
+    docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba"
 
 create-table:
-    cat scripts/create-table.sql | sqlplus $CONNECTION_STRING
+    sqlplus $CONNECTION_STRING @scripts/create-table.sql
 
 query-table:
-    cat scripts/query-table.sql | sqlplus $CONNECTION_STRING
+    sqlplus $CONNECTION_STRING @scripts/query-table.sql
 
 grant:
-    docker exec --interactive --tty oracle bash -c "cat /tmp/scripts/grant.sql | sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba"
+    docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba @/tmp/scripts/grant.sql"
 
 profile-session:
-    rm ./traces/trace.txt
-    sqlplus $CONNECTION_STRING @scripts/profile-session.sql
+    just create-table
+    rm --force ./traces/trace.txt
+    sqlplus $CONNECTION_STRING_ADMINISTRATOR @scripts/profile-session.sql
+    docker exec --interactive --tty $CONTAINER_NAME /tmp/scripts/process-last-trace.sh
+    docker cp $CONTAINER_NAME:/tmp/trace.txt ./traces/trace.txt
+
+profile-identifier:
+    just create-table
+    rm --force ./traces/trace.txt
+    sqlplus $CONNECTION_STRING @scripts/profile-identifier.sql
+    docker exec --interactive --tty $CONTAINER_NAME /tmp/scripts/process-last-trace.sh
+    docker cp $CONTAINER_NAME:/tmp/trace.txt ./traces/trace.txt
+
+extract-last-trace:
+    rm --force ./traces/trace.txt
     docker exec --interactive --tty $CONTAINER_NAME /tmp/scripts/process-last-trace.sh
     docker cp $CONTAINER_NAME:/tmp/trace.txt ./traces/trace.txt

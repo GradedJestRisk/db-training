@@ -30,28 +30,34 @@ ORDER bY
 ;
 
 
-
--- Table 
--- Pour nom (d�tection doublons)
+For name
+```oracle
 SELECT 
    'Table'         rqt_cnt 
    ,tbl.owner      tbl_prp
    ,tbl.table_name tbl_nm
    ,tbl.num_rows   tbl_nrg_nmb
    ,tbl.last_analyzed
+--    ,'all_t&ables=>'
    ,tbl.*
 FROM 
    all_tables tbl
 WHERE 1=1
-   AND UPPER(tbl.table_name)   =   UPPER('troncon')
+   AND UPPER(tbl.table_name)   =   UPPER('simple_table')
 ORDER bY
    tbl.num_rows DESC
 ;
+```
 
+```oracle
+select owner from all_tables where 
+--                                  owner = 'public'
+                                  owner = 'username'
+   --table_name = 'simple_table';
+```
 
-
--- Table 
--- Pour propri�taire + nom 
+For owner
+```oracle
 SELECT 
    'Table'         rqt_cnt 
    ,tbl.owner      tbl_prp
@@ -61,12 +67,13 @@ SELECT
    ,tbl.*
 FROM all_tables tbl
 WHERE 1=1
-   AND tbl.owner               =   'DBOFAP'
-   AND UPPER(tbl.table_name)   =   UPPER('TRONCON')
-   and tbl.num_rows is not null
+   AND tbl.owner               =   'USERNAME'
+--    AND UPPER(tbl.table_name)   =   UPPER('TRONCON')
 ORDER bY
    tbl.num_rows DESC
 ;
+```
+
 
 -- Nb enreg table 
 -- Pour propri�taire + nom 
