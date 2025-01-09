@@ -9,12 +9,21 @@ END;
 /
 
 CREATE TABLE simple_table (id INTEGER);
+
 -- INSERT INTO simple_table VALUES(1);
 
-INSERT INTO simple_table
-SELECT  level
-FROM    dual
-CONNECT BY LEVEL <= 1000000 ;
+-- INSERT INTO simple_table
+-- SELECT  level
+-- FROM    dual
+-- CONNECT BY LEVEL <= 1000000 ;
+
+BEGIN
+    FOR i IN 1..10000000
+    LOOP
+        INSERT INTO simple_table VALUES(i);
+    END LOOP;
+END;
+/
 
 COMMIT;
 

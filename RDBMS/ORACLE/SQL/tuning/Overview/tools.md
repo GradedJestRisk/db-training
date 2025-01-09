@@ -8,6 +8,28 @@ If not, check this
 
 <img src="find-what.jpg" width="200" >
 
+## Identify origin
+
+Set
+```oracle
+BEGIN
+  dbms_session.set_identifier(client_id=>'helicon.antognini.ch');
+  dbms_application_info.set_client_info(client_info=>'Linux x86_64');
+  dbms_application_info.set_module(module_name=>'session_info.sql',
+                                   action_name=>'test session information');
+END;
+```
+
+Get
+```oracle
+SELECT client_identifier,
+       client_info,
+       module AS module_name,
+       action AS action_name
+FROM v$session
+WHERE sid = sys_context('userenv','sid');
+```
+
 ## Dynamic Performance Views
 
 > Some of them are continuously updated, and others are only updated every 5 seconds.
@@ -57,6 +79,12 @@ WHERE 1=1
 ORDER BY 
 --     tm.value DESC
     tm.stat_name ASC
+```
+
+For the whole system
+```oracle
+SELECT *
+FROM v$sys_time_model
 ```
 
 #### DB time
@@ -118,31 +146,301 @@ ORDER BY ses.value DESC;
 
 >  Because DB time accounts only for the database processing time, the time spent by the database engine waiting on user calls isn’t included. As a result, with only the information provided by the time model statistics, you can’t know whether the problem is located inside or outside the database.
 
-### Identify origin
+Ih the problem is located outside, in the application itself, the application may spend say less than 2% of its time waiting for the database. If so, reducing this time to 1% will not reduce overall performance more than 1%.
 
-Set
-```oracle
-BEGIN
-  dbms_session.set_identifier(client_id=>'helicon.antognini.ch');
-  dbms_application_info.set_client_info(client_info=>'Linux x86_64');
-  dbms_application_info.set_module(module_name=>'session_info.sql',
-                                   action_name=>'test session information');
-END;
-```
-
-Get
-```oracle
-SELECT client_identifier,
-       client_info,
-       module AS module_name,
-       action AS action_name
-FROM v$session
-WHERE sid = sys_context('userenv','sid');
-```
 > The values are the ones that were set at hard parse time in the session that first parsed the SQL statement ! (TOP)
 
 Get executed long queries 
 
+#### average number of active sessions
+
+> DN time is the overall elapsed time spent by the database engine processing user calls (not time spent waiting on user calls).
+
+> The average number of active sessions (AAS) is the rate at which the DB time increases at the system level.
+
+Because DB time is the time elapsed, cumulated by CPU, in one minute on a 10 CPU instance, DB time can reach 600 (60*10).
+
+> For example, if the DB time of a database instance increases by 1,860 seconds in 60 seconds, the average number of active sessions is 31 (1,860/60). This means that, during the 60-second period, on average 31 sessions were actively processing user calls.
+
+If going from no activity to maximum activity (saturation) in 60 seconds
+AAS = increase DB time / period = 600 / 60 = 10 = CPU count.
+
+> As a rule of thumb, values much lower than the number of CPU cores mean that the system is almost idle. Inversely, values much higher than the number of CPU cores mean that the system is quite busy.
+
+How can value go higher than the number of CPU cores ?
+
+[But](https://support.quest.com/kb/4228410/what-are-average-active-sessions-in-a-database-agent-workload) it does not refer to session in v$sessions
+>  It is not a measure of how many sessions exist in the system at a given time, but rather how busy the database is.
+
+#### wait
+
+> you can determine 
+> - how much processing time a database instance is consuming
+> - how much CPU it’s using for that processing. 
+>
+> When the two values are equivalent, it means that the database instance isn’t experiencing any wait. If  the difference between the two values is significant, you need to know which waits the server processes are waiting for.
+
+wait 
+- disk I/O operations
+- network round-trips
+- locks
+
+>  1,500 wait events into 13 wait classes
+
+Classes
+```oracle
+SELECT wait_class, COUNT(*)
+FROM v$event_name
+GROUP BY wait_class
+ORDER BY wait_class;
+```
+
+Event
+```oracle
+SELECT 
+    'event='
+    ,vnt.event_id
+    ,vnt.name
+    ,'v$event_name=>'
+    ,vnt.*
+FROM v$event_name vnt
+WHERE 1=1
+    AND vnt.wait_class = 'Concurrency'
+    AND vnt.name = 'library cache lock'
+ORDER BY vnt.wait_class, vnt.name
+```
+
+##### session
+
+Get wait time (value) for session
+```oracle
+SELECT *
+FROM v$session_wait_class ssn_wt
+WHERE 1=1
+    AND ssn_wt.sid = 205;
+
+-- Check data
+SELECT *
+FROM v$sess_time_model
+WHERE 1=1
+    AND sid = 205
+ORDER BY value DESC
+```
+
+Get wait time (distribution) for session
+```oracle
+SELECT wait_class,
+       round(time_waited, 3) AS time_waited,
+       round(1E2 * ratio_to_report(time_waited) OVER (), 1) AS "%"
+FROM (
+  SELECT sid, wait_class, time_waited / 1E2 AS time_waited
+  FROM v$session_wait_class
+  WHERE total_waits > 0
+  UNION ALL
+  SELECT sid, 'CPU', value / 1E6
+  FROM v$sess_time_model
+  WHERE stat_name = 'DB CPU'
+)
+WHERE sid = 205
+ORDER BY 2 DESC;
+```
+
+##### system
+
+```oracle
+SELECT event,
+       round(time_waited, 3) AS time_waited,
+       round(1E2 * ratio_to_report(time_waited) OVER (), 1) AS "%"
+FROM (
+  SELECT event, time_waited_micro / 1E6 AS time_waited
+  FROM v$system_event
+  WHERE total_waits > 0
+  UNION ALL
+  SELECT  'CPU', value / 1E6
+  FROM v$sys_time_model
+  WHERE stat_name = 'DB CPU'
+)
+ORDER BY 2 DESC;
+```
+
+If most of the time is elapsed on idle wait event (SQL*Net message from client), tThis indicates that the database engine is waiting for the application to submit some work.
+
+> The other essential information provided by this resource usage profile may be that, when the database engine is processing user calls, it’s almost always doing disk I/O operations that read a single block (db file sequential read).
+
+I/O : Average waiting time on I/O
+```oracle
+SELECT time_waited_micro/total_waits/1E3 AS avg_wait_ms
+FROM v$system_event
+WHERE event = 'db file sequential read';
+```
+
+I/O : Histogram waiting time
+```oracle
+SELECT wait_time_milli, wait_count, 100*ratio_to_report(wait_count) OVER () AS "%"
+FROM v$event_histogram
+WHERE event = 'db file sequential read'; 
+```
+
+### cumulated additional statistics (v$sysstat / v$sessstat)
+
+> In most situations, an analysis starts by breaking up the response time into 
+> - CPU consumption
+> - wait events
+> 
+> If a session is always on CPU and, therefore, doesn’t experience any wait event
+> => session statistics might be very useful to understand what the session is doing.
+
+All
+```oracle
+SELECT name, value
+FROM v$sysstat
+WHERE 1=1
+--     AND name IN ('logons cumulative', 'user commits', 'sorts (memory)');
+    AND value <> 0
+ORDER BY name
+```
+
+Cumulated I/O
+```oracle
+SELECT name, value
+FROM v$sysstat
+WHERE 1=1
+  AND name LIKE 'physical % total bytes';
+ORDER BY name
+```
+
+Session, PGA
+```oracle
+SELECT sn.name, ss.value
+FROM v$statname sn, v$sesstat ss
+WHERE 1=1
+    AND sn.statistic# = ss.statistic#
+    AND sn.name LIKE 'session pga memory%'
+    AND ss.sid = sys_context('userenv','sid');
+```
+
+### Metrics (selection of statistics)
+
+Metrics
+```oracle
+SELECT metric_id, metric_unit, group_id, group_name
+FROM v$metricname
+WHERE 1=1
+--     AND metric_name = 'Host CPU Usage Per Sec';
+```
+Groups
+```oracle
+SELECT 
+    group_id,
+    name,
+    interval_size frequency,
+    max_interval  how_much_values
+FROM v$metricgroup
+WHERE 1=1
+    AND  name = 'System Metrics Long Duration'
+ORDER BY group_id;
+```
+Computed every 60 seconds, with 60 values, so one hour history.
+
+Values
+```oracle
+SELECT metric_name, begin_time, end_time, value, metric_unit
+FROM v$metric
+WHERE metric_name LIKE '%CPU%'
+ORDER BY metric_name
+```
+
+
+### Session status (v$session)
+
+Overview 
+>
+    The identification of the session (sid, serial#, saddr and audsid), whether it’s a BACKGROUND or USER session (type), and when it was initialized (logon_time).
+    The identification of the user that opened the session (username and user#), the current schema (schemaname), and the name of the service used to connect to the database engine (service_name).
+    The application using the session (program), which machine it was started on (machine), which process ID it has (process), and the name of the OS user who started it (osuser).
+    The type of server-side process (server) which can be either DEDICATED, SHARED, PSEUDO, POOLED or NONE, and its address (paddr).
+    The address of the currently active transaction (taddr).
+    The status of the session (status) which can be either ACTIVE, INACTIVE, KILLED, SNIPED, or CACHED and how many seconds it’s been in that state for (last_call_et). When investigating a performance problem, you’re usually interested in the sessions marked as ACTIVE only.
+    The type of the SQL statement in execution (command), the identification of the cursor related to it (sql_address, sql_hash_value, sql_id and sql_child_number), when the execution was started (sql_exec_start), and its execution ID (sql_exec_id). The execution ID is an integer value that identifies, along with sql_exec_start, one specific execution. It’s necessary because the same cursor can be executed several times per second (note that the datatype of the sql_exec_start column is DATE).
+    The identification of the previous cursor that was executed (prev_sql_address, prev_hash_value, prev_sql_id and prev_child_number), when the previous execution was started (prev_exec_start), and its execution ID (prev_exec_id).
+    If a PL/SQL call is in execution, the identification of the top-level program and subprogram (plsql_entry_object_id and plsql_entry_subprogram_id) that was called, and the program and subprogram (plsql_object_id and plsql_subprogram_id) that is currently in execution. Note that plsql_object_id and plsql_subprogram_id are set to NULL if the session is executing a SQL statement.
+    The session attributes (client_identifier, module, action, and client_info), if the application using the session sets them.
+    If the session is currently waiting (in which case the state column is set to WAITING), the name of the wait event it’s waiting for (event), its wait class (wait_class and wait_class#), details about the wait event (p1text, p1, p1raw, p2text, p2, p2raw, p3text, p3, and p3raw), and how much time the session has been waiting for that wait event (seconds_in_wait and, from 11.1 onward, wait_time_micro). Be aware that if the state column isn’t equal to WAITING, the session is on CPU (provided the status column is equal to ACTIVE). In this case, the columns related to the wait event contain information about the last wait.
+    Whether the session is blocked by another session (if this is the case, blocking_session_status is set to VALID) and, if the session is waiting, which session is blocking it (blocking_instance and blocking_session).
+    If the session is currently blocked and waiting for a specific row (for example, for a row lock), the identification of the row it’s waiting for (row_wait_obj#, row_wait_file#, row_wait_block#, and row_wait_row#). If the session isn’t waiting for a locked row, the row_wait_obj# column is equal to the value -1.
+
+Other related view:
+- v$session_wait : wait events
+- v$session_blockers : blocked sessions.
+
+### Session history (ASH)
+
+One-hour history.
+
+Carried by `MMNL` background process:
+- poll `v$session` each second
+- filter out inactive session
+- store 'events' (if activity has changed, eg. CPU or User I/O) and `sqlId`
+
+Size
+```oracle
+SELECT name, pool, bytes
+FROM v$sgastat
+WHERE name = 'ASH buffers';
+```
+
+Retention
+```oracle
+SELECT max(sample_time) - min(sample_time) AS interval
+FROM v$active_session_history;
+```
+
+```oracle
+SELECT
+    sample_time
+    ,session_id
+    ,session_serial#
+    ,session_state
+    ,sql_id
+    ,in_sql_execution SQL
+    ,in_plsql_execution PLSQL
+    ,sql_plan_operation || ' ' || sql_plan_options
+    ,'v$active_session_history=>'
+    --,ssn_hst.*
+FROM v$active_session_history ssn_hst
+WHERE 1=1
+    AND session_id = 205
+ORDER BY ssn_hst.sample_time ASC;
+```
+
+Top 10 (-1h)
+```oracle
+SELECT activity_pct,
+       db_time,
+       sql_id
+FROM (
+  SELECT round(100 * ratio_to_report(count(*)) OVER (), 1) AS activity_pct,
+         count(*) AS db_time,
+         sql_id
+  FROM v$active_session_history
+  WHERE sample_time BETWEEN to_timestamp('2025-01-09 10:00:00', 'YYYY-MM-DD HH24:MI:SS')
+                        AND to_timestamp('2025-01-09 12:00:00', 'YYYY-MM-DD HH24:MI:SS')
+  AND sql_id IS NOT NULL
+  GROUP BY sql_id
+  ORDER BY count(*) DESC
+)
+WHERE rownum <= 10;
+```
+
+Associated SQL
+```oracle
+SELECT *
+FROM v$sql
+WHERE 1=1
+    AND sql_id = 'd3d7q56sqr8wf'
+```
+
+### SQL Statement Statistics
 
 ## Debug executed queries (profiler)
 

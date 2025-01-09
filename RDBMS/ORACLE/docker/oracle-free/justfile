@@ -34,11 +34,19 @@ sqlplus-administrator:
 sqlplus-administrator-bash:
     docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba"
 
+# 2 minutes, 10 million rows
 create-table:
     sqlplus $CONNECTION_STRING @scripts/create-table.sql
 
 query-table:
     sqlplus $CONNECTION_STRING @scripts/query-table.sql
+
+# last one minute
+query-table-many-times:
+    sqlplus $CONNECTION_STRING @scripts/query-table-many-times.sql
+
+explain:
+    sqlplus $CONNECTION_STRING @scripts/explain.sql
 
 grant:
     docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba @/tmp/scripts/grant.sql"
