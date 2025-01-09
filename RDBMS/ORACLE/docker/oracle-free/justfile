@@ -73,3 +73,13 @@ profile-identifier:
     docker cp $CONTAINER_NAME:/tmp/trace.trc ./traces/trace.trc
     tvdxtat --input ./traces/trace.trc --output ./traces/tvdxtat/trace.txt  --sys no --wait yes --template text
     tvdxtat --input ./traces/trace.trc --output ./traces/tvdxtat/trace.html --sys no --wait yes --template html
+
+
+generate-ash:
+    docker exec $CONTAINER_NAME rm -rf /tmp/report.html
+    docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba @?/rdbms/admin/ashrpt.sql"
+
+extract-ash:
+    rm --force ./traces/report.html
+    docker cp $CONTAINER_NAME:/tmp/report.html ./traces/report.html
+    firefox ./traces/report.html
