@@ -34,14 +34,15 @@ sqlplus-administrator:
 sqlplus-administrator-bash:
     docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba"
 
-# 2 minutes, 10 million rows
+# lasts 2 minutes, 10 million rows
 create-table:
     sqlplus $CONNECTION_STRING @scripts/create-table.sql
 
+# last one second
 query-table:
     sqlplus $CONNECTION_STRING @scripts/query-table.sql
 
-# last one minute
+# lasts one minute
 query-table-many-times:
     sqlplus $CONNECTION_STRING @scripts/query-table-many-times.sql
 
@@ -74,7 +75,6 @@ profile-identifier:
     tvdxtat --input ./traces/trace.trc --output ./traces/tvdxtat/trace.txt  --sys no --wait yes --template text
     tvdxtat --input ./traces/trace.trc --output ./traces/tvdxtat/trace.html --sys no --wait yes --template html
 
-
 generate-ash:
     docker exec $CONTAINER_NAME rm -rf /tmp/report.html
     docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba @?/rdbms/admin/ashrpt.sql"
@@ -83,3 +83,18 @@ extract-ash:
     rm --force ./traces/report.html
     docker cp $CONTAINER_NAME:/tmp/report.html ./traces/report.html
     firefox ./traces/report.html
+
+ash-top-sqls:
+    docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba @/tmp/scripts/ash_top_sqls.sql 2025-01-09_00:00:00.000 2025-01-09_23:00:00.000 all all"
+
+ash-activity:
+    docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba @/tmp/scripts/ash_activity.sql all all"
+
+ash-activity-session:
+    docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba @/tmp/scripts/ash_activity.sql 206 all"
+
+server-load:
+    docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba @/tmp/scripts/host_load_hist.sql"
+
+snapper:
+    docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba @/tmp/scripts/snapper.sql ash=sql_id 15 1 all"

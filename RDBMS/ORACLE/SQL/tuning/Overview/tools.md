@@ -442,6 +442,295 @@ WHERE 1=1
 
 ### SQL Statement Statistics
 
+Parent
+```oracle
+SELECT 
+     'SQL parent:'  
+    ,prn.sql_id
+    ,prn.sql_text
+    ,prn.executions
+    ,prn.parse_calls
+    ,prn.rows_processed
+    ,prn.is_bind_aware
+    ,'v$sqlarea=>'
+    ,prn.*
+FROM v$sqlarea prn
+WHERE 1=1
+    AND prn.module LIKE 'sqlplus%'
+--     AND prn.sql_text LIKE '%SELECT%'
+ORDER BY prn.elapsed_time DESC
+```
+
+Child
+```oracle
+SELECT
+     'SQL child:'  
+    ,chl.sql_id
+    ,chl.sql_text
+    ,chl.executions
+    ,chl.parse_calls
+    ,chl.rows_processed
+    ,chl.is_bind_aware
+    ,'v$sql=>'
+    ,chl.*
+FROM v$sql chl
+WHERE 1=1
+    AND chl.module LIKE 'sqlplus%'
+    AND chl.sql_text LIKE '%SELECT%'
+ORDER BY chl.elapsed_time DESC
+```
+
+
+```oracle
+SELECT
+    'SQL stats:'
+     ,sql_stt.sql_id
+     ,sql_stt.sql_text
+     ,sql_stt.last_active_time
+     ,sql_stt.executions
+     ,sql_stt.parse_calls
+     ,sql_stt.rows_processed
+     ,sql_stt.cpu_time
+     ,sql_stt.elapsed_time
+     ,sql_stt.plsql_exec_time
+     ,'v$sql=>'
+     ,sql_stt.*
+FROM v$sqlstats sql_stt
+WHERE 1=1
+  AND sql_stt.sql_id = 'd3d7q56sqr8wf'
+--   AND sql_stt.sql_text LIKE '%simple%'
+ORDER BY sql_stt.elapsed_time DESC
+```
+
+### Real-time Monitoring
+
+> Real-time monitoring provides historical information about the execution of cursors.
+
+> Because it makes no sense to monitor all executions, by default the database engine enables monitoring in three specific cases only:
+>    - For executions that consume at least 5 seconds of combined CPU and disk I/O time
+>    - For executions that use parallel processing
+>    - For SQL statements that explicitly enable real-time monitoring by specifying the monitor hint
+
+> In two situations, the database engine can silently disable real-time monitoring for specific executions:
+> - when an execution plan exceeds 300 lines
+> - when more than 20 concurrent executions per CPU are monitored
+>
+> To overcome these limitations, you can increase the default value of the _sqlmon_max_planlines and _sqlmon_max_plan undocumented initialization parameters, respectively
+
+> To get all information gathered by real-time monitoring, you need to generate a report through the report_sql_monitor function of the dbms_sqltune package.
+
+Start
+```oracle
+SELECT dbms_sqltune.report_sql_monitor(sql_id => '5kwfj03dc3dp1',
+                                       type   => 'active')
+FROM dual
+```
+
+#### Database Server Load
+
+Server load
+```oracle
+SELECT *
+FROM  v$metric_history
+```
+
+> When looking at the database server load, you should check not only whether the database server is CPU bound (in other words, if all CPU cores are fully used), but also whether there are processes not related to the database instance you’re focusing on that consume a lot of CPU time.
+
+Script `host_load_hist.sql`
+
+Eg. something happened at `17:35` (not much)
+```text
+BEGIN_TIME DURATION DB_FG_CPU DB_BG_CPU NON_DB_CPU OS_LOAD NUM_CPU
+---------- -------- --------- --------- ---------- ------- -------
+17:31:43      60.04	 0.00	   0.00       0.00    0.00	 4
+17:32:43      60.05	 0.00	   0.00      -0.00    0.00	 4
+17:33:43      60.04	 0.00	   0.00      -0.00    0.00	 4
+17:34:43      60.04	 0.24	   0.00      -0.24    0.00	 4
+17:35:43      60.02	 1.17	   0.00      -1.17    0.00	 4
+17:36:43      60.04	 0.32	   0.00      -0.32    0.00	 4
+17:37:43      60.04	 0.00	   0.00       0.00    0.00	 4
+```
+
+#### System Level Analysis
+
+##### Find the time when activity occurred
+
+> The aim of the activity chart is twofold. First, it allows you to have an idea of what’s going on from a database engine point of view.
+> For example, you can not only infer that the average number of active sessions goes between 3 and 13 (hence, because the number of CPUs is 8, the database engine is moderately loaded), but also that most of the DB time is spent in the User I/O class.
+> Second, you use it to select the 5-minute interval for which you want to display more details about the database load. Hence, if you aren’t analyzing something that happened at a specific moment, you usually select the period with the highest number of active sessions. In other words, you select the period with the highest load.
+
+Use `ash_activity.sql` to display AAC and wait events
+```text
+
+```
+##### Then find out what happened at this time, which SQL
+
+
+> Once you’ve selected the 5-minute interval you want to focus on, it’s time to take a look at the detailed information provided by the Top SQL table.
+
+Use `ash_top_sqls.sql` to get 10 more active SQL
+
+```text
+Period Begin		       Period End		      Total Sample Count
+------------------------------ ------------------------------ ------------------
+2025-01-09_00:00:00.000000000  2025-01-09_23:00:00.000000000		   1,497
+
+Activity%    DB Time   CPU% UsrIO%  Wait% SQL Id	SQL Type
+--------- ---------- ------ ------ ------ ------------- ----------------------------
+     78.8      1,179  100.0    0.0    0.0 d3d7q56sqr8wf SELECT
+     13.8	 206   65.5    1.5   33.0 dc7kbzstu82bt INSERT
+      2.1	  31  100.0    0.0    0.0 cbu16wv87m9vw PL/SQL EXECUTE
+      1.7	  26  100.0    0.0    0.0 830jfhnhksm4j SELECT
+      0.7	  11  100.0    0.0    0.0 2pkpuk0vd342z INSERT
+      0.3	   4  100.0    0.0    0.0 15h962pgnm0x0 PL/SQL EXECUTE
+      0.1	   2  100.0    0.0    0.0 586577qpbkgnk SELECT
+      0.1	   2  100.0    0.0    0.0 gzmz63qmyshp5 SELECT
+      0.1	   1  100.0    0.0    0.0 f3ww8rgva3hrs UPDATE
+      0.1	   1  100.0    0.0    0.0 1mxdnsvtchmn4 INSERT
+```
+
+> If it indicates that few SQL statements are responsible for a large part of the activity (for example, the activity of a single SQL statement is a double-digit percentage), you’ve identified the SQL statements that you have to further analyze. For example, seven queries are, in total, responsible for more than 90% of the activity. So, to reduce the load on the system, you have to focus on them.
+
+> If no particular SQL statement stands out, it obviously means that the activity is produced by many SQL statements. Hence, it’s a sign that major changes in the applications might be necessary to improve performance
+
+> To display the data aggregated according to a specific dimension, use one of the following scripts: 
+> - ash_top_sessions.sql
+> - ash_top_services.sql
+> - ash_top_modules.sql
+> - ash_top_actions.sql
+> - ash_top_clients.sql
+> - ash_top_files.sql
+> - ash_top_objects.sql
+> - and ash_top_plsql.sql
+
+#### session Level Analysis
+
+Use `ash_top_sqls.sql` script
+
+Use script with session id
+```oraclesqlplus
+ @ash_activity.sql 232 all
+```
+
+#### SQL Statement Information
+
+> You can use one of the following scripts: 
+> - sqlarea.sql
+> - sql.sql
+> - sqlstats.sql
+
+To display activity, pass sqlId
+```oraclesqlplus
+@ash_activity.sql all c13sma6rkr27c
+```
+
+#### no session stands out  
+
+##### snapper
+
+> If, according to the output of the script, few sessions are responsible for a large part of the activity (for example, the activity of a single session is at least a double-digit percentage), you have identified sessions that you might want to further analyze. 
+> If, as in the example above, no particular session stands out, it obviously means that the activity is due to many sessions.
+
+Use [snapper](https://github.com/tanelpoder/tpt-oracle/blob/master/snapper.sql)
+
+> Its key functionality is to sample the v$session view at a frequency that is inversely proportional to the sampling period. During the sampling, Snapper checks the status of the specified sessions and, for active sessions, it gathers information about their activity (for example, which SQL statement is in execution).
+
+Launch activity:
+- many small queries => `6km8p5f8573mr`
+- one big query => `d3d7q56sqr8wf`
+```shell
+watch -n 1 just query-table
+just query-table-many-times
+```
+
+With `snapper.sql ash=sql_id 15 1 all`
+
+```text
+ ActSes   %Thread | SQL_ID
+------------------------------------
+    1.00    (100%) | d3d7q56sqr8wf
+     .20     (20%) | 9xz7yas8z9pd9
+     .05      (5%) |
+     .01      (1%) | 6km8p5f8573mr
+     .01      (1%) | f3ww8rgva3hrs
+     .01      (1%) | 7qb74y7hp6cwd
+     .01      (1%) | 4rg3vr6z5yw7m
+```
+
+
+##### Statistics of the last 15 seconds
+
+Not available in v$session, they are cumulated
+
+```shell
+just sqlplus-administrator-bash
+```
+
+Then
+```oraclesqlplus
+@/tmp/scripts/sqlstats.sql d3d7q56sqr8wf 15
+```
+
+You'll get
+```text
+-----------------------------------------------------------------------------------------
+Interval (seconds)									15
+Period						 2025-01-09 18:11:19 - 2025-01-09 18:11:34
+------------------------------------------------------------------------------------------
+Identification
+------------------------------------------------------------------------------------------
+Container Id										 3
+SQL Id									     d3d7q56sqr8wf
+Execution Plan Hash Value							1067509040
+------------------------------------------------------------------------------------------
+Shared Cursors Statistics
+------------------------------------------------------------------------------------------
+Total Parses										 0
+Loads / Hard Parses									 0
+Invalidations										 0
+Cursor Size / Shared (bytes)								 0
+------------------------------------------------------------------------------------------
+Activity by Time
+------------------------------------------------------------------------------------------
+Elapsed Time (seconds)								    15.126
+CPU Time (seconds)								    15.119
+Wait Time (seconds)								     0.007
+------------------------------------------------------------------------------------------
+Activity by Waits
+------------------------------------------------------------------------------------------
+Application Waits (%)								     0.000
+Concurrency Waits (%)								     0.000
+Cluster Waits (%)								     0.000
+User I/O Waits (%)								     0.000
+Remaining Waits (%)								     0.049
+CPU (%) 									    99.951
+------------------------------------------------------------------------------------------
+Elapsed Time Breakdown
+------------------------------------------------------------------------------------------
+SQL Time (seconds)								    15.126
+PL/SQL Time (seconds)								     0.000
+Java Time (seconds)								     0.000
+------------------------------------------------------------------------------------------
+Execution Statistics				 Total	   Per Execution	   Per Row
+------------------------------------------------------------------------------------------
+Elapsed Time (milliseconds)			15,126		     233	   232.712
+CPU Time (milliseconds) 			15,119		     233	   232.597
+Executions					    65		       1	     1.000
+Buffer Gets				       987,572		  15,193	15,193.415
+Disk Reads					     0		       0	     0.000
+Direct Writes					     0		       0	     0.000
+Rows						    65		       1	     1.000
+Fetches 					    65		       1	     1.000
+Average Fetch Size				     1
+------------------------------------------------------------------------------------------
+Other Statistics
+------------------------------------------------------------------------------------------
+Executions that Fetched All Rows (%)						       100
+Serializable Aborts									 0
+------------------------------------------------------------------------------------------
+```
+
+
 ## Debug executed queries (profiler)
 
 ### SQL trace
@@ -1028,8 +1317,23 @@ Enterprise Edition is pre-requisite (Standard Edition won't work)
 ### Tuning Pack
 Diagnostics Pack  is pre-requisite
 
-## Stats Pack
+## Analyze a performance problem that happened in the past
 
-## Application Workload Report (AWR)
+> When you are trying to analyze a problem that happened in the past and, as a result, you can’t take advantage of the information provided by SQL Trace and dynamic performance views. 
+>
+> In such a situation, the only way you can make a quantitative analysis is by using a repository containing performance statistics covering the period of time you want to analyze:
+> - Automatic Workload Repository (AWR)
+> - Statspack
+
+> At regular intervals (for example, 30 minutes), the content of a bunch of dynamic performance views (for example, the views discussed in Chapter 4) is dumped into a set of tables. The resulting data is called a snapshot and can be identified by an integer value called a snapshot ID.
+
+> For some dynamic performance views, all the data they provide is dumped. 
+> For others, only part of the data is dumped. For example, information about SQL statements is dumped only for the top consumers.
+
+> In general, snapshots aren’t preserved indefinitely. Instead, they are purged after a specific retention period has elapsed. Snapshots of specific time periods can be marked as baselines and, as a result, be excluded from the purging process. Baselines are useful for comparative purposes. For example, if you preserve a baseline for a period of time in which the system performs as expected, you can compare that period with a baseline when a performance problem occurs.
+
+### Stats Pack
+
+### Application Workload Report (AWR)
 
 ## Enterprise Manager
