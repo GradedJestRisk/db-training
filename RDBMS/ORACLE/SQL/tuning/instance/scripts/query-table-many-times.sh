@@ -6,9 +6,9 @@ SQL_ID="SELECT prev_sql_id FROM v\$session WHERE sid=sys_context('userenv','sid'
 
 for i in {1..20}
 do
-#  SELECT="SELECT MAX(id) FROM simple_table WHERE id > ${i};"
+  SELECT="SELECT MAX(id) FROM simple_table WHERE id > ${i};"
   # 30 seconds
-  SELECT="SELECT MAX(id) FROM simple_table WHERE id > ${i} AND id > dbms_random.value(1,100000);"
+#  SELECT="SELECT MAX(id) FROM simple_table WHERE id > ${i} AND id > dbms_random.value(1,100000);"
 #  echo $SELECT
 #  echo -n "."
 #  sqlplus $CONNECTION_STRING <<< $QUERY #1>/dev/null

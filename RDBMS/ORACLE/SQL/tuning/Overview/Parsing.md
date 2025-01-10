@@ -2,20 +2,17 @@
 
 Create table
 ```oracle
-
+SELECT * FROM simple_table;
 ```
 
 Get count
 ```oracle
-SELECT COUNT(1) FROm simple_table;
+SELECT COUNT(1) FROM simple_table;
 ```
 
 Analyze
 ```oracle
-BEGIN
-    dbms_stats.gather_table_stats ( null, 'simple_table' );
-END;
-/
+CALL dbms_stats.gather_table_stats ( null, 'simple_table' );
 ```
 
 Get count
@@ -34,6 +31,24 @@ WHERE 1=1
 ORDER bY
    tbl.num_rows DESC
 ;
+```
+
+Get size
+```oracle
+SELECT segment_name, SUM(bytes)/1024/1024 size_mb
+FROM user_segments 
+WHERE 1=1
+    --AND segment_name = UPPER('simple_table')
+GROUP BY segment_name
+;
+```
+Cache
+```oracle
+SELECT
+   name, bytes/1024/1024 size_mb
+FROM v$sgainfo
+WHERE 1=1
+    AND name = 'Buffer Cache Size'
 ```
 
 ```oracle

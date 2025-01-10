@@ -120,6 +120,7 @@ Get
 SELECT 
     'session:'
     ,ssn.sid
+    ,ssn.SERIAL#
     ,ssn.logon_time started_at
     ,ssn.username
     ,ssn.program
@@ -141,15 +142,39 @@ FROM
 WHERE 1=1
   -- AND ssn.sid IN (1165,1152,23)
    AND ssn.osuser   <>  'oracle'
-   --AND ssn.status     =   'ACTIVE'
-   AND ssn.client_identifier = 'parsing'
+   AND ssn.status     =   'ACTIVE'
+   --AND ssn.client_identifier = 'parsing'
 --    AND ssn.client_identifier LIKE 'parsing-%'
 --   AND ssn.program    LIKE    'sqlplus%'
 ORDER BY
    ssn.sid
 ;
 ```
+Kill as administrator
+```oracle
+-- ALTER SYSTEM KILL SESSION '<sid, serial#>'
+ALTER SYSTEM KILL SESSION '22, 18210';
+```
 
+## Wait
+
+Get wait time (distribution) for session
+```oracle
+SELECT wait_class,
+       round(time_waited, 3) AS time_waited,
+       round(1E2 * ratio_to_report(time_waited) OVER (), 1) AS "%"
+FROM (
+  SELECT sid, wait_class, time_waited / 1E2 AS time_waited
+  FROM v$session_wait_class
+  WHERE total_waits > 0
+  UNION ALL
+  SELECT sid, 'CPU', value / 1E6
+  FROM v$sess_time_model
+  WHERE stat_name = 'DB CPU'
+)
+WHERE sid = 31
+ORDER BY 2 DESC;
+```
 
 
 ## Session + Query

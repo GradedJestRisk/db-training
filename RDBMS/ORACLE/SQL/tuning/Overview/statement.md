@@ -19,7 +19,7 @@ SELECT
 FROM v$sqlstats sql_stt
 WHERE 1=1
 --   AND sql_stt.sql_id IN ('fzmcf1yg2fwf4','cnzyjqgnv17vb')
-  AND sql_stt.sql_id = '10bcgmfvncs18'
+  AND sql_stt.sql_id = 'ggrbm9uz2pf6g'
 --   AND sql_stt.sql_text LIKE '%simple%'
 ORDER BY sql_stt.elapsed_time DESC
 ```
@@ -41,11 +41,11 @@ SELECT
     --,ssn_hst.*
 FROM v$active_session_history ssn_hst
 WHERE 1=1
-    --AND session_id = 205
-    AND ssn_hst.sql_id = '2hbs39z6qg675'
+    AND session_id = 31
+--     AND ssn_hst.sql_id = '2hbs39z6qg675'
     --AND  ssn_hst.client_info LIKE 'parsing-%'
     --AND  ssn_hst.client_info IS NOT NULL
-ORDER BY ssn_hst.sample_time ASC;
+ORDER BY ssn_hst.sample_time DESC;
 ```
 
 

@@ -19,6 +19,15 @@ console:
 logs:
     docker logs --follow oracle
 
+stats:
+    docker stats
+
+# https://jrs-s.net/2019/06/04/continuously-updated-iostat/
+# to see bandwith usage (%util), add -x
+# => how much time did the storage device have outstanding work (was busy).
+io:
+    watch -n 1 iostat -d nvme0n1 -m -y 1 1
+
 bash:
     docker exec --interactive --tty oracle bash
 
@@ -34,9 +43,15 @@ sqlplus-administrator:
 sqlplus-administrator-bash:
     docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba"
 
-# lasts 2 minutes, 10 million rows
+# one column, integer
+# lasts 2 minutes, 10 million rows, 120 Mb
 create-table:
     sqlplus $CONNECTION_STRING @scripts/create-table.sql
+
+# two columns, integer and random 100-char text
+# lasts 3 minutes, 10 million rows, 1,2 Gb (more than cache, 600mb)
+create-table-bigger-cache:
+    sqlplus $CONNECTION_STRING @scripts/create-big-table.sql
 
 # last one second
 query-table:
