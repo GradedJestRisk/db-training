@@ -395,6 +395,7 @@ SELECT max(sample_time) - min(sample_time) AS interval
 FROM v$active_session_history;
 ```
 
+History
 ```oracle
 SELECT
     sample_time
@@ -423,8 +424,8 @@ FROM (
          count(*) AS db_time,
          sql_id
   FROM v$active_session_history
-  WHERE sample_time BETWEEN to_timestamp('2025-01-09 10:00:00', 'YYYY-MM-DD HH24:MI:SS')
-                        AND to_timestamp('2025-01-09 12:00:00', 'YYYY-MM-DD HH24:MI:SS')
+  WHERE sample_time BETWEEN to_timestamp('2025-01-10 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+                        AND to_timestamp('2025-01-10 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
   AND sql_id IS NOT NULL
   GROUP BY sql_id
   ORDER BY count(*) DESC
@@ -480,7 +481,7 @@ WHERE 1=1
 ORDER BY chl.elapsed_time DESC
 ```
 
-
+Stats
 ```oracle
 SELECT
     'SQL stats:'

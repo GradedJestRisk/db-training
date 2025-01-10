@@ -11,7 +11,8 @@ Get session identifiers
 ```oracle
 SELECT sid, audsid
 FROM V$SESSION
-WHERE CLIENT_IDENTIFIER = 'profiling'
+WHERE 1=1
+    AND CLIENT_IDENTIFIER = 'profiling'
 ```
 
 ### This session
@@ -141,9 +142,9 @@ WHERE 1=1
   -- AND ssn.sid IN (1165,1152,23)
    AND ssn.osuser   <>  'oracle'
    --AND ssn.status     =   'ACTIVE'
-   AND ssn.client_identifier = 'profiling'
---    AND ssn.client_info LIKE 'some%'
---    AND ssn.program    LIKE    'sqlplus%'
+   AND ssn.client_identifier = 'parsing'
+--    AND ssn.client_identifier LIKE 'parsing-%'
+--   AND ssn.program    LIKE    'sqlplus%'
 ORDER BY
    ssn.sid
 ;
@@ -183,3 +184,21 @@ WHERE 1=1
   AND ssn.sid = 44 
 ORDER BY ssn.sid, qry.piece;
 ```
+
+For client_identifier
+```oracle
+select ssn.sid,
+       ssn.sql_id,
+       qry.sql_text
+       --,ssn.*
+FROM v$sqltext qry
+    INNER JOIN v$session ssn 
+        ON  ssn.sql_hash_value = qry.hash_value AND ssn.sql_address = qry.address
+WHERE 1=1
+  --AND ssn.client_info LIKE 'parsing-%'
+  AND ssn.program    LIKE    'sqlplus%'
+--   AND ssn.id = 
+ORDER BY ssn.sid, qry.piece;
+```
+
+## Session history (ASH)

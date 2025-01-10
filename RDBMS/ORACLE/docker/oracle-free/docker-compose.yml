@@ -32,7 +32,11 @@ services:
       retries: 50
       start_period: 5s
       start_interval: 5s
-
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4Gb
 
 volumes:
   oracle-volume:

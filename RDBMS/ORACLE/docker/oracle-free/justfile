@@ -85,7 +85,7 @@ extract-ash:
     firefox ./traces/report.html
 
 ash-top-sqls:
-    docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba @/tmp/scripts/ash_top_sqls.sql 2025-01-09_00:00:00.000 2025-01-09_23:00:00.000 all all"
+    docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba @/tmp/scripts/ash_top_sqls.sql 2025-01-10_00:00:00.000 2025-01-10_23:59:59.999 all all"
 
 ash-activity:
     docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba @/tmp/scripts/ash_activity.sql all all"
