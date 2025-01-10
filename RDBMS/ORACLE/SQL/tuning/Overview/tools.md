@@ -205,8 +205,11 @@ SELECT
     ,vnt.*
 FROM v$event_name vnt
 WHERE 1=1
-    AND vnt.wait_class = 'Concurrency'
-    AND vnt.name = 'library cache lock'
+--     AND vnt.wait_class = 'Concurrency'
+    AND vnt.wait_class = 'Configuration'
+--     AND vnt.wait_class_id = '3290255840'
+--     AND vnt.name = 'library cache lock'
+--     AND vnt.name = 'library cache lock'
 ORDER BY vnt.wait_class, vnt.name
 ```
 
@@ -217,13 +220,14 @@ Get wait time (value) for session
 SELECT *
 FROM v$session_wait_class ssn_wt
 WHERE 1=1
-    AND ssn_wt.sid = 205;
+    AND ssn_wt.sid = 207
+ORDER BY time_waited_micro DESC;
 
 -- Check data
 SELECT *
 FROM v$sess_time_model
 WHERE 1=1
-    AND sid = 205
+    AND sid = 207
 ORDER BY value DESC
 ```
 
@@ -241,12 +245,30 @@ FROM (
   FROM v$sess_time_model
   WHERE stat_name = 'DB CPU'
 )
-WHERE sid = 205
+WHERE sid = 207
 ORDER BY 2 DESC;
 ```
 
+
+
 ##### system
 
+Top wait event
+```oracle
+select * from (
+	select
+		 WAIT_CLASS ,
+		 EVENT,
+		 count(sample_time) as EST_SECS_IN_WAIT
+	from v$active_session_history
+	where sample_time between sysdate - interval '1' hour and sysdate
+	group by WAIT_CLASS,EVENT
+	order by count(sample_time) desc
+	)
+where rownum <6
+```
+
+All waited on wait events
 ```oracle
 SELECT event,
        round(time_waited, 3) AS time_waited,
@@ -279,6 +301,47 @@ I/O : Histogram waiting time
 SELECT wait_time_milli, wait_count, 100*ratio_to_report(wait_count) OVER () AS "%"
 FROM v$event_histogram
 WHERE event = 'db file sequential read'; 
+```
+
+Histogram (buckets)
+```oracle
+SELECT event, SUM(WAIT_TIME_MILLI * WAIT_COUNT)
+FROM v$event_histogram
+GROUP BY event
+ORDER BY SUM(WAIT_TIME_MILLI * WAIT_COUNT) DESC
+```
+
+Histogram (buckets)
+For event
+```oracle
+SELECT t.event, t.wait_time_milli, t.WAIT_COUNT
+--      ,t.*
+FROM v$event_histogram t
+WHERE event = 'log file switch completion' 
+-- GROUP BY t.wait_time_milli
+ORDER BY t.event ASC, t.wait_time_milli ASC
+```
+
+Histogram (buckets)
+Max count
+```oracle
+SELECT t.event, t.wait_time_milli, t.wait_count
+--      ,t.*
+FROM v$event_histogram t
+-- WHERE event = 'log file switch completion' 
+-- GROUP BY t.wait_time_milli
+ORDER BY t.wait_count DESC
+```
+
+Histogram (buckets)
+Max wait_time
+```oracle
+SELECT t.event, t.wait_time_milli, t.wait_count
+--      ,t.*
+FROM v$event_histogram t
+-- WHERE event = 'log file switch completion' 
+-- GROUP BY t.wait_time_milli
+ORDER BY t.wait_time_milli DESC
 ```
 
 ### cumulated additional statistics (v$sysstat / v$sessstat)

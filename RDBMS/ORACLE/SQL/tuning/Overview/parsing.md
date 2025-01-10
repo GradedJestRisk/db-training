@@ -42,6 +42,7 @@ WHERE 1=1
 GROUP BY segment_name
 ;
 ```
+
 Cache
 ```oracle
 SELECT

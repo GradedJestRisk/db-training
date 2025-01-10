@@ -10,6 +10,10 @@ create-start-instance:
 stop-instance:
     docker compose down
 
+restart-instance:
+    just stop-instance
+    just start-instance
+
 remove-volume:
     docker volume rm  oracle-free_oracle-volume
 

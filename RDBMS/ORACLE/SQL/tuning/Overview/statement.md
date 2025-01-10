@@ -41,7 +41,7 @@ SELECT
     --,ssn_hst.*
 FROM v$active_session_history ssn_hst
 WHERE 1=1
-    AND session_id = 31
+    --AND session_id = 31
 --     AND ssn_hst.sql_id = '2hbs39z6qg675'
     --AND  ssn_hst.client_info LIKE 'parsing-%'
     --AND  ssn_hst.client_info IS NOT NULL
