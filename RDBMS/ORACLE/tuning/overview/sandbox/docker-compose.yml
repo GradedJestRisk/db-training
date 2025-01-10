@@ -33,11 +33,11 @@ services:
       start_period: 5s
       start_interval: 5s
 #    https://docs.oracle.com/en/database/oracle/oracle-database/23/xeinl/requirements.html
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 1Gb
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '2'
+#          memory: 1Gb
 
 volumes:
   oracle-volume:
