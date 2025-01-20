@@ -166,3 +166,27 @@ wait event
 service name:
 >  logical name associated to a database, configured through the service_names initialization parameter, or through the dbms_service package
 > One database may have multiple service names.
+
+## optimizer
+
+access paths, eg. , index scans
+
+## langage
+
+lateral
+
+disjunctive predicates : `OR`
+
+query block: eg. a sub-query. Simple SQL statements have a single query block
+
+inline view:
+```oracle
+SELECT *
+FROM (SELECT t1.*
+      FROM t1, t2
+      WHERE t1.id = t2.t1_id) t12,
+```
+
+semi-join (IN, EXISTS)
+
+anti-join (NOT IN, NOT EXISTS)
