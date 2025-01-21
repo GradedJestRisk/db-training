@@ -324,7 +324,7 @@ Child node provide data to their parents using unix-like streams, following thes
 > - Child operations are fully executed before their parent operations.
 > - Child operations pass data to their parent operations.
 
-## Sample
+### Sample
 
 > Knowing the parent-child relationship is essential to understanding the order in which operations of an execution plan are executed. In fact, parent operations, to fulfill their task, require data that is provided by their child operations. 
 > As a result, even though execution starts at the root of the tree, the first operation to be fully executed is one that has no child and, therefore, is a leaf of the tree.
@@ -356,10 +356,10 @@ Child node provide data to their parents using unix-like streams, following thes
 ## Operations (node)
 
 4 types:
-- stand-alone: at most one child, not iterative operation "child operation is executed at most once"
+- stand-alone: at most one child, no iterative operation (child operation is executed at most once)
 - iterative: at most one child, that can be executed more than once
-- unrelated-combine operations
-- related-combine operations
+- combine, unrelated : several children  
+- combine, related : several children, a children drive the other ones
 
 2 types:
 - blocking : in bulk (eg. `sort`) =>  should be buffered in memory (PGA) or disk (temporary tablespace).
@@ -515,4 +515,653 @@ Are executed 2 times (as many times as range values)
 --------------------------------------------------------------------
  
    3 - access(("JOB"='ANALYST' OR "JOB"='CLERK'))
+```
+
+### unrelated-combine
+
+I call unrelated-combine operations all operations:
+- having multiple children;
+- that are independently executed.
+
+#### Rule
+
+> Children are executed sequentially, starting from the one with the smallest ID and going to the one with the highest ID. Before starting the processing of a subsequent child, the current one must be completely executed.
+
+A child is executed at most once and independently (but time dependency) of all other childrens.
+
+>  The following operations are of this type: 
+> - AND-EQUAL, BITMAP AND, BITMAP OR, BITMAP MINUS, 
+> - CONCATENATION
+> - CONNECT BY WITHOUT FILTERING
+> - HASH JOIN, MERGE JOIN
+> - MULTI-TABLE INSERT, SQL MODEL, TEMP TABLE TRANSFORMATION
+> - UNION-ALL, MINUS, INTERSECTION
+
+#### Sample
+
+```oracle
+SELECT ename FROM emp
+UNION ALL
+SELECT dname FROM dept
+UNION ALL
+SELECT '%' FROM dual
+```
+
+> In this execution plan, the unrelated-combine operation is the UNION-ALL. The other three are stand-alone operations.
+
+```text
+-----------------------------------------------------
+| Id  | Operation          | Name | Starts | A-Rows |
+-----------------------------------------------------
+|   0 | SELECT STATEMENT   |      |      1 |     19 |
+|   1 |  UNION-ALL         |      |      1 |     19 |
+|   2 |   TABLE ACCESS FULL| EMP  |      1 |     14 |
+|   3 |   TABLE ACCESS FULL| DEPT |      1 |      4 |
+|   4 |   FAST DUAL        |      |      1 |      1 |
+-----------------------------------------------------
+```
+
+> Operation 1 builds a single result set of 19 rows based on all data received from its children and returns them to its parent (0). 
+
+The data are not related, as a `MAX` would do.
+
+### related-combine
+
+> I call related-combine operations all operations:
+> - having multiple children;
+> - where one of the children controls the execution of all other children
+
+Operations:
+- NESTED LOOPS
+- FILTER
+- UPDATE
+- CONNECT BY WITH FILTERING
+- UNION ALL (RECURSIVE WITH)
+- BITMAP KEY ITERATION
+
+
+#### rule
+
+> The child with the smallest ID controls the execution of the other children.
+
+> Children are executed going from the one with the smallest ID to the one with the highest ID. They aren’t executed sequentially, instead , a kind of interleaving is performed.
+
+> Only the first child is executed at most once. All other children may be executed several times or not executed at all.
+
+
+#### nested loop
+
+> This operation is used to join two sets of rows. Consequently, it always has two children, no more, no less. 
+> The child with the smallest ID is called the outer loop or driving row source. The second child is called the inner loop. 
+> The particular characteristic of this operation is that the inner loop is executed once for each row returned by the outer loop 
+
+N executions of the outer loop
+One execution of the inner loop for each N iteration of the outer loop.
+
+OUTER LOOP : FOR i IN 1 ..N
+  FETCH DATA;
+  INNER LOOP(DATA);
+END OUTER LOOP;
+
+Get un-commissioned employees, of all department but sales.
+
+```oracle
+SELECT *
+FROM emp, dept
+WHERE emp.deptno = dept.deptno
+AND emp.comm IS NULL
+AND dept.dname != 'SALES'
+```
+
+```text
+------------------------------------------------------------------
+| Id  | Operation                    | Name    | Starts | A-Rows |
+------------------------------------------------------------------
+|   0 | SELECT STATEMENT             |         |      1 |      8 |
+|   1 |  NESTED LOOPS                |         |      1 |      8 |
+|*  2 |   TABLE ACCESS FULL          | EMP     |      1 |     10 |
+|*  3 |   TABLE ACCESS BY INDEX ROWID| DEPT    |     10 |      8 |
+|*  4 |    INDEX UNIQUE SCAN         | DEPT_PK |     10 |     10 |
+------------------------------------------------------------------
+ 
+   2 - filter("EMP"."COMM" IS NULL)
+   3 - filter("DEPT"."DNAME"<>'SALES')
+   4 - access("EMP"."DEPTNO"="DEPT"."DEPTNO")
+```
+
+> On this execution plan, both children of the NESTED LOOPS operation are stand-alone operations.
+
+> -   Operation 0 has one child (1). It can’t be the first one being executed.
+> -   Operation 1 has two children (2 and 3), and among them, operation 2 is the first in ascending order. Therefore, operation 2 (the outer loop) is the first one being executed.
+>  -  Operation 2 scans the emp table, applies the "EMP"."COMM" IS NULL filter predicate and passes the data of ten rows to its parent (1).
+> -   For each row returned by operation 2, the second child of the NESTED LOOPS operation, the inner loop, is executed once. This is confirmed by comparing the A-Rows column of operation 2 with the Starts column of operations 3 and 4 <=
+
+>  -  The inner loop is composed of two stand-alone operations
+>    -  Operation 4 scans the dept.dept_pk index by looking for the ten values of emp.deptno rows (op 2). In doing so, it extracts ten rowids from the index over the ten executions (1:1 relationship - each employee deblongs to one and only one department) and passes them to its parent (3).
+>    -  Operation 3 accesses the dept table through the ten rowids passed from operation 4. For each rowid, a row is read. Then it applies the "DEPT"."DNAME"<>'SALES' filter predicate. This filter leads to the exclusion of two rows. It passes the data of the remaining eight rows to its parent (1).
+
+> -   Operation 1 passes the eight rows to its parent (0)
+> -   Operation 0 sends the data to the caller.
+
+#### filter
+
+> The particular characteristic of this operation is that it supports a varying number of children. 
+> If it has a single child, it’s considered a stand-alone operation. If it has two or more children, its function is similar to the NESTED LOOPS operation. The first child drives the execution of the other children.
+
+Get employees:
+- not from sales
+- without bonuses
+
+```oracle
+SELECT *
+FROM emp
+WHERE NOT EXISTS (SELECT 0
+                  FROM dept
+                  WHERE dept.dname = 'SALES' AND dept.deptno = emp.deptno)
+AND NOT EXISTS (SELECT 0
+                FROM bonus
+                WHERE bonus.ename = emp.ename)
+```
+
+```text
+ 
+------------------------------------------------------------------
+| Id  | Operation                    | Name    | Starts | A-Rows |
+------------------------------------------------------------------
+|   0 | SELECT STATEMENT             |         |      1 |      8 |
+|*  1 |  FILTER                      |         |      1 |      8 |
+|   2 |   TABLE ACCESS FULL          | EMP     |      1 |     14 |
+|*  3 |   TABLE ACCESS BY INDEX ROWID| DEPT    |      3 |      1 |
+|*  4 |    INDEX UNIQUE SCAN         | DEPT_PK |      3 |      3 |
+|*  5 |   TABLE ACCESS FULL          | BONUS   |      8 |      0 |
+------------------------------------------------------------------
+ 
+   1 - filter( NOT EXISTS (SELECT 0 FROM "DEPT" "DEPT" WHERE "DEPT"."DEPTNO"=:B1
+               AND "DEPT"."DNAME"='SALES') AND  NOT EXISTS (SELECT 0 FROM "BONUS"
+               "BONUS" WHERE "BONUS"."ENAME"=:B2))
+   3 - filter("DEPT"."DNAME"='SALES')
+   4 - access("DEPT"."DEPTNO"=:B1)
+   5 - filter("BONUS"."ENAME"=:B1)
+```
+
+> For each row returned by operation 2, the second and third children of the FILTER operation should be executed once. In reality, a kind of caching is implemented to reduce executions to a minimum. 
+> This is confirmed by comparing the A-Rows column of operation 2 with the Starts column of operations 3 and 5. 
+>  - Operation 3 is executed three times, once for each distinct value in the deptno column in the emp table. 
+>  - Operation 5 is executed eight times, once for each distinct value in the ename column in the emp table after applying the filter imposed by the operation 3. The following query shows that the number of starts matches the number of distinct values.
+
+```text
+SQL> SELECT deptno, dname, count(*)
+  2  FROM emp NATURAL JOIN dept
+  3  GROUP BY deptno, dname;
+ 
+DEPTNO DNAME      COUNT(*)
+------ ---------- --------
+    10 ACCOUNTING        3
+    20 RESEARCH          5
+    
+    30 SALES             6
+```
+
+> scans the dept_pk index by applying the "DEPT"."DEPTNO"=:B1 access predicate. 
+> The bind variable (B1) is used to pass the value that’s to be checked by the subquery.
+
+To sum up, in `filter`, the first children drive the other two (or more):
+- its result rest is used to call other children
+- it may not be an actual loop, but some kind for performance
+
+#### update
+
+> Most of the time, an update  has a single child and therefore is considered a stand-alone operation. 
+> When subqueries are used in the SET clause, it is a related-combine.
+
+Update each employee 
+- salary : with the average of its department salaries
+- commission : with the average of commissions
+
+```oracle
+UPDATE emp e1
+SET sal = (SELECT avg(sal) FROM emp e2 WHERE e2.deptno = e1.deptno),
+    comm = (SELECT avg(comm) FROM emp e3)
+```
+
+```text
+ ---------------------------------------------------------------
+| Id  | Operation           | Name | Starts | E-Rows | A-Rows |
+---------------------------------------------------------------
+|   0 | UPDATE STATEMENT    |      |      1 |        |      0 |
+|   1 |  UPDATE             | EMP  |      1 |        |      0 |
+|   2 |   TABLE ACCESS FULL | EMP  |      1 |     14 |     14 |
+|   3 |   SORT AGGREGATE    |      |      3 |      1 |      3 |
+|*  4 |    TABLE ACCESS FULL| EMP  |      3 |      5 |     14 |
+|   5 |   SORT AGGREGATE    |      |      1 |      1 |      1 |
+|   6 |    TABLE ACCESS FULL| EMP  |      1 |     14 |     14 |
+---------------------------------------------------------------
+
+  4 - filter("E2"."DEPTNO"=:B1)
+```
+
+> For each distinct value in the deptno column returned by operation 2, operation 4 scans the emp table and applies the "E2"."DEPTNO"=:B1 filter predicate. In doing so over the three executions, it extracts 14 rows and passes them to its parent (3).
+> - Operation 3 computes the average salary of the rows passed to it from operation 4 and returns the result to its parent (1).
+> - Operation 6 scans the emp table, extracts 14 rows, and passes them to its parent (5). Note that this subquery is executed only once because it’s not correlated to the main query.
+> - Operation 5 computes the average commission of the rows passed to it from operation 6 and returns the result to its parent (1).
+> - Operation 1 updates each row passed by operation 2 with the value returned by its other children (3 and 5) and passes to its parent (0) the number of rows that were updated. Note that even if the UPDATE statement modifies the 14 rows, A-Rows column shows 0 for this operation.
+
+#### connect by with filtering
+
+> This operation is used to process hierarchical queries. It’s characterized by two child operations:  
+> - the first one is used to get the root(s) of the hierarchy
+> - the second one is executed once for each level in the hierarchy.
+
+Get the hierarchical pyramid (organization diagram)
+```oracle
+SELECT level, rpad('-',level-1,'-')||ename AS ename, prior ename AS manager
+FROM emp
+START WITH mgr IS NULL
+CONNECT BY PRIOR empno = mgr
+```
+
+```text
+ 
+---------------------------------------------------------------------
+| Id  | Operation                     | Name      | Starts | A-Rows |
+---------------------------------------------------------------------
+|   0 | SELECT STATEMENT              |           |      1 |     14 |
+|*  1 |  CONNECT BY WITH FILTERING    |           |      1 |     14 |
+|*  2 |   TABLE ACCESS FULL           | EMP       |      1 |      1 |
+|   3 |   NESTED LOOPS                |           |      4 |     13 |
+|   4 |    CONNECT BY PUMP            |           |      4 |     14 |
+|   5 |    TABLE ACCESS BY INDEX ROWID| EMP       |     14 |     13 |
+|*  6 |     INDEX RANGE SCAN          | EMP_MGR_I |     14 |     13 |
+---------------------------------------------------------------------
+ 
+   1 - access("MGR"=PRIOR "EMPNO")
+   2 - filter("MGR" IS NULL)
+   6 - access("connect$_by$_pump$_002"."PRIOR empno"="MGR")
+       filter("MGR" IS NOT NULL)
+```
+
+```text
+LEVEL ENAME    MANAGER
+----- -------- -------
+    1 KING
+    2 -JONES   KING
+    3 --SCOTT  JONES
+    4 ---ADAMS SCOTT
+```
+
+> the first child of the CONNECT BY WITH FILTERING operation is a stand-alone operation. Instead, the second child is itself a related-combine operation. 
+
+
+#### union all (recursive with)
+
+
+Get the hierarchical pyramid (organization diagram), with salaries
+```oracle
+WITH
+  e (xlevel, empno, ename, job, mgr, hiredate, sal, comm, deptno)
+  AS (
+    SELECT 1, 
+           empno, ename, job, mgr, hiredate, sal, comm, deptno
+    FROM emp
+    WHERE mgr IS NULL
+    UNION ALL
+    SELECT mgr.xlevel+1, 
+           emp.empno, emp.ename, emp.job, emp.mgr, emp.hiredate, emp.sal, emp.comm, emp.deptno
+    FROM emp, e mgr
+    WHERE emp.mgr = mgr.empno
+  )
+SELECT *
+FROM e
+```
+
+```text
+ 
+---------------------------------------------------------------------------------
+| Id  | Operation                                 | Name      | Starts | A-Rows |
+---------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                          |           |      1 |     14 |
+|   1 |  VIEW                                     |           |      1 |     14 |
+|   2 |   UNION ALL (RECURSIVE WITH) BREADTH FIRST|           |      1 |     14 |
+|*  3 |    TABLE ACCESS FULL                      | EMP       |      1 |      1 |
+|   4 |    NESTED LOOPS                           |           |      4 |     13 |
+|   5 |     NESTED LOOPS                          |           |      4 |     13 |
+|   6 |      RECURSIVE WITH PUMP                  |           |      4 |     14 |
+|*  7 |      INDEX RANGE SCAN                     | EMP_MGR_I |     14 |     13 |
+|   8 |     TABLE ACCESS BY INDEX ROWID           | EMP       |     13 |     13 |
+---------------------------------------------------------------------------------
+ 
+   3 - filter("MGR" IS NULL)
+   7 - access("EMP"."MGR"="MGR"."EMPNO")
+       filter("EMP"."MGR" IS NOT NULL)
+```
+
+```text
+1,7839,KING,PRESIDENT,,1981-11-17,5000.00,,10
+2,7566,JONES,MANAGER,7839,1981-04-02,2975.00,,20
+2,7698,BLAKE,MANAGER,7839,1981-05-01,2850.00,,30
+2,7782,CLARK,MANAGER,7839,1981-06-09,2450.00,,10
+3,7788,SCOTT,ANALYST,7566,1987-04-19,3000.00,,20
+3,7902,FORD,ANALYST,7566,1981-12-03,3000.00,,20
+3,7499,ALLEN,SALESMAN,7698,1981-02-20,1600.00,300.00,30
+3,7521,WARD,SALESMAN,7698,1981-02-22,1250.00,500.00,30
+3,7654,MARTIN,SALESMAN,7698,1981-09-28,1250.00,1400.00,30
+3,7844,TURNER,SALESMAN,7698,1981-09-08,1500.00,0.00,30
+3,7900,JAMES,CLERK,7698,1981-12-03,950.00,,30
+3,7934,MILLER,CLERK,7782,1982-01-23,1300.00,,10
+4,7876,ADAMS,CLERK,7788,1987-05-23,1100.00,,20
+4,7369,SMITH,CLERK,7902,1980-12-17,800.00,,20
+```
+
+## Read execution plan : summin it up
+
+> The essential thing to recognize is that reading long execution plans is no different from reading short ones. 
+> All you need is to methodically apply the rules provided in the previous sections. With them, it doesn’t matter how many lines an execution plan has. You simply proceed in the same way.
+
+
+### Blocks: identify combine
+
+> Initially, it’s necessary to both decompose the execution plan into basic blocks and recognize the order of execution. To do so, you carry out the following steps.
+
+> To read an execution plan at first, you have to identify the combine operations (both related and unrelated), the operation having more than one child. Then, for each child operation of each combine operation, you define a block. Finally, you need to find out in what order the blocks are executed.  So, find the stand-alone operation that has no children, and is driving if combine.
+
+## adaptive execution plans : subplans
+
+During execute, use dynamic sampling to get additional insights into the data to be processed 
+- in a nested loops, switch join to hash join
+- in parallel, switch distribution method from hash to broadcast
+
+```oracle
+SELECT *
+FROM t1, t2
+WHERE t1.id = t2.id
+AND t1.n = 666;
+```
+
+```text
+----------------------------------------------
+| Id  | Operation                    | Name  |
+----------------------------------------------
+|   0 | SELECT STATEMENT             |       |
+|   1 |  NESTED LOOPS                |       |
+|   2 |   NESTED LOOPS               |       |
+|*  3 |    TABLE ACCESS FULL         | T1    |
+|*  4 |    INDEX UNIQUE SCAN         | T2_PK |
+|   5 |   TABLE ACCESS BY INDEX ROWID| T2    |
+----------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   3 - filter("T1"."N"=666)
+   4 - access("T1"."ID"="T2"."ID")
+ 
+Note
+-----
+   - this is an adaptive plan
+```
+
+
+You will see in  `Notes` Section
+> this is an adaptive plan
+
+To get the actual plan, pass `adaptative` in parameter
+```oracle
+SELECT * FROM table(dbms_xplan.display(format=>' basic +predicate +note +adaptive'));
+```
+
+```text
+-------------------------------------------------
+|   Id  | Operation                     | Name  |
+-------------------------------------------------
+|     0 | SELECT STATEMENT              |       |
+|- *  1 |  HASH JOIN                    |       |
+|     2 |   NESTED LOOPS                |       |
+|     3 |    NESTED LOOPS               |       |
+|-    4 |     STATISTICS COLLECTOR      |       |
+|  *  5 |      TABLE ACCESS FULL        | T1    |
+|  *  6 |     INDEX UNIQUE SCAN         | T2_PK |
+|     7 |    TABLE ACCESS BY INDEX ROWID| T2    |
+|-    8 |   TABLE ACCESS FULL           | T2    |
+-------------------------------------------------
+ 
+   1 - access("T1"."ID"="T2"."ID")
+   5 - filter("T1"."N"=666)
+   6 - access("T1"."ID"="T2"."ID")
+ 
+Note
+-----
+   - this is an adaptive plan (rows marked '-' are inactive)
+```
+
+Both plans are mixed up, the adaptative is the following
+```text
+-----------------------------------
+| Id  | Operation          | Name |
+-----------------------------------
+|   0 | SELECT STATEMENT   |      |
+|   1 |  HASH JOIN         |      |
+|   2 |   TABLE ACCESS FULL| T1   |
+|   3 |   TABLE ACCESS FULL| T2   |
+-----------------------------------
+```
+
+> Basically, the first execution plan is better than the second one when the scan of the t1 table returns a small number of rows. Hence, to decide which execution plan should be used, the query optimizer estimates the maximum number of rows (called inflection point) that can be efficiently processed with the nested loops join. 
+> To determine, during the execution phase, which execution plan has to be used, the STATISTICS COLLECTOR operation buffers and counts the number of rows the scan of the t1 table returns. 
+> Then — and only if the number is lower than the inflection point — is the nested loops join executed. Otherwise, the hash join is executed. The execution plan that is actually used is called final execution plan. 
+
+> Be aware that the execution plan switch is only performed during the first execution of a child cursor. All successive executions use the final execution plan.
+
+> To know whether, for a specific child cursor, the final execution plan was already selected
+```oracle
+SELECT is_resolved_adaptive_pla
+FROM v$sql dynamic performance view provides a new column to help you . That column is is_resolved_adaptive_plan. 
+```
+
+> It’s set to one of the following values:
+> - NULL means that the execution plan associated to the cursor isn’t adaptive.
+> - N means that the final execution plan hasn’t been determined. This value can be observed only until the final execution plan has been determined.
+> - Y means that the final execution plan was determined.
+
+> Two initialization parameters control adaptive execution plans:
+> - optimizer_adaptive_features fully enables or disables the feature. Adaptive execution plans are disabled when the parameter is set to FALSE. The default value is TRUE.
+> -  optimizer_adaptive_reporting_only enables or disables adaptive execution plans in reporting mode. This mode can be useful to assess whether an execution plan would change because of adaptive execution plans. When set to TRUE, adaptive execution plans are generated, and the SQL engine checks the inflection point, but the SQL engine uses only the default execution plan. Then, with the reporting feature shown in the following example, you can check which execution plan would be used if the feature were to be fully enabled. The default value is FALSE.
+
+```text
+SQL> ALTER SESSION SET optimizer_adaptive_reporting_only = TRUE;
+ 
+SQL> SELECT *
+  2  FROM t1, t2
+  3  WHERE t1.id = t2.id
+  4  AND t1.n = 666;
+ 
+SQL> SELECT *
+  2  FROM table(dbms_xplan.display_cursor(format=>'basic +predicate +note +adaptive +report'));
+ 
+EXPLAINED SQL STATEMENT:
+------------------------
+SELECT * FROM t1, t2 WHERE t1.id = t2.id AND t1.n = 666
+ 
+Plan hash value: 1837274416
+ 
+-------------------------------------------------
+|   Id  | Operation                     | Name  |
+-------------------------------------------------
+|     0 | SELECT STATEMENT              |       |
+|- *  1 |  HASH JOIN                    |       |
+|     2 |   NESTED LOOPS                |       |
+|     3 |    NESTED LOOPS               |       |
+|-    4 |     STATISTICS COLLECTOR      |       |
+|  *  5 |      TABLE ACCESS FULL        | T1    |
+|  *  6 |     INDEX UNIQUE SCAN         | T2_PK |
+|     7 |    TABLE ACCESS BY INDEX ROWID| T2    |
+|-    8 |   TABLE ACCESS FULL           | T2    |
+-------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   1 - access("T1"."ID"="T2"."ID")
+   5 - filter("T1"."N"=666)
+   6 - access("T1"."ID"="T2"."ID")
+ 
+Note
+-----
+   - this is an adaptive plan (rows marked '-' are inactive)
+ 
+Adaptive plan:
+-------------
+This cursor has an adaptive plan, but adaptive plans are enabled for
+reporting mode only.  The plan that would be executed if adaptive plans
+were enabled is displayed below.
+ 
+Plan hash value: 1837274416
+ 
+-----------------------------------
+| Id  | Operation          | Name |
+-----------------------------------
+|   0 | SELECT STATEMENT   |      |
+|*  1 |  HASH JOIN         |      |
+|*  2 |   TABLE ACCESS FULL| T1   |
+|   3 |   TABLE ACCESS FULL| T2   |
+-----------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   1 - access("T1"."ID"="T2"."ID")
+   2 - filter("T1"."N"=666)
+ 
+Note
+-----
+   - this is an adaptive plan
+```
+
+## inefficient execution plans
+
+### wrong estimations
+
+> The query optimizer computes costs to decide 
+> - which access paths
+> - join orders
+> - join methods 
+> should be used to get an efficient execution plan. 
+> If the computation of the cost is wrong, it’s likely that the query optimizer picks out a suboptimal execution plan. In other words, wrong estimations easily lead to making a mistake in the choice of an execution plan.
+
+> To do so, compare the gap of cardinality between the estimations (E-Rows) and actual data (A-Rows).
+
+```text
+SELECT count(t2.col2)
+FROM t1 JOIN t2 USING (id)
+WHERE t1.col1 = 666
+ 
+-----------------------------------------------------------------------------
+| Id  | Operation                      | Name    | Starts | E-Rows | A-Rows |
+-----------------------------------------------------------------------------
+|   0 | SELECT STATEMENT               |         |      1 |        |      1 |
+|   1 |  SORT AGGREGATE                |         |      1 |      1 |      1 |
+|   2 |   NESTED LOOPS                 |         |      1 |        |  75808 |
+|   3 |    NESTED LOOPS                |         |      1 |     32 |  75808 |
+|   4 |     TABLE ACCESS BY INDEX ROWID| T1      |      1 |     32 |  80016 |
+|*  5 |      INDEX RANGE SCAN          | T1_COL1 |      1 |     32 |  80016 |
+|*  6 |     INDEX UNIQUE SCAN          | T2_PK   |  80016 |      1 |  75808 |
+|   7 |    TABLE ACCESS BY INDEX ROWID | T2      |  75808 |      1 |  75808 |
+-----------------------------------------------------------------------------
+ 
+   5 - access("T1"."COL1"=666)
+   6 - access("T1"."ID"="T2"."ID")
+```
+
+> The estimation of operation 4 (and consequently of operations 2 and 3) is completely wrong. The query optimizer estimated, for operation 4, a return of only 32 rows instead of 80,016. To make things worse, operations 2 and 3 are related-combine operations. This means that operations 6 and 7, instead of being executed only 32 times as estimated, are in fact executed 80,016 and 75,808 times, respectively.
+
+> The cardinality is computed by multiplying the selectivity by the number of rows in the table. 
+> Therefore, if the cardinality is wrong, the problem can have only three possible causes: 
+> - a wrong selectivity
+> - a wrong number of rows
+> - a bug in the query optimizer.
+
+
+Get estimated selectivity
+```text
+SQL> SELECT num_rows, distinct_keys, num_rows/distinct_keys AS avg_rows_per_key
+  2  FROM user_indexes
+  3  WHERE index_name = 'T1_COL1';
+ 
+NUM_ROWS DISTINCT_KEYS AVG_ROWS_PER_KEY
+-------- ------------- ----------------
+  160000          5000               32
+```
+
+Get actual selectivity
+```text
+SQL> SELECT count(*) AS num_rows, count(DISTINCT col1) AS distinct_keys,
+  2         count(nullif(col1,666)) AS rows_per_key_666
+  3  FROM t1;
+  
+NUM_ROWS DISTINCT_KEYS ROWS_PER_KEY_666
+-------- ------------- ----------------
+  160 000         5 000          79 984  
+```
+
+Object statistics correct but that the data is also strongly skewed (666 is a special value). So we need an histogram to show this, and there is none.
+
+```text
+SQL> SELECT histogram, num_buckets
+  2  FROM user_tab_col_statistics
+  3  WHERE table_name = 'T1' AND column_name = 'COL1';
+ 
+HISTOGRAM NUM_BUCKETS
+--------- -----------
+NONE                1
+```
+
+### late restriction (unnecessary processing)
+
+> verify whether the query optimizer correctly recognized the restriction in the SQL statement and, as a result, applied it as soon as possible. In other words, you check whether the execution plan leads to unnecessary processing.
+
+
+```oracle
+SELECT count(t1.pad), count(t2.pad), count(t3.pad)
+FROM t1, t2, t3
+WHERE t1.id = t2.t1_id AND t2.id = t3.t2_id
+```
+
+```text
+----------------------------------------------------------------
+| Id  | Operation            | Name | Starts | E-Rows | A-Rows |
+----------------------------------------------------------------
+|   0 | SELECT STATEMENT     |      |      1 |        |      1 |
+|   1 |  SORT AGGREGATE      |      |      1 |      1 |      1 |
+|*  2 |   HASH JOIN          |      |      1 |  79800 |    100 |
+|*  3 |    HASH JOIN         |      |      1 |  40000 |  40000 |
+|   4 |     TABLE ACCESS FULL| T1   |      1 |  20000 |  20000 |
+|   5 |     TABLE ACCESS FULL| T2   |      1 |  40000 |  40000 |
+|   6 |    TABLE ACCESS FULL | T3   |      1 |  80000 |  80000 |
+----------------------------------------------------------------
+ 
+   2 - access("T2"."ID"="T3"."T2_ID")
+   3 - access("T1"."ID"="T2"."T1_ID")
+```
+
+> A result set of only 100 rows was generated, even though the operation reading the t3 table returned 80,000 rows. This simply means that the query optimizer didn’t recognize the restriction and applied it too late when a lot of processing was already being performed. 
+> Estimating join cardinalities is, en passant, one of the most difficult tasks the query optimizer has to perform.
+
+> When you encounter such problems, there’s little you can do. In fact, there are no object statistics describing the relationship between two tables. 
+> One possible way to correct a situation of this type is to use a SQL profile.
+
+> Not only has the order of the join changed (t2 > t3 > t1), but the access to the t1 table is also different:
+```text
+--------------------------------------------------------------------------
+| Id  | Operation                     | Name  | Starts | E-Rows | A-Rows |
+--------------------------------------------------------------------------
+|   0 | SELECT STATEMENT              |       |      1 |        |      1 |
+|   1 |  SORT AGGREGATE               |       |      1 |      1 |      1 |
+|   2 |   NESTED LOOPS                |       |      1 |        |    100 |
+|   3 |    NESTED LOOPS               |       |      1 |    100 |    100 |
+|*  4 |     HASH JOIN                 |       |      1 |    100 |    100 |
+|   5 |      TABLE ACCESS FULL        | T2    |      1 |  40000 |  40000 |
+|   6 |      TABLE ACCESS FULL        | T3    |      1 |  80000 |  80000 |
+|*  7 |     INDEX UNIQUE SCAN         | T1_PK |    100 |      1 |    100 |
+|   8 |    TABLE ACCESS BY INDEX ROWID| T1    |    100 |      1 |    100 |
+--------------------------------------------------------------------------
+ 
+   4 - access("T2"."ID"="T3"."T2_ID")
+   7 - access("T1"."ID"="T2"."T1_ID")
 ```
