@@ -1,6 +1,6 @@
 SET LINESIZE 200;
 
-SELECT distinct sid FROM v$mystat;
+SELECT distinct sid AS session_id FROM v$mystat;
 CALL dbms_session.set_identifier('query-table');
 
 SELECT MAX(id)
