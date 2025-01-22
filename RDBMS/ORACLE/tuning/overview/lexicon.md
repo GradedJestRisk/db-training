@@ -190,3 +190,20 @@ FROM (SELECT t1.*
 semi-join (IN, EXISTS)
 
 anti-join (NOT IN, NOT EXISTS)
+
+## interface
+
+Java Database Connectivity  `JDBC`
+- database agnostic
+- provide drivers, here Oracle JDBC drivers
+
+Oracle Data Provider for .NET `ODP.NET`
+- API for .Net
+
+Oracle Call Interface `OCI`:
+- native C language interface to Oracle Database
+- used by SQL*Plus, SQL*Loader, Data-Pump
+- used by node-oracledb (NodeJs is in C/C++, V8 in C++)
+
+PHP extension community library OCI `PECL OCI`
+- PHP library for OCI 

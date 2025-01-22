@@ -2,7 +2,7 @@
 
 ## The way
 
-If you know which use-cae peforms badly, focus on it
+If you know which use-cae performs badly, focus on it
 
 If not, check this
 
@@ -416,6 +416,8 @@ ORDER BY metric_name
 
 ### Session status (v$session)
 
+
+
 Overview 
 >
     The identification of the session (sid, serial#, saddr and audsid), whether it’s a BACKGROUND or USER session (type), and when it was initialized (logon_time).
@@ -801,7 +803,9 @@ Serializable Aborts									 0
 
 Check timings are available
 ```oracle
-SHOW PARAMETER timed_statistics
+SHOW PARAMETER timed_statistics -- sqlplus
+SELECT value
+FROM v$parameter WHERE name = 'timed_statistics';
 ALTER SESSION SET timed_statistics = TRUE
 ```
 
@@ -1379,7 +1383,7 @@ Use SQL Developer
 Enterprise Edition is pre-requisite (Standard Edition won't work)
 
 ### Tuning Pack
-Diagnostics Pack  is pre-requisite
+Diagnostics Pack is pre-requisite
 
 ## Analyze a performance problem that happened in the past
 

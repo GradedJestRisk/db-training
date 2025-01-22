@@ -1,7 +1,6 @@
 # Cursor
 
-## Get cursors
-
+## get cursors
 
 ```oracle
 SELECT sql_id, sql_text, executions
@@ -9,7 +8,8 @@ FROM v$sqlarea
 WHERE sql_text LIKE '%1234';
 ```
 
-## Shared cursor
+## shared cursor
+
 ```oracle
 SELECT *, reason
 FROM $sql_shared_cursor
@@ -22,7 +22,7 @@ AND child_number = 1;
 ```oracle
 SELECT child_number, is_bind_sensitive, is_bind_aware, is_shareable, plan_hash_value
 FROM v$sql
-HERE sql_id = 'asth1mx10aygn';
+WHERE sql_id = 'asth1mx10aygn';
 ```
 
 Check why it has been used
@@ -33,7 +33,7 @@ WHERE sql_id = 'asth1mx10aygn'
 ORDER BY child_number;
 ```
 
-Check if because of selctivity
+Check if because of selectivity
 ```oracle
 SELECT child_number, trim(predicate) AS predicate, low, high
 FROM v$sql_cs_selectivity
@@ -49,7 +49,7 @@ CHILD_NUMBER PREDICATE LOW        HIGH
 ```
 
 Bucket to compare expected and actual
-```xpath2
+```oracle
 SELECT child_number, bucket_id, count
 FROM v$sql_cs_histogram
 WHERE sql_id = 'asth1mx10aygn'
