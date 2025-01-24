@@ -78,9 +78,11 @@ SELECT
     ,ssn.state       
    --,ssn.action        
    ,ssn.event
+   ,ssn.sql_id
+   ,'wait:'
    ,ssn.wait_time      --wtn_tm
    ,ssn.wait_class     --wtn_cls
-   ,ssn.sql_id
+
    ,'v$session=>'
    ,ssn.*
 FROM 

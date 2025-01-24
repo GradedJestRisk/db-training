@@ -15,6 +15,8 @@ cardinality (operation) = selectivity * num_rows = rows returned
 
 access path
 
+
+
 bind variable
 >  from a security point of view, bind variables mitigate the risk of SQL injection
 > from a performance point of view, bind variables introduce both an advantage and a disadvantage
@@ -169,7 +171,101 @@ service name:
 
 ## optimizer
 
-access paths, eg. , index scans
+data structure
+way of storing permanently data, which may be redundant
+- table (3 types)
+- index
+
+row source
+set of rows returned by a step in an execution plan, can be 
+ - data structure (eg. table)
+ - view
+ - a result of a join or grouping operation
+
+access path
+technique used by a query to retrieve rows from a single row source (unary operation):
+- a full table scan, source = table
+- an index unique scan, source index
+- an index unique scan, followed by `TABLE ACCESS BY INDEX ROWID` (access by index) is NOT an access path, as is executed in two steps - and a row source span only a single step - but in practice it can be considered so
+
+binary operation
+technique used by a query to retrieve rows from two row sources
+
+The database uses different access paths for different relational data structures. The following table summarizes common access paths for the major data structures.
+
+access paths
+eg. index scans
+
+join tree
+- left-deep
+- right-deep
+- zig-zag
+- bushy
+
+## SQL
+
+result set
+the rows returned by an operation
+
+### FROM
+
+inline view 
+a query specified in the FROM clause of another query, here `emp` is an inline view
+```oracle
+SELECT *
+FROM dept, (SELECT * FROM emp WHERE emp.job = 'CLERK')
+``` 
+
+lateral inline view
+- inline view
+- that contains a correlation referring to other tables that precede it in the FROM clause
+- operator is `LATERAL`
+- here `emp` is a lateral inline view, you can replace it with an inner join
+```oracle
+SELECT *
+FROM dept, LATERAL(SELECT * FROM emp WHERE dept.deptno = emp.deptno)
+``` 
+- available in outer and cross join with `APPLY`
+
+### joins
+
+join tree
+- left input (set), executed first
+- right input (set), executed last
+
+join sets
+the set you want to join, you can join only two set exactly
+
+join condition
+the probe used to join rows, eg ` a.b BETWEEN c.low and c.high`
+
+join type:
+- cross : cartesian product
+- inner, or theta : cross with condition
+  - equi-join: condition operator is equality `=`
+  - self-join: join on itself
+- outer: rows of a theta join are augmented with NULL values when condition is not specified
+  - left / right : specify the table whom rows should be preserved (not NULL) - default is left, and `outer` is optional
+  - full: preserver rows on both sides
+  - partitioned: select a subset of table
+- semi-join: like theta, but 
+  - the right input rows are not returned (hence semi, like semi-result set)
+  - the left input rows are returned once
+  - operator are `IN, EXISTS, ANY, SOME`
+  - anti-join: rows are returned if conditions is not verified `NOT IN, NOT EXISTS`
+
+### WHERE
+
+restriction, predicate
+
+
+## parallel
+
+Parallel query `PQ`
+
+Parallel DML `PDML`
+
+Parallel DDL `PDDL`
 
 ## langage
 

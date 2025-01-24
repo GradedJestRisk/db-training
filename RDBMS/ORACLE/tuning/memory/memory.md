@@ -5,6 +5,12 @@
 > MEMORY_TARGET specifies the Oracle system-wide usable memory: SGA + PGA.
 > Total memory usage can grow beyond the value of MEMORY_TARGET(eg. PL/SQL tables) , as long as memory is available at the operating system level.
 
+```oracle
+SELECT name, display_value, description 
+FROM v$parameter 
+WHERE name IN ('memory_target', 'memory_max_target', 'pga_aggregate_target')
+```
+
 <img src="overview.png" width="200" >
 
 [Diagrams](https://docs.oracle.com/en/database/oracle/oracle-database/23/dbiad/db_dbinstance.html)

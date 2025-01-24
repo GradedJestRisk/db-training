@@ -26,8 +26,20 @@ BEGIN
 END;
 /
 
-SELECT prev_sql_id AS sqlId FROM v$session WHERE sid=sys_context('userenv','sid');
+SELECT prev_sql_id AS sqlId
+FROM v$session
+WHERE sid=sys_context('userenv','sid');
 
 COMMIT;
+
+CALL dbms_stats.gather_table_stats ( null, 'simple_table' );
+
+SELECT TO_CHAR(bytes/1024/1024) || 'MB' AS table_size
+FROM user_segments
+WHERE segment_name = UPPER('simple_table');
+
+SELECT num_rows
+FROM user_tables
+WHERE table_name = UPPER('simple_table');
 
 EXIT;

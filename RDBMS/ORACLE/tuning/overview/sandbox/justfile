@@ -59,12 +59,12 @@ create-small-table:
 # one column, integer
 # lasts 2 minutes, 10 million rows, 120 Mb
 create-table:
-    sqlplus $CONNECTION_STRING @scripts/create-table.sql
+    sqlplus -s $CONNECTION_STRING @scripts/create-table.sql
 
 # two columns, integer and random 100-char text
 # lasts 3 minutes, 10 million rows, 1,2 Gb (more than cache, 600mb)
 create-table-bigger-cache:
-    sqlplus $CONNECTION_STRING @scripts/create-big-table.sql
+    sqlplus -s $CONNECTION_STRING @scripts/create-big-table.sql
 
 # last one second
 query-table:
@@ -73,6 +73,15 @@ query-table:
 # lasts one minute
 query-table-many-times:
     sqlplus $CONNECTION_STRING @scripts/query-table-many-times.sql
+
+query-table-many-times-shell:
+    ./scripts/query-table-many-times.sh
+
+join-table-hash:
+    time sqlplus $CONNECTION_STRING @scripts/join-table-hash.sql
+
+memory:
+    sqlplus -s $CONNECTION_STRING @scripts/memory.sql
 
 explain:
     sqlplus $CONNECTION_STRING @scripts/explain.sql
