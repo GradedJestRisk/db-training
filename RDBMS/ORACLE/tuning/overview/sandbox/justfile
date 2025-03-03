@@ -15,10 +15,7 @@ restart-instance:
     just start-instance
 
 remove-volume:
-    docker volume rm  oracle-free_oracle-volume
-
-console:
-    psql --dbname "$CONNECTION_STRING"
+    docker volume rm oracle_oracle-volume
 
 logs:
     docker logs --follow oracle
@@ -38,8 +35,11 @@ bash:
 sqlplus-container:
     docker exec --interactive --tty oracle bash -c "sqlplus username/password@//localhost/FREEPDB1"
 
-sqlplus:
+console:
     sqlplus $CONNECTION_STRING @scripts/cli.sql
+
+console-test:
+    sqlplus $CONNECTION_STRING_TEST @scripts/cli.sql
 
 sqlcl:
     sql $CONNECTION_STRING
@@ -49,6 +49,9 @@ sqlplus-administrator:
 
 sqlplus-administrator-bash:
     docker exec --interactive --tty oracle bash -c "sqlplus sys/administrator_password@//localhost/FREEPDB1 as sysdba"
+
+create-test-user:
+    docker exec --interactive --tty oracle bash -c "createAppUser test password"
 
 create-scott-dataset:
     sqlplus $CONNECTION_STRING @scripts/create-scott-dataset.sql

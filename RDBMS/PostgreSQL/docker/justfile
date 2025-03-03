@@ -14,3 +14,9 @@ get-console:
 
 get-bash:
     docker exec --interactive --tty --user=root db-training-postgresql-1 bash
+
+extract-configuration-from-container:
+    docker cp postgresql:/var/lib/postgresql/data/postgresql.conf ./configuration/postgresql.conf.sample
+
+extract-active-values-from-configuration:
+    grep  "^[a-ZA-Z]" ./configuration/postgresql.conf.sample

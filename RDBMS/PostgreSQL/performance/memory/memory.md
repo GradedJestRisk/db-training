@@ -2,8 +2,28 @@
 
 ## Theory
 
+### Memory management
+
+Memory is managed internally by Postgresql, written C, by its owm memory management, not by `malloc`: memory contexts. Its aim is to prevent memory leaks.
+
+[Source](https://www.cybertec-postgresql.com/en/memory-context-for-postgresql-memory-management/)
+
+### Memory type
+
+Shared memory ("POSIX shared memory") for:
+- buffer cache, shared between all background process
+- locks, transaction log
+- parallel workers
+
+Private memory for
+- backend process (join, sort, aggregate)
+
+https://momjian.us/main/writings/pgsql/inside_shmem.pdf
+
+### Tracking down usage
+
 Memory usage cannot be accurately monitored:
-- process memory usage will report some shared_buffer footprint (due to copying process mem map to forked)
+- process memory usage will report some `shared_buffer` footprint (due to copying process mem map to forked)
 - connexion footprint is 2 MBytes 
 https://blog.anarazel.de/2020/10/07/measuring-the-memory-overhead-of-a-postgres-connection/
 
@@ -13,11 +33,12 @@ https://dba.stackexchange.com/questions/12501/view-postgresql-memory-usage
 Which include Linux memory survey
 https://utcc.utoronto.ca/~cks/space/blog/linux/LinuxMemoryStats
 
-
 To choose how much RAM to allocate
 https://pgtune.leopard.in.ua/
 
-Cache is at two levels: PG cache and OS cache
+Cache is at two levels: 
+- PG cache 
+- OS cache
 https://dev.to/franckpachot/postgresql-double-buffering-understand-the-cache-size-in-a-managed-service-oci-2oci
 
 Connection metadata are not freed (unless connexion is closed ) and can cause memory leak
@@ -56,9 +77,11 @@ CREATE TABLE foo (id INTEGER UNIQUE);
 INSERT INTO foo (id) VALUES (generate_series( 1, 10000000));
 ```
 
-## Local
+## Get memory
 
-## Docker (eg. bitnami)
+### in OS
+
+#### using top
 
 Get the process ID 
 ```shell
@@ -108,9 +131,7 @@ while :; do grep -oP '^VmRSS:\s+\K\d+' /proc/$PID_MONITOR/status \
     | numfmt --from-unit Ki --to-unit Mi; sleep 1; done | ttyplot -u Mi
 ```
 
-## CLI
-
-### pg_top
+#### using pg_top
 
 https://severalnines.com/blog/dynamic-monitoring-postgresql-instances-using-pgtop/
 
@@ -137,9 +158,52 @@ Hide idle: `i`
 
 You can monitor a remote database if extension `pg_proctab` is installed, using `--remote-mode`.
 
-## Extension
+### from database
 
-### pg_proctab
+#### using view pg_backend_memory_contexts
+
+For current session
+```postgresql
+SELECT name,
+       total_bytes / 1024 size_kbytes,
+       total_bytes / 1024 / 1024 size_mbytes
+FROM pg_backend_memory_contexts mmr_cnt
+WHERE 1=1
+--AND mmr_cnt.name = 'TopMemoryContext';
+ORDER BY total_bytes DESC
+```
+
+You can see metada use up to 1 Mb
+
+| name               | size_kbytes | size_mbytes |
+|:-------------------|:------------|:------------|
+| CacheMemoryContext | 1024        | 1           |
+| Timezones          | 101         | 0           |
+| TopMemoryContext   | 80          | 0           |
+
+#### using function pg_log_backend_memory_contexts
+
+Get the process ID
+```shell
+SELECT
+    cnn.pid,
+    'pg_log_backend_memory_contexts(' || cnn.pid || ')'
+FROM
+   pg_stat_activity cnn
+WHERE 1=1
+      AND cnn.query ILIKE '%INSERT%';
+```
+
+In container as `postgres`
+```postgresql
+SELECT pg_log_backend_memory_contexts(79672)
+```
+
+Then read database log
+
+### using extensions
+
+#### pg_proctab
 
 
 ```shell
@@ -151,7 +215,7 @@ CREATE EXTENSION pg_proctab;
 select pg_size_pretty(sum(rss)*1000) from pg_proctab();
 ```
 
-### plperlu
+#### plperlu
 
 ```shell
 docker compose --file=docker-compose.plperlu.yml up --detach
@@ -200,7 +264,7 @@ select
 from pg_stat_activity;
 ```
 
-### pg_buffercache
+#### pg_buffercache (cache, not backend memory)
 
 ```shell
 psql --dbname "host=localhost port=5432 user=postgres password=password123 dbname=test" --file ./database-setup/activate-extensions.sql
@@ -418,6 +482,11 @@ Will give you [this file](./memory-dump.log).
 [Doc](https://git.postgresql.org/gitweb/?p=postgresql.git;a=blob;f=src/backend/utils/mmgr/README):
 
 
+Total footprint is NOT in first record `TopMemoryContext`: it should be added form each node
+```text
+2024-04-30 12:30:21.997 GMT [195] LOG:  level: 0; TopMemoryContext: 69472 total in 5 blocks; 14392 free (21 chunks); 55080 used
+```
+
 Metadata cache
 ```text
 LOG:  level: 1; CacheMemoryContext: 524 288 total in 7 blocks; 59 648 free (0 chunks); 464 640 used
@@ -483,8 +552,8 @@ while :; do grep -oP '^VmRSS:\s+\K\d+' /proc/$PID_MONITOR/status \
 ```
 
 Memory usage can be broadly simplified into two values
-, Virtual Memory (VMEM) which a program believes it has
-and Resident Set Size (RSS) which is the actual amount of memory it uses.
+- Virtual Memory (VMEM) which a program believes it has
+- Resident Set Size (RSS) which is the actual amount of memory it uses.
 
 ```shell
 man proc | vi -

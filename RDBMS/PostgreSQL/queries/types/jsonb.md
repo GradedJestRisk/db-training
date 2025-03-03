@@ -9,13 +9,34 @@
 
  https://www.postgresql.org/docs/16/functions-json.html
 
-## Generate
+## Create
 
 ```postgresql
 SELECT 
        TO_JSON('value'::TEXT) AS quote_value,
        JSONB_BUILD_OBJECT('KEY', 'value') AS build_object 
 ```
+
+
+```postgresql
+WITH json AS (SELECT 'to' AS data)
+SELECT json.data
+FROM json
+;
+
+```
+
+From string
+```postgresql
+WITH json AS (SELECT '[ ' ||
+                     '{ "name": "foo", "email": "foo@bar.com" }, ' ||
+                     '{ "name": "foo", "email": "foo@bar.com" }' ||
+                     ']' AS data)
+SELECT CAST(json.data AS JSONB)
+FROM json
+;
+```
+
 
 
 ## Check if JSON
@@ -58,6 +79,31 @@ SELECT
     f_is_json('{"b":"foo"')
 ```
 
+## Update
+
+Update a part of the value, without altering the other part
+
+```postgresql
+WITH json AS (SELECT '[ ' ||
+                     '{ "name": "foo", "email": "foo@bar.com" }, ' ||
+                     '{ "name": "foo", "email": "foo@bar.com" }' ||
+                     ']' AS data)
+SELECT
+   jsonb_set(
+        CAST(json.data AS JSONB),
+       '{0,name}',
+       '"bar"')
+FROM json
+;
+```
+
+Result
+```json
+[{"name": "bar", "email": "foo@bar.com"}, {"name": "foo", "email": "foo@bar.com"}]
+```
+
+[Doc](https://www.freecodecamp.org/news/how-to-update-objects-inside-jsonb-arrays-with-postgresql-5c4e03be256a/)
+
 ##  Display
 
 ### Raw
@@ -97,6 +143,45 @@ SELECT
        jsonb_pretty('{"what": "is this", "nested": {"items 1": "are the best", "items 2": [1, 2, 3]}}'::jsonb);
 ```
 
+
+## Operators
+
+### Inclusion
+
+```postgresql
+SELECT '["Fiction", "Thriller", "Horror"]'::jsonb
+        @>
+       '["Fiction", "Horror"]'::jsonb
+;
+```
+true
+
+```postgresql
+SELECT '["Fiction", "Thriller"]'::jsonb
+        @>
+       '["Fiction", "Horror", "Thriller"]'::jsonb
+;
+```
+false
+
+### Other operators
+
+List:
+- `->` 
+- `->>` 
+- `#>` 
+- `#>>` 
+- `@?`
+- `?&`
+
+[Doc](https://www.postgresql.org/docs/current/functions-json.html#FUNCTIONS-JSON-OP-TABLE)
+
+### Arrays
+
+SELECT
+'{"a": {"b":"foo"}}'::json->'a',
+'[{"a":"foo"},{"b":"bar"},{"c":"baz"}]'::json->2
+;
 
 ## Search
 
@@ -175,7 +260,9 @@ FROM ( VALUES
 ```
 
 
-## Tutorial
+## Tutorials
+
+### Library
 
 ```postgresql
 DROP TABLE IF EXISTS foo;
@@ -197,6 +284,8 @@ INSERT INTO books VALUES (3, '{"title": "The Dictator''s Handbook", "genres": ["
 INSERT INTO books VALUES (4, '{"title": "Deep Work", "genres": ["Productivity", "Reference"], "published": true}');
 INSERT INTO books VALUES (5, '{"title": "Siddhartha", "genres": ["Fiction", "Spirituality"], "published": true}');
 
+
+select * from books
 -- Display
 SELECT
     data->'title' AS title
@@ -209,59 +298,62 @@ FROM books
 WHERE 1=1
     AND data->'published' = 'false'
 ;
+```
 
--- Create rows from JSONB single value
--- 0-based
+#### Create rows from JSONB single value
+           
+0-based
+Without quotes
+```postgresql
 SELECT
    jsonb_array_elements_text(data->'genres') AS genre
 FROM books
 WHERE id = 1
 ;
+```
 
+With quotes
+```postgresql
 SELECT
    jsonb_array_elements(data->'genres') AS genre
 FROM books
 WHERE id = 1
 ;
+```
 
--- Which row have data that contains an attribute ?
+#### Access first element on collection
+
+```postgresql
+SELECT
+    data->'genres',
+    data->'genres'->0
+FROM books
+WHERE id = 1
+;
+```
+
+
+#### Which row have data that contains an attribute ?
+
+```postgresql
 SELECT *
 FROM books
 WHERE 1=1
  AND data ? 'authors'
 ;
+```
 
--- Inclusion
-SELECT '["Fiction", "Thriller", "Horror"]'::jsonb
-        @>
-       '["Fiction", "Horror"]'::jsonb
-;
--- true
+#### indexing
 
-SELECT '["Fiction", "Thriller"]'::jsonb
-        @>
-       '["Fiction", "Horror", "Thriller"]'::jsonb
-;
--- false
-
-
--- Other operators: -> ->> #> #>> @? ?& ...
--- https://www.postgresql.org/docs/current/functions-json.html#FUNCTIONS-JSON-OP-TABLE
-
--- Arrays
-
-SELECT
-    '{"a": {"b":"foo"}}'::json->'a',
-    '[{"a":"foo"},{"b":"bar"},{"c":"baz"}]'::json->2
-;
-
-
--- indexing
+Create
+```postgresql
 CREATE INDEX
     idx_published
 ON books ((data->'published'));
+```
 
--- Indexes
+List
+```postgresql
 SELECT
        'Indexes=>' qry
        ,ndx.indexname ndxl_nm
@@ -274,75 +366,46 @@ WHERE 1=1
     AND ndx.indexname = 'idx_published'
 ;
 
+```
 
+### Customers
 
--- Instantiate
-WITH json AS (SELECT 'to' AS data)
-SELECT json.data
-FROM json
-;
-
-WITH json AS (SELECT '[ ' ||
-                     '{ "name": "foo", "email": "foo@bar.com" }, ' ||
-                     '{ "name": "foo", "email": "foo@bar.com" }' ||
-                     ']' AS data)
-SELECT CAST(json.data AS JSONB)
-FROM json
-;
-
-
--- Transform JSONB (update a part of the value, without altering the other part)
-WITH json AS (SELECT '[ ' ||
-                     '{ "name": "foo", "email": "foo@bar.com" }, ' ||
-                     '{ "name": "foo", "email": "foo@bar.com" }' ||
-                     ']' AS data)
-SELECT
-   jsonb_set(
-        CAST(json.data AS JSONB),
-       '{0,name}',
-       '"bar"')
-FROM json
-;
--- [
--- {"name": "bar", "email": "foo@bar.com"},
--- {"name": "foo", "email": "foo@bar.com"}
--- ]
-
-
--- https://www.freecodecamp.org/news/how-to-update-objects-inside-jsonb-arrays-with-postgresql-5c4e03be256a/
-
+#### Create
+```postgresql
 create table customers (
     name varchar(256),
     contacts jsonb)
 ;
+insert into customers (name, contacts) values (
+                                                  'Jimi',
+                                                  '[
+                                                    {"type": "phone", "value": "+1-202-555-0105"},
+                                                    {"type": "email", "value": "jimi@gmail.com"}
+                                                  ]'
+                                              );
 
 insert into customers (name, contacts) values (
-  'Jimi',
-  '[
-    {"type": "phone", "value": "+1-202-555-0105"},
-    {"type": "email", "value": "jimi@gmail.com"}
-  ]'
-);
-
-insert into customers (name, contacts) values (
-  'Janis',
-  '[
-	{"type": "email", "value": "janis@gmail.com"}
-   ]'
-);
+                                                  'Janis',
+                                                  '[
+                                                    {"type": "email", "value": "janis@gmail.com"}
+                                                   ]'
+                                              );
 
 SELECT * FROM customers;
+```
 
-
--- Get index of "email" contact type
+Get index of "email" contact type
+```postgresql
 select index-1 as index
   from customers
       ,jsonb_array_elements(contacts) with ordinality arr(contact, index)
  where contact->>'type' = 'email'
    and name = 'Jimi';
+```
 
+#### Update
 
--- Update
+```postgresql
 with contact_email as (
   select ('{'||index-1||',value}')::text[] as path
     from customers
@@ -355,8 +418,14 @@ update customers
   from contact_email
  where name = 'Jimi';
 
+```
 
--- https://stackoverflow.com/questions/45849494/how-do-i-search-for-a-specific-string-in-a-json-postgres-data-type-column
+
+https://stackoverflow.com/questions/45849494/how-do-i-search-for-a-specific-string-in-a-json-postgres-data-type-column
+
+#### Search
+
+```postgresql
 SELECT
     c.contacts
 FROM
@@ -367,18 +436,27 @@ WHERE 1=1
     AND c.contacts::text          LIKE '%hendrix%'
 
 ;
+```
 
--- Array
 
---https://hevodata.com/learn/query-jsonb-array-of-objects/
+### Another : students
+
+https://hevodata.com/learn/query-jsonb-array-of-objects/
+
+
+#### Create
+
+```postgresql
+DROP TABLE students;
 
 CREATE TABLE students(
-   id serial PRIMARY KEY,
+   id integer PRIMARY KEY,
    name varchar(50),
    subject_marks jsonb
 );
 
-INSERT INTO students(name ,subject_marks ) VALUES ('Dandelions',
+INSERT INTO students(id, name, subject_marks ) 
+VALUES (1, 'Dandelions',
 '[{
  "sub_id": 1,
  "sub_name": "Computer Architecture",
@@ -390,15 +468,25 @@ INSERT INTO students(name ,subject_marks ) VALUES ('Dandelions',
  "sub_marks": 120
 
 }]');
+```
 
+```postgresql
+SELECT *
+FROM students
+```
+
+#### WITH ORDINALITY
+
+Process collection (marks) as rows using `WITH ORDINALITY` to create a view 
+```postgresql
 SELECT
   s.id,
-  arr.item_object
+  marks.item_object
 FROM students s,
-  JSONB_ARRAY_ELEMENTS(subject_marks) WITH ORDINALITY arr (item_object, position)
+  JSONB_ARRAY_ELEMENTS(subject_marks) WITH ORDINALITY marks (item_object, position)
 WHERE 1=1
   AND s.id = 1
-  AND arr.position = 1
+  AND marks.position = 1
   ;
 
 ```

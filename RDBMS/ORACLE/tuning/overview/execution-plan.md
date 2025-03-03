@@ -126,6 +126,11 @@ WHERE 1=1
     AND sql_text NOT LIKE '%v$sql%'
 ```
 
+Or
+```oracle
+select CHILD_NUMBER from V$SQL_SHARED_CURSOR where SQL_ID = '9420hwvnq6jsj';
+```
+
 
 Once identified (`sql_id` and `child_number`):
 - you can run queries on `v$sql_plan_statistics_all`
