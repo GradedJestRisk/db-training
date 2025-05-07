@@ -1,0 +1,26 @@
+# Load configuration from .env file
+# Limit resources (CPU/RAM)
+services:
+  postgresql:
+    image: postgres:${POSTGRESQL_IMAGE_VERSION}
+    container_name: postgresql
+    ports:
+      - "${POSTGRESQL_EXPOSED_PORT}:${POSTGRESQL_INTERNAL_PORT}"
+    environment:
+      POSTGRES_USER: ${POSTGRESQL_USER_NAME}
+      POSTGRES_PASSWORD: ${POSTGRESQL_USER_PASSWORD}
+      POSTGRES_DB: ${POSTGRESQL_DATABASE_NAME}
+    #    https://www.postgresql.org/docs/current/app-postgres.html
+    #    command: postgres $SOME_CONFIGURATION
+    #      volumes:
+    #         - ./configuration/postgresql.conf:/etc/postgresql.conf
+    healthcheck:
+      test: "psql --dbname \"host=localhost port=${POSTGRESQL_INTERNAL_PORT} dbname=${POSTGRESQL_DATABASE_NAME} user=${POSTGRESQL_USER_NAME} password=${POSTGRESQL_USER_PASSWORD}\""
+      interval: 1s
+      timeout: 10s
+      retries: 20
+    deploy:
+      resources:
+        limits:
+          cpus: '${POSTGRESQL_CPU_COUNT}'
+          memory: ${POSTGRESQL_TOTAL_MEMORY_SIZE}
