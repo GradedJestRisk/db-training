@@ -1,14 +1,22 @@
--- https://www.postgresql.org/docs/current/datatype.html
+# Database, index, table
 
--- Name 	            Storage Size (octet = byte)
--- smallint 	        2
--- integer 	            4
--- bigint 	            8
--- decimal 	            variable
--- decimal 	            variable
--- numeric 	            variable
--- real 	            4
--- double precision 	8
+## Primitive
+
+[Doc](https://www.postgresql.org/docs/current/datatype.html)
+
+Name 	            Storage Size (octet = byte)
+smallint 	        2
+integer 	        4
+bigint 	            8
+decimal 	        variable
+decimal 	        variable
+numeric 	        variable
+real 	            4
+double precision 	8
+
+
+Dataset
+```postgresql
 
 CREATE TABLE foo (
    id    SERIAL PRIMARY KEY,
@@ -20,13 +28,14 @@ SELECT floor(random() * 2147483627 + 1)::int
 FROM
     generate_series( 1, 1000000) -- 1 million => 40 seconds
 ON CONFLICT ON CONSTRAINT value_unique DO NOTHING;
+```
 
+## Record
 
-------- Record --------------
+https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-DBSIZE
+https://www.postgresql.org/docs/current/storage-toast.html
 
--- https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-DBSIZE
--- https://www.postgresql.org/docs/current/storage-toast.html
-
+```postgresql
 SELECT octet_length(repeat('1234567890',(2^n)::integer)),
        pg_column_size(repeat('1234567890',(2^n)::integer))
 FROM generate_series(0,12) n;
@@ -42,8 +51,10 @@ SELECT
     data
 FROM stored_query
 ORDER BY LENGTH(data) DESC;
+```
 
 
+```postgresql
 -- Columns
 SELECT
     c.column_name,
@@ -67,9 +78,11 @@ SELECT
 FROM foo AS t
     WHERE id = 1
 ;
+```
 
-------- Table --------------
+## Table
 
+```postgresql
 SELECT
     MOD(id, 2), COUNT(1)
 FROM foo
@@ -89,8 +102,13 @@ WHERE MOD(id, 2) = 0;
 -- Generate update
 UPDATE foo SET value = -1 * value;
 ;
+```
 
--- Estimated row count (immediate)
+### Row count 
+
+#### Immediate, not accurate : pg_stat_user_tables
+
+```postgresql
 SELECT
    stt.n_live_tup,
    stt.last_analyze,
@@ -99,31 +117,46 @@ FROM pg_stat_user_tables stt
 WHERE 1=1
    AND relname = 'answers'
 ;
+```
 
+#### Actual, may take time : pg_stat_get_*_tuples
 
-
-
--- Actual row count (may take time)
+```postgresql
 SELECT
     COUNT(*)                                        live_row_count_actual,
     pg_stat_get_live_tuples('public.foo'::regclass) live_row_count_estimated,
     pg_stat_get_dead_tuples('public.foo'::regclass) dead_row_count_estimated
 FROM foo
 ;
+```
 
--- Update statistics (update estimation)
-VACUUM ANALYZE foo;
+### Statistics
 
--- Reclaim space => 5 seconds
--- Execute DELETE, check dead_tuples, then run VACUUM full
+#### Update 
+
+Update statistics (update estimation)
+```postgresql
+ANALYZE foo;
+--VACUUM ANALYZE foo;
+```
+
+Reclaim space => 5 seconds
+Execute DELETE, check dead_tuples, then run VACUUM full
+```postgresql
 VACUUM FULL;
+```
 
--- Reset table stats
+#### Reset
+
+```postgresql
 SELECT
     pg_stat_reset_single_table_counters('public.foo'::regclass)
 ;
+```
 
--- Statistics
+####  Statistics
+
+```postgresql
 SELECT
    stt.relname,
    stt.n_live_tup,
@@ -137,9 +170,11 @@ FROM pg_stat_user_tables stt
 WHERE 1=1
    AND relname = 'foo'
 ;
+```
 
-
--- Statistics
+Full
+Statistics
+```postgresql
 SELECT
    stt.relname,
    stt.n_live_tup,
@@ -166,19 +201,31 @@ WHERE 1=1
 --    AND relname = 'foo'
    AND stt.last_autoanalyze IS NOT NULL
 ;
+```
 
--- Data (regular + TOAST) / Index
+### Data (regular + TOAST + fsm + vm)  : pg_table_size
+
+> the size reported includes the actual table data, any TOAST table data, the free space map and the visibility map. 
+> The size of any indexes is NOT included in the total.
+
+```postgresql
 SELECT
        pg_table_size('foo')                   data_size_octet,
        pg_size_pretty(pg_table_size('foo'))   data_size_pretty
 ;
+```
 
--- Index
+### Indexes only : pg_indexes_size
+
+```postgresql
 SELECT
        pg_size_pretty(pg_indexes_size('foo'))   index_size
 ;
+```
 
--- Indexes
+
+Get included indexes
+```postgresql
 SELECT
     ndx.indexname  ndxl_nm
    ,ndx.indexdef  dfn
@@ -186,14 +233,21 @@ FROM pg_indexes ndx
 WHERE 1=1
     AND ndx.tablename = 'foo'
 ;
+```
 
--- Data (regular + TOAST) + index
+
+### Data + indexes : pg_total_relation_size
+
+```postgresql
 SELECT
        pg_size_pretty(  pg_total_relation_size('foo'))  data_toast_index
 ;
+```
 
--- Complete
--- https://dba.stackexchange.com/questions/23879/measure-the-size-of-a-postgresql-table-row/23933#23933
+### Complete
+
+[SE](https://dba.stackexchange.com/questions/23879/measure-the-size-of-a-postgresql-table-row/23933#23933)
+```postgresql
 WITH x AS (
    SELECT count(*)               AS ct
         , sum(length(t::text))   AS txt_len  -- length in characters
@@ -228,9 +282,11 @@ UNION ALL SELECT 'row_count', ct, NULL, NULL FROM x
 UNION ALL SELECT 'live_tuples', pg_stat_get_live_tuples(tbl), NULL, NULL FROM x
 UNION ALL SELECT 'dead_tuples', pg_stat_get_dead_tuples(tbl), NULL, NULL FROM x
 ;
+```
 
 
--- Without COUNT (can be resource-consuming)
+Without COUNT (can be resource-consuming)
+```postgresql
 WITH x AS (
    SELECT ARRAY [pg_relation_size('foo')
                , pg_relation_size('foo', 'vm')
@@ -252,46 +308,88 @@ SELECT unnest(name)                AS metric
      , pg_size_pretty(unnest(val)) AS bytes_pretty
 FROM x
 ;
+```
+
+## Index
+
+> An index is sometimes considered a "table", in this case when using pg_table_size(), and so you get 8192 as the size of the index table (i.e., relation).
+> Since an index doesn't have an index of its own, pg_indexes_size() returns 0.
+
+[Source](https://postgrespro.com/list/thread-id/1235601)
 
 
 
-------- Database --------------
+## Database
 
--- https://www.postgresql.fastware.com/blog/back-to-basics-with-postgresql-memory-components
--- shared buffer, WAL, temp..
+### Components
 
+Components are
+- shared buffer
+- WAL
+- temp
+- ...
+
+[Doc](https://www.postgresql.fastware.com/blog/back-to-basics-with-postgresql-memory-components)
+
+
+#### Block size
+
+```postgresql
 -- Block size
 SELECT current_setting('block_size');
+```
 
+#### Cache
+
+```postgresql
 --
 SHOW shared_buffers;
 -- 128 MB
+```
 
+#### client working area
+```postgresql
 SHOW work_mem;
 -- 4MB
+```
 
--- Temporary table storage
--- No link with temporary files
+#### Temporary table storage
+
+Unrelated to temporary files
+
+```postgresql
 SHOW temp_buffers
 ;
--- 8MB
+```
+8MB
 
+```postgresql
 SELECT *
 FROM pg_controldata
 ;
+```
 
--- Database
+### Database
+
+```postgresql
 SELECT
        pg_size_pretty(  pg_database_size('database'))  data_toast_index
 ;
+```
 
--- https://www.postgresql.org/docs/current/monitoring-stats.html#PG-STAT-DATABASE-VIEW
+https://www.postgresql.org/docs/current/monitoring-stats.html#PG-STAT-DATABASE-VIEW
 
--- Reset stats
+
+Reset stats
+```postgresql
 SELECT pg_stat_reset()
 ;
 
--- Database
+```
+
+### Statistics
+
+```postgresql
 SELECT
      'Database stats=>'
      ,db.stats_reset  audit_start_time
@@ -314,29 +412,48 @@ FROM
 WHERE 1=1
     AND db.datname = 'database'
 ;
+```
 
--- Disc
--- Volume total size (all volumes)
+### Disc
+
+#### total
+Volume total size (all volumes)
+
+```shell
 docker system df
+```
 
--- File mapping
--- https://www.postgresql.org/docs/current/storage-file-layout.html
+#### File mapping
 
--- Named volume size
+https://www.postgresql.org/docs/current/storage-file-layout.html
+
+Named volume size
+```shell
 sudo du -sh /var/lib/docker/volumes/database_database-data/
+```
 
--- browse
+Browse
+```shell
 sudo ncdu /var/lib/docker/volumes/database_database-data/
+```
 
--- WAL
+### WAL
+
+```text
 _data/pg_wal
 -- Relations
 _data/base/16384
+```
 
+### Total activity
 
+Reset stats
+```postgresql
 select pg_stat_statements_reset();
+```
 
-
+Get
+```postgresql
 SELECT
     TRUNC(SUM(stt.total_exec_time))                  execution_time_ms
    ,pg_size_pretty(SUM(wal_bytes))                   disk_wal_size
@@ -347,4 +464,4 @@ FROM pg_stat_statements stt
 WHERE 1=1
     AND db.datname = 'database'
 ;
-
+```

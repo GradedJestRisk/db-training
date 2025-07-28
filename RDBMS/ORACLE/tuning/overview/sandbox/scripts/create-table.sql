@@ -14,7 +14,7 @@ BEGIN
     INSERT INTO simple_table VALUES(1);
 
     BEGIN
-        FOR i IN 1..20000000
+        FOR i IN 1..2000000
         LOOP
             INSERT INTO simple_table VALUES(i);
         END LOOP;

@@ -10,14 +10,44 @@ LGWR :lg writer, write data to redolog files
 
 SQL trace
 
-selectivity: rows returned / rows total - strong/weak [0;1]   
-cardinality (operation) = selectivity * num_rows = rows returned
+## selectivity (ratio)
+selectivity (of an operation) :  fraction of rows filtered by an operation = rows returned / rows total - strong/weak [0;1]
 
-access path
+When the selectivity is 
+close to 0, it’s said to be strong. 
+close to 1, it’s said to be weak.
 
+> Knowing the selectivity of an operation helps you determine what the most efficient access path is.
 
+## cardinality (count)
+cardinality (operation) = selectivity * num_rows (dataset) = count of rows returned
 
-bind variable
+Caution ! In the relational model, the term cardinality refers to the number of tuples in a relation.
+
+## execution plan
+
+### access path
+
+> An access path describes how records in a database file are retrieved.
+[IBM i OS manual](https://www.ibm.com/docs/fr/i/7.4.0)
+
+> The means by which the database retrieves data from a database. 
+> For example, a query using an index and a query using a full table scan use different access paths.
+[Oracle DB glossary](https://docs.oracle.com/en/database/oracle/oracle-database/12.2/tgsql/glossary.html#GUID-22DF198C-4310-4307-BF29-DCE765725BD4)
+
+> An access path is a technique used by a query to retrieve rows from a row source.
+[Oracle Tuning guide](https://docs.oracle.com/en/database/oracle/oracle-database/12.2/tgsql/optimizer-access-paths.html)
+
+> The optimizer considers different possible execution plans, and then assigns each plan a cost. 
+> The optimizer chooses the plan with the lowest cost. 
+> In general, index access paths are more efficient for statements that retrieve a small subset of table rows, 
+> whereas full table scans are more efficient when accessing a large portion of a table.
+
+### row source
+> A row source is a set of rows returned by a step in an execution plan. A row source can be a table, view, or result of a join or grouping operation.
+[Oracle Tuning guide](https://docs.oracle.com/en/database/oracle/oracle-database/12.2/tgsql/optimizer-access-paths.html)
+
+## bind variable
 >  from a security point of view, bind variables mitigate the risk of SQL injection
 > from a performance point of view, bind variables introduce both an advantage and a disadvantage
 > - they allow the sharing of parent cursors, then avoid hard parses 

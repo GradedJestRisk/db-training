@@ -1,6 +1,10 @@
-# Start:
+# Start (docker)
 # docker compose up --force-recreate --renew-anon-volumes --detach --wait postgresql
-# Connect:
+#
+# Setup (IDE)
+# jdbc:postgresql://localhost:5400/database
+#
+# Connect (client)
 # psql --dbname "host=localhost port=5400 dbname=database user=user password=password"
 services:
   postgresql:

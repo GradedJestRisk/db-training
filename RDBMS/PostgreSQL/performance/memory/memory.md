@@ -61,7 +61,7 @@ SHOW maintenance_work_mem;
 
 Sample use
 
-[Start local](../../local.md)
+[Start local](../../install-postgresql.md)
 ```shell
 docker exec --user root --tty --interactive postgresql-debian bash
 ```

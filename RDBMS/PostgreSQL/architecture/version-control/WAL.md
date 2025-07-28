@@ -1,6 +1,9 @@
-## WAL
+# WAL
 
-### Automatic checkpointer configuration
+
+[Dalibo](https://blog.dalibo.com/2024/01/05/cambouis.html)
+
+## Automatic checkpointer configuration
 
 > A checkpoint is begun every checkpoint_timeout seconds, or if max_wal_size is about to be exceeded, whichever comes first. The default settings are 5 minutes and 1 GB, respectively.
 
@@ -21,7 +24,7 @@ CHECKPOINT
 
 https://www.postgresql.org/docs/14/monitoring-stats.html#MONITORING-PG-STAT-BGWRITER-VIEW
 
-### Table (stats)
+## Table (stats)
 
 Checkpointed
 ```postgresql
@@ -40,9 +43,32 @@ Reset stats
 SELECT pg_stat_reset_shared('bgwriter') ;
 ```
 
-### Database logs
+## Database logs
 
 ```text
 2024-12-26 14:11:14.154 GMT [61] LOG:  checkpoint starting: time
 2024-12-26 14:11:41.118 GMT [61] LOG:  checkpoint complete: wrote 44272 buffers (4.2%); 0 WAL file(s) added, 0 removed, 38 recycled; write=26.895 s, sync=0.003 s, total=26.965 s; sync files=19, longest=0.002 s, average=0.001 s; distance=626950 kB, estimate=626950 kB
+```
+
+
+## Asychronous or synchronous commit
+
+[Postgresql docs](https://www.postgresql.org/docs/current/wal-async-commit.html)
+> As described in the previous section, transaction commit is normally synchronous: the server waits for the transaction's WAL records to be flushed to permanent storage before returning a success indication to the client. The client is therefore guaranteed that a transaction reported to be committed will be preserved, even in the event of a server crash immediately after. 
+> However, for short transactions this delay is a major component of the total transaction time. 
+> Selecting asynchronous commit mode means that the server returns success as soon as the transaction is logically completed, before the WAL records it generated have actually made their way to disk. 
+
+```text
+synchronous_commit=off
+```
+
+
+## Disable WAL
+
+[Postgresql docs](https://www.postgresql.org/docs/current/runtime-config-wal.html)
+> `minimal` removes all logging except the information required to recover from a crash or immediate shutdown.
+>  archive_mode cannot be enabled when wal_level is set to minimal.
+ 
+```text
+wal_level=minimal
 ```

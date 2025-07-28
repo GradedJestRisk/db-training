@@ -1,25 +1,27 @@
---------------------------------------------------
------- DISCLAIMER       --------------------------
---------------------------------------------------
-
--- https://stackoverflow.com/questions/13570613/making-sense-of-postgres-row-sizes
--- Calculation of row size is much more complex than that.
--- Storage is typically partitioned in 8 kB data pages.
--- There is a small fixed overhead per page, possible remainders not big enough to fit another tuple,
--- and more importantly dead rows or a percentage initially reserved with the FILLFACTOR setting (100% per default)
---
--- And there is even more overhead per row (tuple):
---  - an item identifier of 4 bytes at the start of the page,
---  - the HeapTupleHeader of 23 bytes and alignment padding.
---  The start of the tuple header as well as the start of tuple data are aligned at a multiple of MAXALIGN, which is 8 bytes on a typical 64-bit machine.
---  Some data types require alignment to the next multiple of 2, 4 or 8 bytes.
+# Tuple size
 
 
+## DISCLAIMER
 
---------------------------------------------------
------- Single column, no row   ---------------
---------------------------------------------------
+[SO](https://stackoverflow.com/questions/13570613/making-sense-of-postgres-row-sizes)
 
+Calculation of row size is much more complex than that.
+Storage is typically partitioned in 8 kB data pages.
+There is a small fixed overhead per page, possible remainders not big enough to fit another tuple,
+and more importantly dead rows or a percentage initially reserved with the FILLFACTOR setting (100% per default)
+
+And there is even more overhead per row (tuple):
+ - an item identifier of 4 bytes at the start of the page,
+ - the HeapTupleHeader of 23 bytes and alignment padding.
+ The start of the tuple header as well as the start of tuple data are aligned at a multiple of MAXALIGN, which is 8 bytes on a typical 64-bit machine.
+ Some data types require alignment to the next multiple of 2, 4 or 8 bytes.
+
+
+## Single column
+
+### no row
+
+```postgresql
 DROP TABLE IF EXISTS foo CASCADE;
 
 CREATE TABLE foo (
@@ -31,11 +33,12 @@ VACUUM (VERBOSE, ANALYZE) foo;
 -- table size
 SELECT * FROM pg_table_size('foo') size_bytes;
 -- 0
+```
 
---------------------------------------------------
------- Single column, single row   ---------------
---------------------------------------------------
 
+### single row
+
+```postgresql
 DROP TABLE IF EXISTS foo CASCADE;
 
 CREATE TABLE foo (
@@ -77,16 +80,12 @@ SELECT
      pg_column_size('foo')  "data",
      (pg_table_size('foo') - pg_column_size('foo'))  overhead
 ;
+```
 
 
+### text, identical (compression)
 
---------------------------------------------------
------- Single column   --------------------------
---------------------------------------------------
-
---------------------------------
--- Text, identical (compression)
-
+```postgresql
 DROP TABLE IF EXISTS foo CASCADE;
 
 CREATE TABLE foo (
@@ -125,11 +124,11 @@ FROM pg_class WHERE relname = 'foo';
 
 -- 4 425 pages
 -- 35 400 000
+``` 
 
+### integer, random
 
---------------------------------
--- Integer, random
-
+```postgresql
 DROP TABLE IF EXISTS foo CASCADE;
 
 CREATE TABLE foo (
@@ -218,11 +217,11 @@ SELECT
 FROM pg_class WHERE relname = 'foo';
 -- 4 425 pages
 -- 35 400 000 bytes
+```
 
---------------------------------------------------
------- Several columns  --------------------------
---------------------------------------------------
+## Several columns 
 
+```postgresql
 -- UUID size
 SELECT pg_column_size('60c0d3d5-b35c-47d4-853c-36bee508fb5f'::uuid);
 -- 16 bytes
@@ -272,6 +271,9 @@ SELECT
 -- 164 bytes
 
 -- System columns have a 10% overhead then
+
+```
+
 
 
 

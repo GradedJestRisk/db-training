@@ -1,5 +1,6 @@
 # Cache
 
+## Overview
 [Introduction](https://web.archive.org/web/20240107132036/https://madusudanan.com/blog/understanding-postgres-caching-in-depth/)
 
 caching => memory => shared_buffers
@@ -8,6 +9,7 @@ Check OS cache
 ```shell
 sudo iotop
 ```
+
 Cache size
 ```postgresql
 SHOW shared_buffers;

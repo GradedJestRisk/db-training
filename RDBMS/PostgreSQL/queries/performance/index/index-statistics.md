@@ -1,4 +1,8 @@
--- Index statistics
+#  Index statistics
+
+## Usage
+
+```postgresql
 SELECT
     ndx_stt.relname      tbl_nm,
     ndx_stt.indexrelname ndx_nm,
@@ -15,9 +19,11 @@ ORDER BY
    idx_tup_fetch DESC,
    idx_tup_read DESC
 ;
+```
 
 
--- Index usage + definition
+Index usage + definition
+```postgresql
 SELECT
     relname      tbl_nm,
     indexrelname ndx_nm,
@@ -32,8 +38,10 @@ WHERE 1 = 1
 --   AND indexrelname NOT LIKE '%unique%'
 ORDER BY idx_scan ASC
 ;
+```
 
--- Index usage + definition
+Index usage + definition
+```postgresql
 SELECT
     relname                                                tbl_nm,
     (select
@@ -52,10 +60,12 @@ WHERE 1 = 1
 --   AND indexrelname NOT LIKE '%unique%'
 ORDER BY idx_scan ASC;
 
+```
 
 
--- Indexes usage + Table cardinality
--- Given schema name
+Indexes usage + Table cardinality
+Given schema name
+```postgresql
 SELECT
     'Table=>'       qry
   , ndx.tablename   tbl_nm
@@ -77,10 +87,16 @@ WHERE 1 = 1
 ORDER BY tbl.n_live_tup,
          ndx.tablename ASC
 ;
+```
 
+## Useless
 
--- Indexes on tables < 10^5 records (useless)
--- Given schema name
+### Small tables
+
+Indexes on tables < 10^5 records (useless)
+Given schema name
+
+```postgresql
 SELECT
     'Table=>'      qry
   , ndx.tablename  tbl_nm
@@ -98,13 +114,35 @@ WHERE 1 = 1
   AND tbl.n_live_tup <= 100000 --LOG(10, 5)
 ORDER BY tbl.n_live_tup, ndx.tablename ASC
 ;
+```
 
+### Duplicated indexes
 
--- Duplicated indexes
+```postgresql
 SELECT
     array_agg(indexname)             AS indexes,
     replace(indexdef, indexname, '') AS defn
 FROM pg_indexes
 GROUP BY defn
 HAVING count(*) > 1;
+```
 
+### Seldomly used
+
+Less than 10 times
+```postgresql
+SELECT
+    relname      tbl_nm,
+    indexrelname ndx_nm,
+    ndx.indexdef,
+    idx_scan     usage_count
+FROM pg_stat_all_indexes ndx_sg
+         INNER JOIN pg_indexes ndx ON ndx.indexname = ndx_sg.indexrelname
+WHERE 1 = 1
+  AND ndx_sg.idx_scan <= 10
+  AND ndx_sg.schemaname = 'public'
+--   AND indexrelname NOT LIKE '%pkey%'
+--   AND indexrelname NOT LIKE '%unique%'
+ORDER BY idx_scan ASC
+;
+```

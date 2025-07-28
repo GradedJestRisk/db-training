@@ -1,20 +1,35 @@
----------------------------------------------
----- Bloat
---------------------------------------------
+# Bloat
 
--- Bloat is caused by dead_tuples, they cannot be removed by VACUUM
--- A VACUUM full is sometimes needed, or to use etension as repack or compact
--- https://medium.com/compass-true-north/dealing-with-significant-postgres-database-bloat-what-are-your-options-a6c1814a03a5Fs
+## Overview
 
+Bloat (table is bigger than its visible/functional content) is caused by "dead" tuples (nobody can see them).
+They can safely be removed, as nobody need them anymore. It will be done automatically by `autovacuum` process, but you can do it manually using `VACUUM`.
+
+The space they were using will be reused by other rows of the same table.
+If you want to give the space back to OS, eg. if you mistakenly created too many rows, you can use `VACUUM FULL`, or extensions as `repack` or `compact`.
+
+https://medium.com/compass-true-north/dealing-with-significant-postgres-database-bloat-what-are-your-options-a6c1814a03a5Fs
+
+
+## Create dataset
+
+Create table
+```postgresql
 DROP TABLE IF EXISTS foo;
 
 CREATE TABLE foo (
    id    SERIAL PRIMARY KEY,
    value INTEGER
  );
+```
 
+Disable autovacuum
+```postgresql
 ALTER TABLE foo SET (AUTOVACUUM_ENABLED=FALSE);
+```
 
+Add data
+```postgresql
 INSERT INTO foo
   (value)
 SELECT
@@ -22,33 +37,54 @@ SELECT
 FROM
     generate_series( 1, 1000000) -- 1 million => 2 seconds
 ;
+```
 
+Count
+```postgresql
+select count(1) from foo;
+```
+
+
+Update part of the rows
+```postgresql
 DELETE FROM foo
 WHERE MOD(id, 2) = 0;
+```
 
-select count(1) from foo;
+Mark dead rows
+```postgresql
+VACUUM foo;
+```
 
------------------------------
----- native
------------------------------
+Deallocate used space
+```postgresql
+VACUUM FULL foo;
+```
 
--- https://github.com/ioguix/pgsql-bloat-estimation/blob/master/table/table_bloat.sql
+
+## Get bloat natively
+
+### Of a relation
+
+[](https://github.com/ioguix/pgsql-bloat-estimation/blob/master/table/table_bloat.sql)
+
+```postgresql
 SELECT
 --     current_database(), schemaname,
-    tblname,
-   bs*tblpages                      AS real_size,
-  (tblpages-est_tblpages)*bs        AS extra_size,
+   tblname,
+   pg_size_pretty(bs*tblpages)                      AS real_size,
+   pg_size_pretty(((tblpages-est_tblpages)*bs)::numeric)       AS extra_size,
   CASE WHEN tblpages - est_tblpages > 0
-    THEN 100 * (tblpages - est_tblpages)/tblpages::float
-    ELSE 0
+    THEN TRUNC(100 * (tblpages - est_tblpages)/tblpages::float) || '%'
+    ELSE '0%'
   END AS extra_pct, fillfactor,
   CASE WHEN tblpages - est_tblpages_ff > 0
-    THEN (tblpages-est_tblpages_ff)*bs
-    ELSE 0
+    THEN pg_size_pretty(((tblpages-est_tblpages_ff)*bs)::numeric)
+    ELSE '0'
   END AS bloat_size,
   CASE WHEN tblpages - est_tblpages_ff > 0
-    THEN 100 * (tblpages - est_tblpages_ff)/tblpages::float
-    ELSE 0
+    THEN TRUNC(100 * (tblpages - est_tblpages_ff)/tblpages::float) || '%'
+    ELSE '0%'
   END AS bloat_pct, is_na
   -- , tpl_hdr_size, tpl_data_size, (pst).free_percent + (pst).dead_tuple_percent AS real_frag -- (DEBUG INFO)
 FROM (
@@ -100,14 +136,15 @@ WHERE 1=1
 --   AND tblpages*((pst).free_percent + (pst).dead_tuple_percent)::float4/100 >= 1
 ORDER BY bloat_size DESC,
          tblname;
+```
 
-select pg_size_pretty(105220751360);
+### Of a schema
 
--- Total bloat
+```postgresql
 SELECT
-    SUM(t.real_size)   size,
-    SUM(t.bloat_size)  bloat_size,
-    SUM(t.bloat_size)  /  SUM(t.real_size) * 100 || '%' bloat_pct
+    pg_size_pretty(SUM(t.real_size))   size,
+    pg_size_pretty(SUM(t.bloat_size)::numeric)  bloat_size,
+    TRUNC(SUM(t.bloat_size)  /  SUM(t.real_size) * 100) || '%' bloat_pct
 FROM (
     SELECT
        current_database(), schemaname, tblname, bs*tblpages AS real_size,
@@ -170,33 +207,29 @@ FROM (
     WHERE 1=1
        AND schemaname = 'public'
 ) t;
+```
+
+## Get bloat using an extension
+
+```postgresql
+CREATE EXTENSION pgstattuple;
+```
+
+The table_len will always be greater than the sum of the tuple_len, dead_tuple_len and free_space.
+
+The difference is accounted for by:
+ - fixed page overhead
+ - the per-page table of pointers to tuples
+ - padding to ensure that tuples are correctly aligned.
+
+See
+- [dalibo](https://public.dalibo.com/exports/formation/manuels/modules/h2/h2.handout.html)
+- [PG](https://www.postgresql.org/docs/13/pgstattuple.html)
+
+### Exact
 
 
-select * from pg_statistic;
-
-select * from pg_stats s
-WHERE 1=1
--- AND s.schemaname <> 'pg_catalog'
--- AND s.attname = ''
-;
-
------------------------------
----- extension
------------------------------
-
-CREATE EXTENSION pgstattuple
-;
-
--- Also
--- https://public.dalibo.com/exports/formation/manuels/modules/h2/h2.handout.html
-
--- https://www.postgresql.org/docs/13/pgstattuple.html
--- The table_len will always be greater than the sum of the tuple_len, dead_tuple_len and free_space.
--- The difference is accounted for by:
---  - fixed page overhead
---  - the per-page table of pointers to tuples
---  - padding to ensure that tuples are correctly aligned.
-
+```postgresql
 SELECT
     pg_size_pretty(tuple_len)       alive_size,
     tuple_percent || ' %'           alive_percent,
@@ -208,22 +241,23 @@ SELECT
     pg_size_pretty(table_len - tuple_len - dead_tuple_len - free_space) overhead
 FROM pgstattuple('foo')
 ;
+```
 
+
+```postgresql
 SELECT *
 FROM pgstattuple('foo')
 ;
+```
 
-VACUUM foo;
 
--- Whereas pgstattuple always performs a full-table scan and returns an exact count of live and dead tuples (and their sizes) and free space,
--- pgstattuple_approx tries to avoid the full-table scan and returns exact dead tuple statistics along with an approximation of the number and size of live tuples and free space.
+### Approximative
 
+Whereas pgstattuple always performs a full-table scan and returns an exact count of live and dead tuples (and their sizes) and free space,
+pgstattuple_approx tries to avoid the full-table scan and returns exact dead tuple statistics along with an approximation of the number and size of live tuples and free space.
+
+```postgresql
 SELECT *
 FROM pgstattuple_approx('foo')
 ;
-
-DROP TABLE IF EXISTS foo;
-CREATE TABLE foo (i integer);
-ALTER TABLE foo SET (autovacuum_enabled=false);
-INSERT INTO foo SELECT i FROM generate_series(1, 10000) i ;
-DELETE FROM foo WHERE i < 9000 ;
+```

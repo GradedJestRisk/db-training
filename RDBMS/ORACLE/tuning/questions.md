@@ -1,8 +1,11 @@
+# Questions
+
+
 OLTP or web ?
 
 RAM, CPU, SGA, PGA
 
-Network : latency, bandwith
+Network : latency, bandwidth
 
 Disk: HDD, SDD, Exadata
 

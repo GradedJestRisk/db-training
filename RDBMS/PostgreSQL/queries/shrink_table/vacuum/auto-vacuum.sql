@@ -103,7 +103,7 @@ WHERE 1=1
 
 --------- On INSERT -----------
 
--- Starting with PG 13, the visibility map is updated by ANALYZE even if ony INSERT took place
+-- Starting with PG 13, the visibility map is updated by VACUUM even if ony INSERT took place
 -- http://amitkapila16.blogspot.com/2020/05/improved-autovacuum-in-postgresql-13.html
 
 

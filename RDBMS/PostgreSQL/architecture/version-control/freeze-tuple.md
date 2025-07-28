@@ -1,5 +1,7 @@
 # Freeze
 
+Freeze is not teh same as "all visible" in row headr or block VM !
+
 [DOC](https://www.interdb.jp/pg/pgsql05/10.html)
 
 Transaction identifiers (txid) are 32-bit quantities. 
