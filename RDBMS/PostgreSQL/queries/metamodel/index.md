@@ -53,29 +53,51 @@ WHERE 1=1
 ;
 ```
 
+### Columns
 
+Data set
+```postgresql
+CREATE TABLE people (id INTEGER, name TEXT);
 
+CREATE INDEX people_id ON people(id);
 
+CREATE INDEX people_id_name ON people(id, name);
+```
 
-SELECT
-   a.attname,
-   am.amname index_type
-FROM pg_index idx
-    INNER JOIN pg_class cls ON cls.oid=idx.indexrelid
-    INNER JOIN pg_class tab ON tab.oid=idx.indrelid
-    INNER JOIN pg_am am     ON am.oid=cls.relam
-    INNER JOIN pg_attribute a ON a.attrelid = cls.oid
-WHERE 1=1
---     AND tab.relname = 'answers_bigint'
-    AND tab.relname = 'knowledge-elements_bigint'
-ORDER BY a.attname
+The column should be extracted from `pg_index.indkey` 
+```postgresql
+SELECT i.relname                                           AS index_name,
+       (SELECT array_agg(a.attname)
+        FROM (SELECT t.oid, unnest(string_to_array(ix.indkey::text, ' ')) AS colnum) AS b
+               JOIN pg_attribute a ON
+          a.attrelid = b.oid AND a.attnum = b.colnum::int) AS column_names
+FROM pg_class t
+       JOIN pg_index ix ON ix.indrelid = t.oid
+       JOIN pg_class i ON i.oid = ix.indexrelid
+WHERE t.relkind = 'r'
+  AND t.relnamespace = to_regnamespace('public')
+  AND t.relname = 'people'
 ;
+```
+
+| index\_name      | column\_names |
+|:-----------------|:--------------|
+| people\_id       | {id}          |
+| people\_id\_name | {id,name}     |
 
 
+[Source](https://stackoverflow.com/questions/4138911/how-to-query-the-metadata-of-indexes-in-postgresql)
 
 
--- Indexes on tables < 10^5 records (useless)
--- Given schema name
+## Useless indexes
+
+
+### Small tables 
+
+Indexes on tables < 10^5 records (useless)
+Given schema name
+
+```postgresql
 SELECT
        'Table=>' qry
        ,ndx.tablename tbl_nm
@@ -94,11 +116,12 @@ WHERE 1=1
 ORDER BY tbl.n_live_tup, ndx.tablename ASC
 ;
 
+```
 
+## Index type
 
-
--- Invalid indexes
--- Given table name
+Given table name
+```postgresql
 SELECT
     'index=>',
     cls.relname       index_name,
@@ -115,21 +138,47 @@ WHERE 1=1
 --    AND ndx.indisprimary IS TRUE
     AND cls.relname  = 'idx_uniq_bigintId'
 ;
-
--- Monitor index creation
--- Phases in https://www.postgresql.org/docs/13/progress-reporting.html
--- initializing
--- waiting for writers before build
--- building index
--- waiting for writers before validation
--- index validation: scanning index
--- index validation: sorting tuples
--- index validation: scanning table
--- waiting for old snapshots
--- waiting for readers before marking dead
--- waiting for readers before dropping
+```
 
 
+## Invalid indexes
+
+Given table name
+```postgresql
+SELECT
+    'index=>',
+    cls.relname       index_name,
+    cls.*,
+    ndx.indisvalid    is_valid,
+    ndx.indisunique   is_unique,
+     ndx.indisprimary is_primary,
+    'pg_index=>',
+    ndx.*
+FROM pg_index ndx
+      INNER JOIN pg_class cls ON ndx.indexrelid = cls.oid
+WHERE 1=1
+--    AND ndx.indisvalid IS FALSE
+--    AND ndx.indisprimary IS TRUE
+    AND cls.relname  = 'idx_uniq_bigintId'
+;
+```
+
+
+## Monitor index creation
+
+[Phases](https://www.postgresql.org/docs/13/progress-reporting.html):
+- initializing
+- waiting for writers before build
+- building index
+- waiting for writers before validation
+- index validation: scanning index
+- index validation: sorting tuples
+- index validation: scanning table
+- waiting for old snapshots
+- waiting for readers before marking dead
+- waiting for readers before dropping
+
+```postgresql
 SELECT
   p.phase,
   p.blocks_total,
@@ -162,5 +211,7 @@ FROM pg_stat_progress_create_index p
 JOIN pg_stat_activity a ON p.pid = a.pid;
 -- now	query	phase	blocks_total	blocks_done	progress	tuples_total	tuples_done
 -- 18:19:16	CREATE UNIQUE INDEX ndx_pk_foo ON foo(id)	building index: scanning table	3097346	567725	18%	0	0
+```
+
 
 

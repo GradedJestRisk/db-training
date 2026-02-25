@@ -70,7 +70,7 @@ A row (a block entry) is marked all 'visible' in the row header on first read
 All rows (in a block entry) is marked all 'visible' on vacuum
 > The beauty now is that we not only know whether a single row is visible or not - VACUUM can also figure out whether an entire block is visible or not.
 
-There is no flag at a table level to tell that all rows form all block arte visible.
+There is no flag at a table level to tell that all rows from all block are visible.
 
 ### Get visibility map statistics
 
@@ -133,6 +133,15 @@ WHERE 1=1
 ```
 
 
+All visible blocks
+```postgresql
+SELECT
+    COUNT(*) AS block_count
+FROM
+    pg_visibility('mytable')
+WHERE 1=1
+    AND all_visible IS TRUE
+```
 
 ## index-only-scan after massive INSERT
 

@@ -37,7 +37,7 @@ docker compose --file=docker-compose.pgPool.replication.classic.yml up --remove-
 docker logs --follow pooling-pgpool-1
 ```
 
-[Create data](../performance/memory/load-test)
+[Create data](../../performance/memory/load-test)
 
 Check pgpool received the connexion
 ```shell

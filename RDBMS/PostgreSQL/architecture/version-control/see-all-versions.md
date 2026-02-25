@@ -12,7 +12,7 @@ https://www.highgo.ca/2024/04/19/a-deeper-look-inside-postgresql-visibility-chec
 
 Start instance with [pg-dirtyread](https://tracker.debian.org/pkg/pg-dirtyread) extension.
 
-You'll find one [here](../../docker/justfile).
+You'll find one [here](../../sandboxes/docker/justfile).
 ```shell
 just start-instance-fresh
 ```

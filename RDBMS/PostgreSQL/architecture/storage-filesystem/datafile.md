@@ -200,6 +200,25 @@ There are 2 tuples, all in the same block (0) at offset 1 and 2
 | (0,1) |
 | (0,2) |
 
+You can decompose, and query
+```postgresql
+SELECT 
+    ctid,
+    (ctid::text::point)[0] as block,
+    (ctid::text::point)[1] as row
+FROM versions
+WHERE 1=1
+```
+
+How many rows in block 0 ?
+```postgresql
+SELECT
+    MAX((ctid::text::point)[1] )
+FROM versions
+WHERE (ctid::text::point)[0] = 0
+;
+```
+
 
 ### peek into blocks: pageinspect
 
