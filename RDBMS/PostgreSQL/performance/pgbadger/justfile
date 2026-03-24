@@ -1,0 +1,35 @@
+start:
+    docker compose up --detach --wait postgresql
+
+stop:
+    docker compose down
+
+restart:
+    just stop
+    just start
+
+install-pgbadger:
+    curl -o pgbadger https://github.com/darold/pgbadger/blob/master/pgbadger
+    chmod +x pgbadger
+
+console:
+    psql --dbname "host=localhost port=5432 user=postgres password=password"
+
+shell:
+    docker exec -it postgresql bash
+
+logs:
+    docker logs --follow postgresql
+
+logs-pg:
+    docker exec -it postgresql bash -c "tail -f /logs/postgresql/postgresql.log"
+
+create-logfile:
+    docker exec postgresql bash -c "chown postgres /logs/postgresql"
+    docker exec --user postgres postgresql  bash -c "touch /logs/postgresql/postgresql.log"
+
+extract-logs:
+    docker cp postgresql:/logs/postgresql/postgresql.log ./logs
+
+generate-report:
+    pgbadger ./logs/postgresql.log --outfile report.html

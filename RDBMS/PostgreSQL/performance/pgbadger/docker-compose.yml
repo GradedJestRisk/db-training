@@ -1,0 +1,30 @@
+services:
+  postgresql:
+    container_name: postgresql
+    image: postgres:18-trixie
+    command: docker-entrypoint.sh -c 'config_file=/etc/postgresql/postgresql.conf'
+    volumes:
+    #  to check expected location, use `SHOW config_file;`
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
+      - postgresql_data:/var/lib/postgresql
+      - postgresql_logs:/logs/postgresql
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=database
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 8Gb
+    healthcheck:
+      test: "psql --dbname \"host=localhost port=5432 dbname=database user=postgres password=password\""
+      start_period: 10s
+      interval: 30s
+      timeout: 2s
+      retries: 20
+
+volumes:
+  postgresql_data:
+  postgresql_logs:
