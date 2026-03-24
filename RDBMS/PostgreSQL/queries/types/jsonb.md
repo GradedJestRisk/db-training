@@ -143,6 +143,15 @@ SELECT
        jsonb_pretty('{"what": "is this", "nested": {"items 1": "are the best", "items 2": [1, 2, 3]}}'::jsonb);
 ```
 
+### Count
+
+```postgresql
+SELECT  
+    json_array_length('[{"name": "john"},{"name": "jane"}]') AS array_count
+;
+```
+
+
 
 ## Operators
 
