@@ -1,0 +1,21 @@
+start:
+    docker compose up --detach --wait postgresql
+
+stop:
+    docker compose down
+
+restart:
+    just stop
+    just start
+
+console:
+    psql --dbname "host=localhost dbnme=database port=5433 user=user password=password"
+
+shell:
+    docker exec -it postgresql bash
+
+logs:
+    docker logs --follow postgresql
+
+# ALTER SYSTEM SET listen_addresses = '*';
+# sudo systemctl restart postgresql

@@ -1,0 +1,31 @@
+# Start (docker)
+# docker compose up --force-recreate --renew-anon-volumes --detach --wait postgresql
+#
+# Setup (IDE)
+# jdbc:postgresql://localhost:5400/database
+#
+# Connect (client)
+# psql --dbname "host=localhost port=5400 dbname=database user=user password=password"
+services:
+  postgresql:
+    image: postgres:18-trixie
+    container_name: postgresql
+    command: docker-entrypoint.sh -c 'config_file=/etc/postgresql/postgresql.conf'
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./volumes/pgdata:/var/lib/postgresql/18/docker
+      - ./volumes/configuration/postgresql.conf:/etc/postgresql/postgresql.conf
+    # https://stackoverflow.com/questions/56188573/permission-issue-with-postgresql-in-docker-container
+    user: 1000:1000
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: database
+      #PGDATA: /var/lib/postgresql
+    healthcheck:
+      test: "psql --dbname \"host=localhost port=5433 dbname=database user=user password=password\""
+      start_period: 5s
+      interval: 1s
+      timeout: 2s
+      retries: 20
