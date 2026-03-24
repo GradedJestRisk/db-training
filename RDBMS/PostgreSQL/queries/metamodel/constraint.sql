@@ -159,8 +159,8 @@ FROM
     information_schema.table_constraints tc
 WHERE 1=1
   AND tc.constraint_type = 'FOREIGN KEY'
-  --AND tc.constraint_name = 'knowledge_elements_answerid_foreign'
-  AND tc.table_name       IN ('answers', 'feedbacks')
+  AND tc.constraint_name = 'alinea_id_alinea_parent_fkey'
+--  AND tc.table_name       IN ('answers', 'feedbacks')
 --    AND tc.table_name = 'authentication-methods'
     -- references
 --     AND ccu.table_name   = 'answers'
@@ -184,9 +184,10 @@ WHERE 1=1
 -- FOREIGN KEY constraints + Referencing/referenced tables + columns
 SELECT
     tc.constraint_name,
+    'referencing=>',
     tc.table_name    AS referencing_table_name,
     kcu.column_name  AS referencing_column_name,
-    c.*,
+    'referenced=>',
     ccu.table_name   AS referenced_table_name,
     ccu.column_name  AS referenced_column_name
 FROM
@@ -202,11 +203,12 @@ FROM
       AND ccu.table_schema = tc.table_schema
 WHERE 1=1
   AND tc.constraint_type = 'FOREIGN KEY'
+ AND tc.constraint_name = 'alinea_id_alinea_parent_fkey'
   -- referencing_table_name
 --  AND tc.table_name       IN ('answers', 'feedbacks')
 --    AND tc.table_name = 'authentication-methods'
     -- referenced_table_name
-    AND ccu.table_name = 'answers_bigint'
+---    AND ccu.table_name = 'answers_bigint'
 ;
 
 
