@@ -1,0 +1,7 @@
+\set TWO_SECONDS 2000
+\set ONE_MINUTE 60000
+SET default_transaction_read_only = ON;
+SET statement_timeout = :ONE_MINUTE;
+SET lock_timeout = :TWO_SECONDS;
+\set COMP_KEYWORD_CASE upper
+\pset null 'NULL'
