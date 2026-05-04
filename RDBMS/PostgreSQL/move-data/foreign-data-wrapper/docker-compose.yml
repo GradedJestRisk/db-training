@@ -1,0 +1,14 @@
+# https://docs.docker.com/compose/compose-file/compose-versioning/
+version: '3.8'
+
+services:
+  database:
+    image: postgres:alpine
+    container_name: postgres_entrypoint
+    restart: always
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./init-database.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - 5432:5432

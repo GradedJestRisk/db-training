@@ -1,5 +1,9 @@
+# Database link (db link)
+
 ## Setup
-We need 2 databases with each a password-authenticated users 
+
+We need 2 databases with each a password-authenticated user.
+They can be run by the same server, [here a local one](./docker-compose.yml).
 
 Start containers
 ````shell
@@ -26,30 +30,7 @@ CREATE TABLE target_table (id SERIAL);
 INSERT INTO target_table DEFAULT VALUES;
 ````
 
-## Use fdw (Foreign Data Wrapper)
-#https://help.aiven.io/en/articles/977358-postgresql-dblink-extension-use-example
-
-Wrap connection to source database as source_user
-```` sql
-CREATE SERVER source_database
-FOREIGN DATA WRAPPER dblink_fdw
-OPTIONS (dbname 'source_database');
-
-CREATE USER MAPPING FOR target_user
-SERVER source_database
-OPTIONS (user 'source_user', password 'source_user_password');
-
-GRANT USAGE ON FOREIGN SERVER source_database TO target_user;
-````
-
-We use a local connection for convenience, but remote is as easy with this syntax
-```` sql
-OPTIONS (host 'postgres.demoproject.aivencloud.com', dbname 'db2', port '11254');
-```` 
-
-##  Use dblink
-
-### As administrator
+## Setup database link
 
 Connect to target
 ````shell
@@ -59,7 +40,7 @@ psql postgres://postgres@localhost/target_database;
 ```` sql
 CREATE EXTENSION dblink;
 SELECT dblink_connect('dbname=source_database');
- SELECT t.* FROM dblink('dbname=source_database','SELECT id FROM source_table') AS t(id INTEGER);
+SELECT t.* FROM dblink('dbname=source_database','SELECT id FROM source_table') AS t(id INTEGER);
 ````
 
 ### As user
@@ -82,6 +63,8 @@ Connect to remote database
 ```` sql
 SELECT dblink_connect_u('to_source','dbname=source_database');
 ````
+
+## Test
 
 Execute query
 ```` sql
