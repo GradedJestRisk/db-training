@@ -23,6 +23,16 @@ FROM pg_class WHERE relname = 'people'
 );
 ```
 
+```postgresql
+SELECT toast.relname
+FROM pg_class heap 
+    INNER JOIN pg_class toast ON heap.reltoastrelid = toast.oid
+WHERE 1=1
+  AND heap.relkind = 'r'
+  AND heap.relname = 'tickets'
+  AND toast.relkind = 't'
+;  
+
 Access
 ```postgresql
 SELECT * FROM pg_toast.pg_toast_16424

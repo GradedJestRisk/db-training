@@ -12,7 +12,11 @@ Each client is a connection to the DB, which means a backend process.
 Each thread is a Linux process. Each thread can manage several transaction at the same time.
 The threads cannot share the connections
 
-`--transactions` : number of transactions each client runs
+`--transactions` : number of transactions **each** client runs
+
+So, the number of transactions is `$CLIENT * $TRANSACTIONS`
+
+To create a connection for each transaction, use `--connect`.
 
 Use psql variable `\set` to create randomness
 https://dev.to/aws-heroes/custom-sql-scripts-in-pgbench-502i
