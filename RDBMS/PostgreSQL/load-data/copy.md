@@ -161,3 +161,45 @@ Then drop
 ```postgresql
 SELECT * FROM people;
 ```
+
+## Binary
+
+The following will not work. 
+
+It is designed do read data written by PG in its custom format.
+https://www.postgresql.org/docs/current/sql-copy.html#SQL-COPY-FILE-FORMATS
+
+You should use `lo_import` functions, which are cumbersome. 
+[Reference](https://postgis.us/presentations/PGOpen2018_data_loading.pdf)
+
+
+Create target table
+```postgresql
+DROP TABLE file;
+
+CREATE TABLE file (
+    content BYTEA
+);
+```
+
+Create file
+```shell
+export DATA_FILE_PATH="./hello-world.jpg"
+curl --output $DATA_FILE_PATH "https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Hello_World_Brian_Kernighan_1978.jpg/330px-Hello_World_Brian_Kernighan_1978.jpg"
+```
+
+Import it 
+```shell
+cat $DATA_FILE_PATH | \
+psql --dbname $CONNECTION_STRING  \ 
+     --command="COPY file(content) FROM STDIN WITH (FORMAT BINARY)"
+```
+
+You will get an error
+```text
+ERROR:  invalid byte sequence for encoding "UTF8": 0xff
+invalid command \���v���:Na8���
+invalid command \A�
+ERROR:  invalid byte sequence for encoding "UTF8": 0xed 0x9b 0x70
+zsh: command not found: --command=COPY file(content) FROM STDIN WITH (FORMAT BINARY)
+```
