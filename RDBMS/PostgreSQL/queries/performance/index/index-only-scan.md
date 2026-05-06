@@ -36,7 +36,7 @@ But tables in which a large fraction of the rows are unchanging are common enoug
 
 ## Visibility map
 
-TOD: Move to [dedicated file](../../../architecture/storage-filesystem/visibility-map.md)
+TOD: Move to [dedicated file](../../../architecture/storage/visibility-map.md)
 
 ### Overview
 
